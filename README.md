@@ -1,51 +1,77 @@
-# Threadly AI Chatbot
+# Threadly AI
 
-A production-ready AI chatbot built with Next.js, Supabase, and SambaNova.
+![Threadly Banner](/public/icon.png)
 
-## Features
+Threadly is a high-performance, production-ready AI chatbot workspace built with **Next.js 15+**, **Supabase**, and **SambaNova AI**. It features a "Bring Your Own Key" (BYOK) architecture, persistent chat history, and smart sidebar navigation for power users.
 
-- **SambaNova Integration**: Default AI powered by LLaMA 3.1 8B Instruct.
-- **BYOK (Bring Your Own Key)**: Support for custom API keys (e.g., OpenAI) stored securely in `localStorage`.
-- **Persistent Chat History**: High-performance storage with Supabase.
-- **Smart Sidebar Navigation**: Quick jumps to specific user messages with temporary highlighting.
-- **Prompt Library**: Save and insert frequently used prompts.
-- **Modern UI**: Dark-themed, glassmorphic design with smooth animations.
+## ✨ Features
 
-## Tech Stack
+- **🚀 SambaNova LLaMA 3.1 Integration**: Blazing fast, enterprise-grade AI responses streaming in real-time.
+- **🛡️ Secure BYOK (Bring Your Own Key)**: Use your own OpenAI keys. Keys are stored safely in your browser and never transmitted to our servers.
+- **🔒 Robust Authentication**: Complete user lifecycle management powered by Supabase Auth.
+- **📂 Persistent Chat History**: Manage multiple conversations with automatic AI-generated titles and persistent storage.
+- **📍 Smart Sidebar Navigation**: Instantly jump between user messages in long conversations with a dynamic, highlighted navigation panel.
+- **⚡ Pro-UX Elements**: Modern glassmorphic design, smooth animations, and PWA support for mobile/desktop installation.
+- **💾 Prompt Library**: Save and reuse your favorite complex prompts in a dedicated prompt manager.
 
-- **Framework**: Next.js 15 (App Router)
-- **Styling**: TailwindCSS
-- **Database/Auth**: Supabase
-- **AI Backend**: SambaNova Cloud
-- **Frontend AI**: Direct BYOK calls
+## 🛠️ Tech Stack
 
-## Getting Started
+- **Framework**: Next.js 15+ (App Router)
+- **Database & Auth**: Supabase (PostgreSQL + RLS)
+- **AI Engine**: SambaNova Cloud (LLaMA 3.1 8B)
+- **Styling**: Tailwind CSS 4
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **PWA**: Custom Service Worker + Manifest
 
-1. **Clone the repository**
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-3. **Setup Environment Variables**:
-   Create a `.env.local` file:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SAMBANOVA_API_KEY=your_sambanova_api_key
-   ```
-4. **Setup Database**:
-   Run the SQL provided in `supabase_schema.sql` in your Supabase SQL Editor.
-5. **Run the app**:
-   ```bash
-   npm run dev
-   ```
+## 🚀 Getting Started
 
-## Security Note
+### 1. Clone the Repository
+```bash
+git clone https://github.com/rohanvibe/threadly-AI.git
+cd threadly-AI
+```
 
-- The SambaNova API key is handled strictly in the backend.
-- BYOK keys are stored ONLY in the browser's `localStorage` and never sent to your server.
-- All backend routes are protected by Supabase session validation.
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-## License
+### 3. Setup Supabase
+1. Create a new project at [supabase.com](https://supabase.com).
+2. Run the SQL schema found in `supabase/migrations/schema.sql` in the Supabase SQL Editor.
+3. Enable "Email Auth" in Authentication settings.
 
-MIT
+### 4. Environment Variables
+Create a `.env.local` file in the root directory and add your credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SAMBANOVA_API_KEY=your_sambanova_api_key
+```
+
+### 5. Run Locally
+```bash
+npm run dev
+```
+Visit `http://localhost:3000` to start chatting.
+
+## 📦 Deployment
+
+### Vercel (Recommended)
+1. Push your code to GitHub.
+2. Import the project into Vercel.
+3. Add the environment variables listed above.
+4. Update your **Site URL** in Supabase Auth settings to your Vercel URL.
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to get started.
+
+## 📜 License
+
+This project is licensed under a custom license. See [LICENSE](LICENSE) for details.
+- Personal and Educational use: **Allowed**
+- Commercial use: **NOT Allowed** without explicit permission.
+
+For commercial inquiries, contact: [maheshkumar79759@gmail.com](mailto:maheshkumar79759@gmail.com)
