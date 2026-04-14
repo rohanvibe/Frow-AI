@@ -75,3 +75,4 @@ This project is licensed under a custom license. See [LICENSE](LICENSE) for deta
 - Commercial use: **NOT Allowed** without explicit permission.
 
 For commercial inquiries, contact: [maheshkumar79759@gmail.com](mailto:maheshkumar79759@gmail.com)
+.
