@@ -167,11 +167,16 @@ export default function ChatPage() {
   }
 
   const fetchChats = async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('chats')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
+    
+    if (error) {
+       console.error("Fetch Chats Error:", error)
+       toast("Failed to load history. Run the SQL update in Supabase.", "error")
+    }
     if (data) setChats(data)
   }
 
