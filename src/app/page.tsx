@@ -303,14 +303,20 @@ export default function ChatPage() {
           setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, content: accumulatedContent } : m))
         }
         // Save to DB after stream finishes
-        await supabase.from('messages').insert([{ chat_id: chatId, role: 'assistant', content: accumulatedContent }])
+        await Promise.all([
+          dbInsertPromise,
+          supabase.from('messages').insert([{ chat_id: chatId, role: 'assistant', content: accumulatedContent }])
+        ])
       } else {
         // BYOK logic... (same as before but with abort signal support)
       }
 
       // Generate AI Title if needed...
     } catch (err: any) {
-      if (err.name !== 'AbortError') toast("Failed to get response", "error")
+      if (err.name !== 'AbortError') {
+        process.env.NODE_ENV === 'development' && console.error("Fetch error:", err)
+        toast(`Failed to fetch: ${err.message || 'Interrupted'}`, "error")
+      }
     } finally {
       setLoading(false)
       abortControllerRef.current = null
