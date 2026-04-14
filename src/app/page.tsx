@@ -627,7 +627,7 @@ export default function ChatPage() {
               </div>
             </motion.div>
           ) : (
-            <div className="max-w-3xl mx-auto space-y-12 md:space-y-16 py-10">
+            <div className="w-full max-w-3xl mx-auto space-y-10 md:space-y-16 py-10 px-0 md:px-0">
               {messages.map((msg, i) => (
                 <motion.div 
                   initial={{ opacity: 0, x: -10 }} 
@@ -635,7 +635,7 @@ export default function ChatPage() {
                   transition={{ delay: i * 0.05 }}
                   key={msg.id} 
                   id={`message-${msg.id}`}
-                  className={`flex gap-4 md:gap-8 group transition-all duration-700 rounded-2xl p-4 md:p-6 md:-mx-6 ${
+                  className={`flex gap-3 md:gap-8 group transition-all duration-700 rounded-2xl p-3 md:p-6 md:-mx-6 ${
                     highlightedMessageId === msg.id ? 'highlight-bg bg-blue-500/5 ring-1 ring-blue-500/20' : 'hover:bg-white/1'
                   }`}
                 >
@@ -703,7 +703,7 @@ export default function ChatPage() {
              </motion.div>
            )}
 
-           <div className="max-w-3xl mx-auto relative group">
+           <div className="w-full max-w-3xl mx-auto relative group">
               <form onSubmit={sendMessage}>
                 <div className="relative">
                   <textarea 
