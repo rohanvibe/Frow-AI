@@ -41,7 +41,9 @@ import {
   Camera,
   LinkIcon,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Activity,
+  ArrowRight
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
@@ -95,12 +97,26 @@ export default function ChatPage() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
   
+  const [profileMemories, setProfileMemories] = useState<string[]>([])
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const skipFetchRef = useRef(false)
   const supabase = createClient()
   const router = useRouter()
   const { toast } = useToast()
+
+  const fetchProfile = async (uid: string) => {
+    const { data } = await supabase.from('profiles').select('ai_memory').eq('id', uid).maybeSingle()
+    if (data) {
+       try {
+          const mems = JSON.parse(data.ai_memory || '[]')
+          setProfileMemories(Array.isArray(mems) ? mems : [])
+       } catch (e) {
+          setProfileMemories([])
+       }
+    }
+  }
 
   // Load persistence
   useEffect(() => {
@@ -112,6 +128,7 @@ export default function ChatPage() {
         setUser(user)
         fetchChats(user.id)
         fetchPrompts(user.id)
+        fetchProfile(user.id)
         
         // Restore last chat
         const lastChat = localStorage.getItem(`threadly_last_chat_${user.id}`)
@@ -447,6 +464,7 @@ export default function ChatPage() {
                    ai_memory: JSON.stringify(updatedMems),
                    updated_at: new Date().toISOString()
                  }, { onConflict: 'id' })
+                 setProfileMemories(updatedMems)
                  toast(`Threadly learned: ${newFact}`, "info")
               }
            }
@@ -866,30 +884,72 @@ export default function ChatPage() {
             exit={isMobile ? { x: '100%' } : { width: 0, opacity: 0 }}
             className={`${isMobile ? 'absolute inset-y-0 right-0 w-[85%] z-50 shadow-2xl' : 'w-80 relative'} border-l border-white/5 flex flex-col bg-[#09090b]/80 backdrop-blur-2xl h-full`}
           >
-            <div className="p-5 border-b border-white/5 flex items-center justify-between shrink-0">
-              <h2 className="font-black text-[10px] uppercase tracking-[0.4em] text-gray-600 pt-1">Session Data</h2>
-              <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}><X className="w-4 h-4" /></Button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-              {messages.filter(m => m.role === 'user').map((msg, idx) => (
-                <button
-                  key={msg.id}
-                  onClick={() => { scrollToMessage(msg.id); if (isMobile) setIsSidebarOpen(false); }}
-                  className="w-full text-left p-4 rounded-2xl border border-white/3 bg-white/1 hover:bg-blue-600/5 hover:border-blue-500/20 transition-all group active:scale-[0.98] relative overflow-hidden"
-                >
-                  <div className="flex items-center gap-4 relative z-10">
-                    <span className="text-[10px] font-black text-blue-500 bg-blue-500/10 w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border border-blue-500/20">{idx + 1}</span>
-                    <span className="text-xs font-bold truncate text-gray-500 group-hover:text-white transition-colors">{msg.content}</span>
-                  </div>
-                  <div className="absolute inset-y-0 left-0 w-1 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-              ))}
-              {messages.filter(m => m.role === 'user').length === 0 && (
-                <div className="h-full flex flex-col items-center justify-center text-center p-10 space-y-6 opacity-20 filter grayscale">
-                  <Globe className="w-12 h-12" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] leading-loose">Waiting for interaction to index flow...</p>
+            <div className="flex flex-col h-full">
+              {/* Identity & Memory Card */}
+              <div className="p-6 border-b border-white/5 bg-white/2">
+                <div className="flex items-center justify-between mb-6">
+                   <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white shadow-xl shadow-blue-600/20 uppercase">
+                         {user?.email?.[0] || 'U'}
+                      </div>
+                      <div className="flex flex-col">
+                         <span className="text-[10px] font-black uppercase tracking-widest text-white truncate max-w-[140px]">
+                            {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+                         </span>
+                         <span className="text-[8px] font-bold uppercase tracking-widest text-gray-500">Authorized Member</span>
+                      </div>
+                   </div>
+                   <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)} className="rounded-xl"><X className="w-4 h-4" /></Button>
                 </div>
-              )}
+
+                {profileMemories.length > 0 && (
+                   <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                         <h3 className="text-[8px] font-black uppercase tracking-[0.3em] text-blue-500">AI Knowledge Store</h3>
+                         <span className="text-[8px] font-black bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full border border-blue-500/20">{profileMemories.length} Facts</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar pr-2">
+                         {profileMemories.slice(0, 5).map((mem, i) => (
+                            <div key={i} className="px-2 py-1 rounded-md bg-white/5 border border-white/5 text-[9px] font-bold text-gray-400">
+                               {mem.length > 25 ? mem.slice(0, 25) + '...' : mem}
+                            </div>
+                         ))}
+                         {profileMemories.length > 5 && (
+                            <button onClick={() => setShowSettings(true)} className="text-[8px] font-bold text-blue-500 hover:underline pl-1">+ More</button>
+                         )}
+                      </div>
+                   </div>
+                )}
+              </div>
+
+              {/* Chat Index (Session Data) */}
+              <div className="p-5 border-b border-white/5 flex items-center justify-between shrink-0">
+                <h2 className="font-black text-[9px] uppercase tracking-[0.4em] text-gray-600 pt-1 flex items-center gap-2">
+                   <Activity className="w-3 h-3" />
+                   Session Flow
+                </h2>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                {messages.filter(m => m.role === 'user').map((msg, idx) => (
+                  <button
+                    key={msg.id}
+                    onClick={() => { scrollToMessage(msg.id); if (isMobile) setIsSidebarOpen(false); }}
+                    className="w-full text-left p-4 rounded-2xl border border-white/3 bg-white/1 hover:bg-blue-600/5 hover:border-blue-500/20 transition-all group active:scale-[0.98] relative overflow-hidden"
+                  >
+                    <div className="flex items-center gap-4 relative z-10">
+                      <span className="text-[10px] font-black text-gray-500 group-hover:text-blue-500 bg-white/5 w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border border-white/5 transition-colors">{idx + 1}</span>
+                      <span className="text-xs font-bold truncate text-gray-500 group-hover:text-white transition-colors">{msg.content}</span>
+                    </div>
+                    <div className="absolute inset-y-0 left-0 w-1 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                ))}
+                {messages.filter(m => m.role === 'user').length === 0 && (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-10 space-y-6 opacity-20 filter grayscale">
+                    <Globe className="w-12 h-12" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] leading-loose">Waiting for interaction to index flow...</p>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
