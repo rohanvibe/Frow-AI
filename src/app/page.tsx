@@ -43,7 +43,10 @@ import {
   ExternalLink,
   ChevronRight,
   Activity,
-  ArrowRight
+  ArrowRight,
+  Paperclip,
+  FileText,
+  CheckCircle2
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
@@ -98,13 +101,33 @@ export default function ChatPage() {
   const [editValue, setEditValue] = useState('')
   
   const [profileMemories, setProfileMemories] = useState<string[]>([])
+  const [attachedFile, setAttachedFile] = useState<{ name: string, content: string } | null>(null)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const skipFetchRef = useRef(false)
   const supabase = createClient()
   const router = useRouter()
   const { toast } = useToast()
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 1024 * 1024) { // 1MB limit for context injection
+      toast("File too large. Max 1MB for context injection.", "error")
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const content = event.target?.result as string
+      setAttachedFile({ name: file.name, content })
+      toast(`File "${file.name}" attached`, "success")
+    }
+    reader.readAsText(file)
+  }
 
   const fetchProfile = async (uid: string) => {
     const { data } = await supabase.from('profiles').select('ai_memory').eq('id', uid).maybeSingle()
@@ -361,8 +384,14 @@ export default function ChatPage() {
 
   const sendMessage = async (e?: React.FormEvent, customMsg?: string) => {
     if (e) e.preventDefault()
-    const messageContent = customMsg || input
-    if (!messageContent.trim() || loading || !user) return
+    
+    const displayContent = customMsg || input
+    if (!displayContent.trim() || loading || !user) return
+
+    let finalPrompt = displayContent
+    if (attachedFile) {
+      finalPrompt = `[FILE CONTEXT: ${attachedFile.name}]\n\`\`\`\n${attachedFile.content}\n\`\`\`\n\n${displayContent}`
+    }
 
     let chatId = currentChatId
     
@@ -375,7 +404,7 @@ export default function ChatPage() {
     if (!chatId) {
       const { data } = await supabase
         .from('chats')
-        .insert([{ user_id: user.id, title: messageContent.slice(0, 30) }])
+        .insert([{ user_id: user.id, title: displayContent.slice(0, 30) }])
         .select()
         .single()
       if (data) {
@@ -387,6 +416,7 @@ export default function ChatPage() {
     }
 
     setInput('')
+    setAttachedFile(null)
     setLoading(true)
     abortControllerRef.current = new AbortController()
 
@@ -395,13 +425,13 @@ export default function ChatPage() {
       id: Math.random().toString(),
       chat_id: chatId!,
       role: 'user',
-      content: messageContent,
+      content: displayContent,
       created_at: new Date().toISOString()
     }
     setMessages(prev => [...prev, tempUserMsg])
     
     // Start DB insert in parallel
-    const userMsgInsert = supabase.from('messages').insert([{ chat_id: chatId, role: 'user', content: messageContent }])
+    const userMsgInsert = supabase.from('messages').insert([{ chat_id: chatId, role: 'user', content: displayContent }])
 
     // Create placeholder for assistant message
     const assistantMsgId = Math.random().toString()
@@ -420,7 +450,7 @@ export default function ChatPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            message: messageContent, 
+            message: finalPrompt, 
             messages: messages.slice(-20), // Send last 20 messages for context
             chatId 
           }),
