@@ -12,6 +12,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
+    const userEmail = user.email || 'unknown'
+
     // Fetch user personalization
     const { data: profile } = await supabase
       .from('profiles')
@@ -41,6 +44,8 @@ export async function POST(req: Request) {
     const systemPrompt = `You are Threadly, a helpful and sophisticated AI partner. 
 While maintaining high-speed technical precision, avoid robotic responses. 
 Be concise, skip the boilerplate, and when using tables, use clear "Yes" or "-" symbols for comparisons.
+
+CURRENT USER: ${userName} (${userEmail})
 
 ${profile?.custom_instructions ? `HOW TO RESPOND: ${profile.custom_instructions}` : ''}
 ${memoryPrompt}
