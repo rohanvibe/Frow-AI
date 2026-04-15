@@ -12,11 +12,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Fetch user personalization
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('custom_instructions, ai_memory')
+      .eq('id', user.id)
+      .single()
+
     const { message, chatId, skipSave, stream: requestedStream = true } = await req.json()
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
+
+    // Format memory if it exists
+    let memoryPrompt = ''
+    if (profile?.ai_memory) {
+       try {
+          const memories = JSON.parse(profile.ai_memory)
+          if (Array.isArray(memories) && memories.length > 0) {
+             memoryPrompt = `USER CONTEXT & MEMORY:\n${memories.map(m => `- ${m}`).join('\n')}`
+          }
+       } catch (e) {
+          memoryPrompt = profile.ai_memory // Fallback to raw if not JSON
+       }
+    }
+
+    const systemPrompt = `You are Threadly, a helpful and sophisticated AI partner. 
+While maintaining high-speed technical precision, avoid robotic responses. 
+Be concise, skip the boilerplate, and when using tables, use clear "Yes" or "-" symbols for comparisons.
+
+${profile?.custom_instructions ? `HOW TO RESPOND: ${profile.custom_instructions}` : ''}
+${memoryPrompt}
+
+MEMORY MANAGEMENT: 
+If the user shares new personal information, preferences, or technical context about themselves during this conversation, identify it. 
+At the VERY END of your response, output a single line with this format: [MEMORY_LEARNED: <brief concise fact>]. 
+Do not mention memory unless you are recording it. Only record high-value facts.`
 
     const response = await fetch('https://api.sambanova.ai/v1/chat/completions', {
       method: 'POST',
@@ -27,7 +59,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: 'Meta-Llama-3.3-70B-Instruct',
         messages: [
-          { role: 'system', content: 'You are Threadly, a helpful and sophisticated AI partner. While maintaining high-speed technical precision, avoid robotic responses. Be concise, skip the boilerplate, and when using tables, use clear "Yes" or "-" symbols for comparisons to ensure high-density readability.' },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
         ],
         stream: requestedStream

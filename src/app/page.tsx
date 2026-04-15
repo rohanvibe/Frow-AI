@@ -418,10 +418,35 @@ export default function ChatPage() {
           accumulatedContent += chunk
           setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, content: accumulatedContent } : m))
         }
+        
+        let finalContent = accumulatedContent
+        const memoryMatch = finalContent.match(/\[MEMORY_LEARNED:\s*(.*?)\]/)
+        
+        if (memoryMatch) {
+           const newFact = memoryMatch[1].trim()
+           finalContent = finalContent.replace(/\[MEMORY_LEARNED:.*?\]/g, '').trim()
+           
+           // Sync new memory to Supabase
+           const { data: { user } } = await supabase.auth.getUser()
+           if (user) {
+              const { data: currentProfile } = await supabase.from('profiles').select('ai_memory').eq('id', user.id).single()
+              let mems = []
+              try { mems = JSON.parse(currentProfile?.ai_memory || '[]') } catch (e) {}
+              if (!mems.includes(newFact)) {
+                 const updatedMems = [...mems, newFact]
+                 await supabase.from('profiles').upsert({ id: user.id, ai_memory: JSON.stringify(updatedMems) })
+                 toast(`Threadly remembered: ${newFact}`, "info")
+              }
+           }
+        }
+
+        // Final UI update with cleaned content
+        setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, content: finalContent } : m))
+
         // Save to DB after stream finishes
         const [userResult, assistantResult] = await Promise.all([
           userMsgInsert,
-          supabase.from('messages').insert([{ chat_id: chatId, role: 'assistant', content: accumulatedContent }])
+          supabase.from('messages').insert([{ chat_id: chatId, role: 'assistant', content: finalContent }])
         ])
 
         if (userResult.error) console.error("User message save error:", userResult.error)
@@ -865,45 +890,156 @@ export default function ChatPage() {
 }
 
 function SettingsModal({ onClose }: { onClose: () => void }) {
+  const [activeTab, setActiveTab] = useState<'general' | 'personalization'>('general')
   const [keys, setKeys] = useState({ openai: '' })
+  const [profile, setProfile] = useState({ custom_instructions: '', ai_memory: [] as string[] })
+  const [newMemory, setNewMemory] = useState('')
+  const [saving, setSaving] = useState(false)
   const { toast } = useToast()
+  const supabase = createClient()
 
   useEffect(() => {
+    // Load local keys
     const saved = localStorage.getItem('threadly_keys')
     if (saved) setKeys(JSON.parse(saved))
+
+    // Load server profile
+    const loadProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        if (data) {
+          try {
+            const memoryArray = JSON.parse(data.ai_memory || '[]')
+            setProfile({ custom_instructions: data.custom_instructions, ai_memory: Array.isArray(memoryArray) ? memoryArray : [] })
+          } catch (e) {
+            setProfile({ custom_instructions: data.custom_instructions, ai_memory: [] })
+          }
+        }
+      }
+    }
+    loadProfile()
   }, [])
 
-  const save = () => {
-    localStorage.setItem('threadly_keys', JSON.stringify(keys))
-    toast("Settings saved", "success")
-    onClose()
+  const saveAll = async () => {
+    setSaving(true)
+    try {
+      localStorage.setItem('threadly_keys', JSON.stringify(keys))
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { error } = await supabase.from('profiles').upsert({
+          id: user.id,
+          custom_instructions: profile.custom_instructions,
+          ai_memory: JSON.stringify(profile.ai_memory),
+          updated_at: new Date().toISOString()
+        })
+        if (error) throw error
+      }
+      toast("Configuration updated", "success")
+      onClose()
+    } catch (err: any) {
+      toast(`Save failed: ${err.message}`, "error")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const addMemory = () => {
+    if (!newMemory.trim()) return
+    setProfile(prev => ({ ...prev, ai_memory: [...prev.ai_memory, newMemory.trim()] }))
+    setNewMemory('')
+  }
+
+  const removeMemory = (index: number) => {
+    setProfile(prev => ({ ...prev, ai_memory: prev.ai_memory.filter((_, i) => i !== index) }))
   }
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
-      <Card className="w-full max-w-lg border-white/5 shadow-2xl">
-        <CardHeader className="border-b border-white/5">
-          <CardTitle className="uppercase tracking-widest text-sm flex items-center gap-2">
-             <Settings className="w-4 h-4 text-blue-500" />
-             AI Configuration
-          </CardTitle>
-          <CardDescription>Configure your secure BYOK settings.</CardDescription>
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 md:p-6 overflow-y-auto">
+      <Card className="w-full max-w-xl border-white/5 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+        <CardHeader className="border-b border-white/5 pb-2">
+          <div className="flex items-center justify-between mb-2">
+             <CardTitle className="uppercase tracking-[0.3em] text-[10px] font-black flex items-center gap-2">
+                <Settings className="w-4 h-4 text-blue-500" />
+                Workspace Infrastructure
+             </CardTitle>
+             <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl"><X className="w-4 h-4" /></Button>
+          </div>
+          <div className="flex gap-6 mt-4">
+             {['general', 'personalization'].map((tab) => (
+                <button 
+                  key={tab}
+                  onClick={() => setActiveTab(tab as any)}
+                  className={`pb-2 text-[9px] font-black uppercase tracking-[0.2em] transition-all border-b-2 ${
+                    activeTab === tab ? 'border-blue-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  {tab}
+                </button>
+             ))}
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6 py-6 font-bold">
-          <div className="space-y-3">
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">OpenAI API Key (GPTo-Mini)</label>
-            <Input type="password" value={keys.openai} onChange={(e) => setKeys({...keys, openai: e.target.value})} placeholder="sk-..." className="bg-black py-6 rounded-2xl" />
-          </div>
-          <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 mb-2">
-            <p className="text-[10px] text-blue-400 font-bold leading-relaxed">
-              <span className="font-black uppercase tracking-[0.2em] block mb-1">Local Storage Privacy</span>
-              These keys never touch our database. All BYOK requests are made directly from your browser's client-side fetch.
-            </p>
-          </div>
+
+        <CardContent className="py-8 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+          {activeTab === 'general' && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+              <div className="space-y-3">
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">OpenAI API Key (BYOK Tunnel)</label>
+                <Input type="password" value={keys.openai} onChange={(e) => setKeys({...keys, openai: e.target.value})} placeholder="sk-..." className="bg-black py-7 rounded-2xl border-white/5" />
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'personalization' && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+              <div className="space-y-4">
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Custom Response Logic</label>
+                <textarea 
+                  value={profile.custom_instructions}
+                  onChange={(e) => setProfile({...profile, custom_instructions: e.target.value})}
+                  className="w-full bg-black border border-white/5 rounded-2xl p-5 text-sm font-bold outline-none focus:border-blue-500/50 min-h-[140px] resize-none custom-scrollbar transition-all"
+                  placeholder="e.g. Always respond in TypeScript. Use a helpful engineer persona."
+                />
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Managed AI Memory</label>
+                <div className="flex gap-2">
+                  <Input 
+                    value={newMemory}
+                    onChange={(e) => setNewMemory(e.target.value)}
+                    placeholder="Fact to remember..."
+                    className="bg-black border-white/5 rounded-xl h-12 text-xs"
+                    onKeyDown={(e) => e.key === 'Enter' && addMemory()}
+                  />
+                  <Button onClick={addMemory} className="h-12 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4"><Plus className="w-4 h-4" /></Button>
+                </div>
+                <div className="space-y-2">
+                  {profile.ai_memory.map((mem, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-white/2 border border-white/5 group">
+                      <span className="text-xs font-bold text-gray-300">{mem}</span>
+                      <button onClick={() => removeMemory(idx)} className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500/50 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  ))}
+                  {profile.ai_memory.length === 0 && (
+                    <p className="text-[9px] text-gray-600 uppercase tracking-widest text-center py-4 italic">No memories recorded yet.</p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
         </CardContent>
-        <CardFooter className="flex justify-end gap-3 border-t border-white/5 pt-6">
-          <Button variant="ghost" onClick={onClose} className="rounded-xl px-8">Discard</Button>
-          <Button onClick={save} className="rounded-xl px-12 bg-blue-600 hover:bg-blue-700">Save System</Button>
+
+        <CardFooter className="border-t border-white/5 py-8 flex justify-end gap-3 px-8">
+          <Button variant="ghost" onClick={onClose} className="font-black text-[9px] uppercase tracking-widest px-8 rounded-xl opacity-50 hover:opacity-100">Discard</Button>
+          <Button 
+            onClick={saveAll} 
+            disabled={saving}
+            className="bg-blue-600 hover:bg-blue-500 rounded-xl px-12 font-black text-[9px] uppercase tracking-widest shadow-2xl shadow-blue-500/20 active:scale-95 transition-all h-12"
+          >
+            {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin mr-2" /> : null}
+            Commit All Changes
+          </Button>
         </CardFooter>
       </Card>
     </div>

@@ -74,3 +74,22 @@ CREATE POLICY "Public messages are viewable by everyone" ON messages
 
 CREATE POLICY "Public prompts are viewable by everyone" ON prompts 
   FOR SELECT USING (is_public = true);
+
+-- Profiles Table (Personalization & Memory)
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  custom_instructions TEXT DEFAULT '',
+  ai_memory TEXT DEFAULT '',
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own profile" ON profiles 
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile" ON profiles 
+  FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert their own profile" ON profiles 
+  FOR INSERT WITH CHECK (auth.uid() = id);
