@@ -12,15 +12,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
-    const userEmail = user.email || 'unknown'
+    const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Member'
+    const userRole = user.app_metadata?.role || 'User'
 
     // Fetch user personalization
     const { data: profile } = await supabase
       .from('profiles')
       .select('custom_instructions, ai_memory')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     const { message, messages: history = [], chatId, skipSave, stream: requestedStream = true } = await req.json()
 
@@ -34,26 +34,31 @@ export async function POST(req: Request) {
        try {
           const memories = JSON.parse(profile.ai_memory)
           if (Array.isArray(memories) && memories.length > 0) {
-             memoryPrompt = `USER CONTEXT & MEMORY:\n${memories.map(m => `- ${m}`).join('\n')}`
+             memoryPrompt = `USER CONTEXT & MEMORY:\n${memories.map((m: string) => `- ${m}`).join('\n')}`
           }
        } catch (e) {
           memoryPrompt = profile.ai_memory
        }
     }
 
-    const systemPrompt = `You are Threadly, a helpful and sophisticated AI partner. 
-While maintaining high-speed technical precision, avoid robotic responses. 
-Be concise, skip the boilerplate, and when using tables, use clear "Yes" or "-" symbols for comparisons.
+    const systemPrompt = `You are Threadly, the personalized AI workspace for ${userName} (${user.email}). 
+You have a "Persistent Brain"—this means you must actively use the "USER CONTEXT & MEMORY" and "HOW TO RESPOND" sections below to shape every single reply. 
 
-CURRENT USER: ${userName} (${userEmail})
+IMPORTANT: The user is FULLY AUTHORIZED. Do not record that the user is "anonymous". Focus only on facts about their life, work, and preferences.
+
+Tone & Logic:
+- Proactively reference ${userName}'s projects, tech stack, and preferences.
+- If the user prefers TypeScript, always output TS. 
+- Avoid generic filler. Be an elite engineer-partner.
+- Use clear "Yes" or "-" symbols for comparison tables.
 
 ${profile?.custom_instructions ? `HOW TO RESPOND: ${profile.custom_instructions}` : ''}
 ${memoryPrompt}
 
 MEMORY MANAGEMENT: 
-If the user shares new personal information, preferences, or technical context about themselves during this conversation, identify it. 
+If the user shares new personal information or project context, identify it. 
 At the VERY END of your response, output a single line with this format: [MEMORY_LEARNED: <brief concise fact>]. 
-Do not mention memory unless you are recording it. Only record high-value facts.`
+Record facts like "User is building a fintech app" or "User prefers clean architecture".`
 
     // Construct full message history for the AI
     const apiMessages = [

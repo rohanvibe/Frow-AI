@@ -979,13 +979,16 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
     const loadProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
         if (data) {
           try {
             const memoryArray = JSON.parse(data.ai_memory || '[]')
-            setProfile({ custom_instructions: data.custom_instructions, ai_memory: Array.isArray(memoryArray) ? memoryArray : [] })
+            setProfile({ 
+               custom_instructions: data.custom_instructions || '', 
+               ai_memory: Array.isArray(memoryArray) ? memoryArray : [] 
+            })
           } catch (e) {
-            setProfile({ custom_instructions: data.custom_instructions, ai_memory: [] })
+            setProfile({ custom_instructions: data.custom_instructions || '', ai_memory: [] })
           }
         }
       }
