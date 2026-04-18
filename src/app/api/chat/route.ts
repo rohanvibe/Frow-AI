@@ -36,7 +36,35 @@ export async function POST(req: Request) {
           try { memories = JSON.parse(memories) } catch (e) {}
        }
        if (Array.isArray(memories) && memories.length > 0) {
-          memoryPrompt = `USER CONTEXT & MEMORY:\n${memories.map((m: any) => `- ${m}`).join('\n')}`
+          const userContextStr = (history.slice(-3).map((h: any) => h.content).join(' ') + ' ' + (message || '')).toLowerCase()
+          
+          const filteredMemories = memories.map((m: any, i: number) => {
+             if (typeof m === 'string' && m.includes('|')) {
+                const parts = m.split('|')
+                const tag = parts[0].trim()
+                const fact = parts.slice(1).join('|').trim()
+                return { id: i, tag, fact, raw: m }
+             }
+             return { id: i, tag: '', fact: m, raw: m }
+          }).filter(item => {
+             if (!item.tag) return true // Include legacy untagged memory
+             // Include if tag keyword is present in recent conversation
+             return userContextStr.includes(item.tag.toLowerCase()) || userContextStr.includes('remember') || userContextStr.includes('forget')
+          })
+
+          if (filteredMemories.length > 0) {
+             const memoryList = filteredMemories.map(m => `[ID: ${m.id}] ${m.raw}`).join('\n')
+             const tagList = memories
+               .map((m: any) => typeof m === 'string' && m.includes('|') ? m.split('|')[0].trim() : '')
+               .filter(Boolean)
+               .filter((val, i, arr) => arr.indexOf(val) === i) // unique tags
+               .join(', ')
+
+             memoryPrompt = `ACTIVE MEMORY FACTS (Loaded via related tags):\n${memoryList}`
+             if (tagList) {
+                memoryPrompt += `\n\n(HIDDEN TAGS: ${tagList}. If user mentions these words, facts will load next turn.)`
+             }
+          }
        }
     }
 
@@ -60,9 +88,12 @@ ${memoryPrompt}
 
 MEMORY MANAGEMENT: 
 Do NOT output phrases like "Memory learned" or "I will remember that" in your natural text. Act completely natural.
-IF AND ONLY IF the user explicitly asks you to remember something, or shares a highly critical persistent fact (e.g., tech stack, project rules), you may trigger the memory system.
-To log a memory, output a single line at the VERY END of your response exactly like this: [MEMORY_LEARNED: <brief concise fact>]. 
-DO NOT USE THIS TAG unless absolutely critical. Keep it extremely rare.`
+IF AND ONLY IF the user explicitly asks you to remember, update, or forget something, or shares a critical persistent fact, you may trigger the memory system.
+Memories use a TAG SYSTEM. When adding a memory, prefix it with a simple 1-word lowercase tag and a pipe symbol (e.g., framework|User uses NextJS).
+Use ONE of these exact tags on a single line at the VERY END of your response to manage memory. Keep usages extremely rare.
+To ADD: [MEMORY_ADD: <one_word_tag>|<brief concise fact>]
+To EDIT an existing fact by ID: [MEMORY_EDIT: <ID> | <new updated raw string including tag>]
+To DELETE an existing fact by ID: [MEMORY_DELETE: <ID>]`
 
     // Construct full message history for the AI
     const apiMessages = [

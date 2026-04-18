@@ -79,7 +79,7 @@ CREATE POLICY "Public prompts are viewable by everyone" ON prompts
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   custom_instructions TEXT DEFAULT '',
-  ai_memory TEXT DEFAULT '',
+  ai_memory JSONB DEFAULT '[]'::jsonb,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

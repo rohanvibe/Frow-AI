@@ -553,11 +553,12 @@ export default function ChatPage() {
         }
         
         let finalContent = accumulatedContent
-        const memoryMatch = finalContent.match(/\[MEMORY_LEARNED:\s*(.*?)\]/i)
+        const addMatch = finalContent.match(/\[MEMORY_ADD:\s*(.*?)\]/i) || finalContent.match(/\[MEMORY_LEARNED:\s*(.*?)\]/i)
+        const editMatch = finalContent.match(/\[MEMORY_EDIT:\s*(\d+)\s*\|\s*(.*?)\]/i)
+        const deleteMatch = finalContent.match(/\[MEMORY_DELETE:\s*(\d+)\]/i)
         
-        if (memoryMatch) {
-           const newFact = memoryMatch[1].trim()
-           finalContent = finalContent.replace(/\[MEMORY_LEARNED:.*?\]/gi, '').trim()
+        if (addMatch || editMatch || deleteMatch) {
+           finalContent = finalContent.replace(/\[MEMORY_(ADD|LEARNED|EDIT|DELETE):.*?\]/gi, '').trim()
            
            // Sync new memory to Supabase
            const { data: { user } } = await supabase.auth.getUser()
@@ -571,15 +572,36 @@ export default function ChatPage() {
 
               if (!Array.isArray(mems)) mems = []
 
-              if (!mems.includes(newFact)) {
-                 const updatedMems = [...mems, newFact]
+              let updated = false
+              if (addMatch) {
+                 const newFact = addMatch[1].trim()
+                 if (!mems.includes(newFact)) {
+                    mems.push(newFact)
+                    updated = true
+                 }
+              } else if (editMatch) {
+                 const targetId = parseInt(editMatch[1].trim())
+                 const newFact = editMatch[2].trim()
+                 if (!isNaN(targetId) && targetId >= 0 && targetId < mems.length) {
+                    mems[targetId] = newFact
+                    updated = true
+                 }
+              } else if (deleteMatch) {
+                 const targetId = parseInt(deleteMatch[1].trim())
+                 if (!isNaN(targetId) && targetId >= 0 && targetId < mems.length) {
+                    mems.splice(targetId, 1)
+                    updated = true
+                 }
+              }
+
+              if (updated) {
                  const { error: upsertError } = await supabase.from('profiles').upsert({ 
                    id: user.id, 
-                   ai_memory: updatedMems,
+                   ai_memory: mems,
                    updated_at: new Date().toISOString()
                  }, { onConflict: 'id' })
                  if (upsertError) console.error("Memory Upsert Error:", upsertError)
-                 setProfileMemories(updatedMems)
+                 setProfileMemories([...mems])
                  setSavedMemoryMsgId(assistantMsgId)
                  setTimeout(() => setSavedMemoryMsgId(null), 4000)
               }
