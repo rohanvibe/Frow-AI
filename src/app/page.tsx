@@ -534,6 +534,11 @@ export default function ChatPage() {
           signal: abortControllerRef.current.signal
         })
 
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || errData.details || `Server Error ${res.status}`);
+        }
+
         if (!res.body) return
         const reader = res.body.getReader()
         const decoder = new TextDecoder()
@@ -602,6 +607,8 @@ export default function ChatPage() {
       if (err.name !== 'AbortError') {
         process.env.NODE_ENV === 'development' && console.error("Fetch error:", err)
         toast(`Failed to fetch: ${err.message || 'Interrupted'}`, "error")
+        // Remove the empty ghost message since the request failed
+        setMessages(prev => prev.filter(m => m.id !== assistantMsgId))
       }
     } finally {
       setLoading(false)
