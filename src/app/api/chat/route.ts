@@ -165,6 +165,7 @@ DO NOT USE THIS TAG unless absolutely critical. Keep it extremely rare.`
 
   } catch (error: any) {
     console.error('Chat API Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const errDetails = error.cause ? error.cause.message || error.cause.code : error.message
+    return NextResponse.json({ error: 'fetch failed', details: errDetails }, { status: 500 })
   }
 }
