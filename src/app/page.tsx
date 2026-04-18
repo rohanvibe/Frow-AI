@@ -46,7 +46,11 @@ import {
   ArrowRight,
   Paperclip,
   FileText,
-  CheckCircle2
+  CheckCircle2,
+  Search,
+  Star,
+  Map,
+  List
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
@@ -103,6 +107,16 @@ export default function ChatPage() {
   const [profileMemories, setProfileMemories] = useState<string[]>([])
   const [attachedFile, setAttachedFile] = useState<{ name: string, content: string } | null>(null)
   
+  // Phase 1 Sidebar States
+  const [sidebarSearch, setSidebarSearch] = useState('')
+  const [bookmarkedMessages, setBookmarkedMessages] = useState<Set<string>>(new Set())
+
+  // Phase 4 Workspace States
+  const [chatSearch, setChatSearch] = useState('')
+
+  // Phase 6 Chat Map
+  const [sidebarMode, setSidebarMode] = useState<'flow' | 'map'>('flow')
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -179,7 +193,26 @@ export default function ChatPage() {
       window.history.replaceState({}, '', '/')
     }
 
-    return () => window.removeEventListener('resize', checkMobile)
+    // Handle keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + \ to toggle sidebar
+      if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+        setIsSidebarOpen(prev => !prev)
+        e.preventDefault()
+      }
+      // Cmd/Ctrl + K to search sidebar
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        setIsSidebarOpen(true)
+        setTimeout(() => document.getElementById('sidebar-search')?.focus(), 100)
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('resize', checkMobile)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [])
 
   useEffect(() => {
@@ -189,10 +222,34 @@ export default function ChatPage() {
         fetchMessages(currentChatId)
       }
       skipFetchRef.current = false // Reset for next selection
+      
+      // Load bookmarks
+      const savedBookmarks = localStorage.getItem(`threadly_bookmarks_${currentChatId}`)
+      if (savedBookmarks) {
+         try {
+           setBookmarkedMessages(new Set(JSON.parse(savedBookmarks)))
+         } catch { setBookmarkedMessages(new Set()) }
+      } else {
+         setBookmarkedMessages(new Set())
+      }
     } else {
       setMessages([])
+      setBookmarkedMessages(new Set())
     }
   }, [currentChatId])
+
+  const toggleBookmark = (msgId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setBookmarkedMessages(prev => {
+      const next = new Set(prev)
+      if (next.has(msgId)) next.delete(msgId)
+      else next.add(msgId)
+      if (currentChatId) {
+        localStorage.setItem(`threadly_bookmarks_${currentChatId}`, JSON.stringify(Array.from(next)))
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     scrollToBottom()
@@ -207,6 +264,24 @@ export default function ChatPage() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  const chatMap = useMemo(() => {
+    const userMsgs = messages.filter(m => m.role === 'user');
+    const sections = [];
+    let i = 0;
+    while(i < userMsgs.length) {
+       const chunk = userMsgs.slice(i, i + 4);
+       let title = "Discovery Phase";
+       if (i >= 4 && i < 8) title = "Deep Dive";
+       else if (i >= 8 && i < 12) title = "Refinement";
+       else if (i >= 12 && i < 16) title = "Complex Logic";
+       else if (i >= 16) title = "Advanced Mastery";
+       
+       sections.push({ title, messages: chunk });
+       i += 4;
+    }
+    return sections;
+  }, [messages])
 
   const fetchChats = async (userId: string) => {
     const { data, error } = await supabase
@@ -597,51 +672,69 @@ export default function ChatPage() {
               </Button>
             </div>
 
-            <div className="px-4 mb-4">
+            <div className="px-4 mb-4 space-y-3">
               <Button onClick={createNewChat} className="w-full py-6 rounded-2xl flex items-center gap-2 group shadow-lg shadow-white/5">
                 <Plus className="w-5 h-5 transition-transform group-hover:rotate-90" />
                 <span className="font-bold uppercase tracking-widest text-xs">New Chat</span>
               </Button>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search chats..."
+                  value={chatSearch}
+                  onChange={(e) => setChatSearch(e.target.value)}
+                  className="w-full bg-white/5 border border-white/5 rounded-xl py-2 pl-9 pr-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                />
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto px-3 space-y-1.5 py-2 custom-scrollbar">
-              {chats.map(chat => (
-                <div key={chat.id} className="group relative">
-                  {editingChatId === chat.id ? (
-                    <div className="flex items-center gap-2 p-2 bg-white/5 rounded-xl border border-blue-500/50">
-                      <input 
-                        value={editingTitle}
-                        onChange={e => setEditingTitle(e.target.value)}
-                        className="bg-transparent border-none outline-none text-xs w-full font-medium"
-                        autoFocus
-                        onKeyDown={e => e.key === 'Enter' && updateChatTitle(chat.id)}
-                      />
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => { setCurrentChatId(chat.id); if (isMobile) setIsNavOpen(false); }}
-                      className={`w-full text-left p-3.5 rounded-xl text-xs font-bold transition-all flex items-center gap-3 pr-12 group overflow-hidden ${
-                        currentChatId === chat.id ? 'bg-white/10 text-white ring-1 ring-white/10' : 'text-gray-500 hover:bg-white/3 hover:text-gray-300'
-                      }`}
-                    >
-                      <MessageSquare className="w-4 h-4 shrink-0 transition-all group-hover:text-blue-500" />
-                      <span className="truncate uppercase tracking-wider">{chat.title}</span>
-                      <div className="absolute inset-y-0 left-0 w-1 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  )}
-                  
-                  {editingChatId !== chat.id && (
-                    <div className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={(e) => { e.stopPropagation(); setEditingChatId(chat.id); setEditingTitle(chat.title); }}>
-                        <Edit2 className="w-3 h-3" />
-                      </Button>
-                      <Button variant="destructive" size="icon" className="w-7 h-7" onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
+              {chats.length === 0 ? (
+                <div className="flex flex-col items-center justify-center text-center p-6 space-y-4 opacity-50 mt-10">
+                  <MessageSquare className="w-8 h-8 text-gray-500" />
+                  <p className="text-xs font-bold text-gray-400">No chats yet.</p>
+                  <p className="text-[10px] text-gray-500">Start a new thread to begin your workspace flow.</p>
                 </div>
-              ))}
+              ) : (
+                chats.filter(c => chatSearch.trim() === '' || c.title.toLowerCase().includes(chatSearch.toLowerCase())).map(chat => (
+                  <div key={chat.id} className="group relative">
+                    {editingChatId === chat.id ? (
+                      <div className="flex items-center gap-2 p-2 bg-white/5 rounded-xl border border-blue-500/50">
+                        <input 
+                          value={editingTitle}
+                          onChange={e => setEditingTitle(e.target.value)}
+                          className="bg-transparent border-none outline-none text-xs w-full font-medium"
+                          autoFocus
+                          onKeyDown={e => e.key === 'Enter' && updateChatTitle(chat.id)}
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setCurrentChatId(chat.id); if (isMobile) setIsNavOpen(false); }}
+                        className={`w-full text-left p-3.5 rounded-xl text-xs font-bold transition-all flex items-center gap-3 pr-12 group overflow-hidden ${
+                          currentChatId === chat.id ? 'bg-white/10 text-white ring-1 ring-white/10' : 'text-gray-500 hover:bg-white/3 hover:text-gray-300'
+                        }`}
+                      >
+                        <MessageSquare className="w-4 h-4 shrink-0 transition-all group-hover:text-blue-500" />
+                        <span className="truncate uppercase tracking-wider">{chat.title}</span>
+                        <div className="absolute inset-y-0 left-0 w-1 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    )}
+                    
+                    {editingChatId !== chat.id && (
+                      <div className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                        <Button variant="ghost" size="icon" className="w-7 h-7" onClick={(e) => { e.stopPropagation(); setEditingChatId(chat.id); setEditingTitle(chat.title); }}>
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                        <Button variant="destructive" size="icon" className="w-7 h-7" onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}>
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="p-4 border-t border-white/5 space-y-2 bg-black/20">
@@ -843,7 +936,27 @@ export default function ChatPage() {
                                 td: ({ children }) => <td className="px-6 py-4 text-sm border-t border-white/5 text-gray-300 whitespace-nowrap min-w-[120px]">{children}</td>,
                                 ul: ({ children }) => <ul className="list-disc pl-5 space-y-2 mb-4 wrap-break-word">{children}</ul>,
                                 ol: ({ children }) => <ol className="list-decimal pl-5 space-y-2 mb-4 wrap-break-word">{children}</ol>,
-                                li: ({ children }) => <li className="leading-relaxed wrap-break-word">{children}</li>
+                                li: ({ children }) => <li className="leading-relaxed wrap-break-word">{children}</li>,
+                                code: ({ node, className, children, ...props }: any) => {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  if (!className) {
+                                    return <code className="bg-white/10 px-1.5 py-0.5 rounded-md text-[13px]" {...props}>{children}</code>
+                                  }
+                                  return (
+                                    <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
+                                      <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{match?.[1] || 'Code'}</span>
+                                        <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
+                                          <Copy className="w-3 h-3" />
+                                          <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
+                                        </button>
+                                      </div>
+                                      <div className="p-4 overflow-x-auto text-[13px] leading-relaxed custom-scrollbar text-gray-300">
+                                        <code className={className} {...props}>{children}</code>
+                                      </div>
+                                    </div>
+                                  )
+                                }
                               }}
                             >
                               {msg.content}
@@ -953,26 +1066,86 @@ export default function ChatPage() {
               </div>
 
               {/* Chat Index (Session Data) */}
-              <div className="p-5 border-b border-white/5 flex items-center justify-between shrink-0">
-                <h2 className="font-black text-[9px] uppercase tracking-[0.4em] text-gray-600 pt-1 flex items-center gap-2">
-                   <Activity className="w-3 h-3" />
-                   Session Flow
-                </h2>
+              <div className="p-5 border-b border-white/5 flex flex-col shrink-0 gap-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-black text-[9px] uppercase tracking-[0.4em] text-gray-600 pt-1 flex items-center gap-2">
+                     <Activity className="w-3 h-3" />
+                     Session {sidebarMode === 'map' ? 'Map' : 'Flow'}
+                  </h2>
+                  <div className="flex bg-white/5 p-1 rounded-lg">
+                    <button onClick={() => setSidebarMode('flow')} className={`p-1 rounded-md transition-colors ${sidebarMode === 'flow' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500 hover:text-white'}`}><List className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => setSidebarMode('map')} className={`p-1 rounded-md transition-colors ${sidebarMode === 'map' ? 'bg-white/10 text-blue-400 shadow-sm' : 'text-gray-500 hover:text-white'}`}><Map className="w-3.5 h-3.5" /></button>
+                  </div>
+                </div>
+                {sidebarMode === 'flow' && (
+                  <div className="relative">
+                    <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input
+                      id="sidebar-search"
+                      type="text"
+                      placeholder="Search flow (Ctrl/Cmd+K)"
+                      value={sidebarSearch}
+                      onChange={(e) => setSidebarSearch(e.target.value)}
+                      className="w-full bg-white/5 border border-white/5 rounded-lg py-2 pl-8 pr-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                    />
+                  </div>
+                )}
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                {messages.filter(m => m.role === 'user').map((msg, idx) => (
-                  <button
-                    key={msg.id}
-                    onClick={() => { scrollToMessage(msg.id); if (isMobile) setIsSidebarOpen(false); }}
-                    className="w-full text-left p-4 rounded-2xl border border-white/3 bg-white/1 hover:bg-blue-600/5 hover:border-blue-500/20 transition-all group active:scale-[0.98] relative overflow-hidden"
-                  >
-                    <div className="flex items-center gap-4 relative z-10">
-                      <span className="text-[10px] font-black text-gray-500 group-hover:text-blue-500 bg-white/5 w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border border-white/5 transition-colors">{idx + 1}</span>
-                      <span className="text-xs font-bold truncate text-gray-500 group-hover:text-white transition-colors">{msg.content}</span>
-                    </div>
-                    <div className="absolute inset-y-0 left-0 w-1 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                ))}
+                {sidebarMode === 'map' ? (
+                   chatMap.map((section, sidx) => (
+                      <div key={sidx} className="space-y-3 mb-6">
+                         <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                            {section.title}
+                         </h3>
+                         <div className="space-y-2 border-l border-white/10 ml-0.5 pl-3">
+                            {section.messages.map((msg) => (
+                               <button
+                                 key={msg.id}
+                                 onClick={() => { scrollToMessage(msg.id); if (isMobile) setIsSidebarOpen(false); }}
+                                 className="w-full text-left p-2 rounded-xl hover:bg-white/5 transition-all group flex items-center gap-2"
+                               >
+                                  <span className="w-1 h-1 rounded-full bg-gray-600 group-hover:bg-white transition-colors shrink-0" />
+                                  <span className="text-[11px] font-medium text-gray-400 group-hover:text-white truncate transition-colors">
+                                    {msg.content}
+                                  </span>
+                               </button>
+                            ))}
+                         </div>
+                      </div>
+                   ))
+                ) : (
+                   messages
+                     .filter(m => m.role === 'user')
+                     .filter(m => sidebarSearch.trim() === '' || m.content.toLowerCase().includes(sidebarSearch.toLowerCase()))
+                     .map((msg, idx) => {
+                       const isBookmarked = bookmarkedMessages.has(msg.id)
+                       const isActive = highlightedMessageId === msg.id
+                       return (
+                         <button
+                           key={msg.id}
+                           onClick={() => { scrollToMessage(msg.id); if (isMobile) setIsSidebarOpen(false); }}
+                           className={`w-full text-left p-4 rounded-2xl border transition-all group active:scale-[0.98] relative overflow-hidden ${isActive ? 'bg-blue-600/10 border-blue-500/30' : 'border-white/3 bg-white/1 hover:bg-blue-600/5 hover:border-blue-500/20'}`}
+                         >
+                           <div className="flex items-center justify-between gap-4 relative z-10">
+                             <div className="flex items-center gap-3 min-w-0 flex-1">
+                               <span className={`text-[10px] font-black w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${isActive || isBookmarked ? 'text-blue-400 bg-blue-500/20 border-blue-500/30' : 'text-gray-500 bg-white/5 border-white/5 group-hover:text-blue-500'}`}>
+                                  {idx + 1}
+                               </span>
+                               <span className={`text-xs font-bold truncate transition-colors ${isActive || isBookmarked ? 'text-gray-200' : 'text-gray-500 group-hover:text-white'}`}>
+                                 {msg.content}
+                               </span>
+                             </div>
+                             <button onClick={(e) => toggleBookmark(msg.id, e)} className={`p-1 rounded-md transition-all ${isBookmarked ? 'opacity-100 text-yellow-500' : 'opacity-0 group-hover:opacity-100 text-gray-600 hover:text-white hover:bg-white/10'}`}>
+                                <Star className="w-3.5 h-3.5" fill={isBookmarked ? "currentColor" : "none"} />
+                             </button>
+                           </div>
+                           <div className={`absolute inset-y-0 left-0 w-1 bg-blue-600 transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                         </button>
+                       )
+                   })
+                )}
                 {messages.filter(m => m.role === 'user').length === 0 && (
                   <div className="h-full flex flex-col items-center justify-center text-center p-10 space-y-6 opacity-20 filter grayscale">
                     <Globe className="w-12 h-12" />
