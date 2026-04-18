@@ -573,11 +573,12 @@ export default function ChatPage() {
 
               if (!mems.includes(newFact)) {
                  const updatedMems = [...mems, newFact]
-                 await supabase.from('profiles').upsert({ 
+                 const { error: upsertError } = await supabase.from('profiles').upsert({ 
                    id: user.id, 
                    ai_memory: updatedMems,
                    updated_at: new Date().toISOString()
                  }, { onConflict: 'id' })
+                 if (upsertError) console.error("Memory Upsert Error:", upsertError)
                  setProfileMemories(updatedMems)
                  setSavedMemoryMsgId(assistantMsgId)
                  setTimeout(() => setSavedMemoryMsgId(null), 4000)
@@ -1211,15 +1212,15 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
       if (user) {
         const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
         if (data) {
+          let memoryArray: string[] = []
           try {
-            const memoryArray = JSON.parse(data.ai_memory || '[]')
-            setProfile({ 
-               custom_instructions: data.custom_instructions || '', 
-               ai_memory: Array.isArray(memoryArray) ? memoryArray : [] 
-            })
-          } catch (e) {
-            setProfile({ custom_instructions: data.custom_instructions || '', ai_memory: [] })
-          }
+             if (Array.isArray(data.ai_memory)) memoryArray = data.ai_memory as string[]
+             else if (typeof data.ai_memory === 'string') memoryArray = JSON.parse(data.ai_memory)
+          } catch (e) { }
+          setProfile({ 
+             custom_instructions: data.custom_instructions || '', 
+             ai_memory: Array.isArray(memoryArray) ? memoryArray : [] 
+          })
         }
       }
     }
@@ -1235,7 +1236,7 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
         const { error } = await supabase.from('profiles').upsert({
           id: user.id,
           custom_instructions: profile.custom_instructions,
-          ai_memory: JSON.stringify(profile.ai_memory),
+          ai_memory: profile.ai_memory,
           updated_at: new Date().toISOString()
         })
         if (error) throw error
