@@ -1,44 +1,126 @@
 # Contributing to Threadly AI
 
-First off, thank you for considering contributing to Threadly AI! It's people like you that make it a great tool for everyone.
+Thank you for your interest in contributing. Threadly is built in the open, and every contribution — large or small — makes a real difference.
 
-## 🌈 How Can I Contribute?
+---
 
-### Reporting Bugs
-- Use a clear and descriptive title.
-- Describe the exact steps which reproduce the problem.
-- Explain which behavior you expected to see and why.
+## Ways to Contribute
 
-### Suggesting Enhancements
-- Check if there's already a similar suggestion.
-- Explain why this enhancement would be useful to most users.
+You don't need to write code to contribute:
 
-## 🚀 Development Process
+- 🐛 **Report bugs** — even detailed bug reports save hours
+- 💡 **Suggest features** — product ideas that serve real users
+- 📖 **Improve documentation** — fix typos, clarify setup steps, add examples
+- 🎨 **UI improvements** — design polish, accessibility fixes
+- ⚡ **Code contributions** — new features, bug fixes, performance improvements
+- 🔍 **Code review** — review open PRs and leave thoughtful feedback
 
-1. **Fork the Repo**: Create your own copy of the project.
-2. **Create a Branch**: `git checkout -b feature/amazing-feature`.
-3. **Commit Your Changes**: Following our commit message format.
-4. **Push to the Branch**: `git push origin feature/amazing-feature`.
-5. **Open a Pull Request**: Submit your changes for review.
+---
 
-## 📝 Commit Message Format
-We follow the conventional commits specification:
-- `feat: ...` for a new feature.
-- `fix: ...` for a bug fix.
-- `docs: ...` for documentation changes.
-- `style: ...` for code style changes (whitespace, formatting, etc).
-- `refactor: ...` for code changes that neither fix a bug nor add a feature.
+## Before You Start
 
-## 🎨 Coding Standards
-- Use TypeScript for all new code.
-- Follow the existing Tailwind CSS naming conventions.
-- Keep components small and focused.
-- Add comments for complex logic.
+1. Check [Issues](https://github.com/rohanvibe/threadly-AI/issues) to see if your bug or feature is already tracked.
+2. For large changes, open an Issue first and describe your plan. This avoids duplicate work and ensures it aligns with the project direction.
+3. Read this guide fully before submitting a PR.
 
-## 🏗️ Pull Request Guidelines
-- The PR title should be descriptive.
-- Ensure the code builds locally (`npm run build`).
-- Link any related issues in the PR description.
-- Be responsive to feedback during the review process.
+---
 
-Thank you for building with us!
+## Setting Up Locally
+
+```bash
+# Fork and clone
+git clone https://github.com/YOUR_USERNAME/threadly-AI.git
+cd threadly-AI
+
+# Install dependencies
+npm install
+
+# Copy env template
+cp .env.example .env.local
+# Fill in your Supabase + SambaNova keys
+
+# Run the database schema in your Supabase SQL Editor
+# File: supabase_schema.sql
+
+# Start dev server
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Branch Naming
+
+Use clear, descriptive branch names:
+
+| Type | Pattern | Example |
+|---|---|---|
+| Bug fix | `fix/description` | `fix/memory-not-saving` |
+| Feature | `feat/description` | `feat/chat-folders` |
+| Documentation | `docs/description` | `docs/env-setup` |
+| Refactor | `refactor/description` | `refactor/sidebar-state` |
+
+---
+
+## Commit Style
+
+Use conventional commits for clarity:
+
+```
+feat: add chat folder support
+fix: memory not persisting across sessions
+docs: update env variable table in README
+refactor: extract sidebar into separate component
+chore: update supabase client version
+```
+
+---
+
+## Pull Request Checklist
+
+Before submitting a PR, confirm:
+
+- [ ] My change is scoped and focused on one thing
+- [ ] I tested the feature locally and it works as expected
+- [ ] I did not break any existing functionality
+- [ ] TypeScript compiles with no errors (`npx tsc --noEmit`)
+- [ ] Code is readable and follows existing patterns
+- [ ] I've updated documentation where relevant
+- [ ] PR description explains what changed and why
+
+---
+
+## Code Quality Standards
+
+- **TypeScript**: All new code must be typed. Avoid `any` where possible.
+- **Components**: Keep components focused. Extract if a component exceeds ~150 lines.
+- **State management**: Use `useState` and `useEffect` with clear dependency arrays. Avoid unnecessary re-renders.
+- **API routes**: Validate inputs, handle all error paths, return consistent response shapes.
+- **Security**: Never log secrets. Never expose server-side keys to the client.
+
+---
+
+## Beginner-Friendly Issues
+
+Look for issues tagged [`good first issue`](https://github.com/rohanvibe/threadly-AI/labels/good%20first%20issue). These are:
+
+- Well-scoped and clearly described
+- Don't require deep codebase knowledge
+- Reviewed and merged quickly
+
+If you're unsure where to start, open a Discussion and ask.
+
+---
+
+## Respect & Communication
+
+Be direct, constructive, and respectful. We're all here because we care about making something good.
+
+See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for full community standards.
+
+---
+
+## Questions?
+
+Open a [GitHub Discussion](https://github.com/rohanvibe/threadly-AI/discussions) or email [maheshkumar79759@gmail.com](mailto:maheshkumar79759@gmail.com).

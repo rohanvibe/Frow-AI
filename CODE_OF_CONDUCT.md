@@ -1,24 +1,63 @@
-# Contributor Covenant Code of Conduct
+# Code of Conduct
 
-## Our Pledge
-We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+## Our Commitment
 
-## Our Standards
-Examples of behavior that contributes to a positive environment for our community include:
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologizing to those affected by our mistakes, and learning from the experience
-* Focusing on what is best not just for us as individuals, but for the overall community
-
-## Enforcement Responsibilities
-Community leaders are responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive, or harmful.
-
-## Scope
-This Code of Conduct applies within all community spaces, and also applies when an individual is officially representing the community in public spaces.
-
-## Enforcement
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the community leaders at **maheshkumar79759@gmail.com**. All complaints will be reviewed and investigated promptly and fairly.
+Threadly is a project for everyone. We are committed to making participation in this project a welcoming and harassment-free experience, regardless of experience level, gender, gender identity and expression, sexual orientation, disability, personal appearance, race, ethnicity, age, religion, or nationality.
 
 ---
-*This Code of Conduct is adapted from the Contributor Covenant, version 2.0, available at https://www.contributorcovenant.org/version/2/0/code_of_conduct.html*
+
+## Expected Behavior
+
+All contributors and community members are expected to:
+
+- Be respectful and considerate in all communications
+- Assume good intent, especially in code review and discussion
+- Accept constructive criticism professionally
+- Give credit where it is due
+- Focus on what is best for the project and its users
+- Welcome people who are new to open-source or to this codebase
+
+---
+
+## Unacceptable Behavior
+
+The following behaviors will not be tolerated:
+
+- Harassment, insults, or derogatory comments in any form
+- Personal attacks or political arguments in project spaces
+- Publishing others' private information without permission
+- Trolling, dismissive or condescending attitudes
+- Unsolicited sexual attention or advances
+- Any conduct that a reasonable person would find inappropriate
+
+---
+
+## Reporting
+
+If you witness or experience unacceptable behavior, report it by emailing [maheshkumar79759@gmail.com](mailto:maheshkumar79759@gmail.com).
+
+Reports are reviewed confidentially. You will receive a response within 72 hours.
+
+---
+
+## Enforcement
+
+Project maintainers will investigate all reports. Consequences may include:
+
+1. **Warning** — A written notice explaining the violation
+2. **Temporary restriction** — Restricted from project spaces temporarily
+3. **Permanent ban** — Permanent removal from all project spaces
+
+Severity and response are determined by the nature and pattern of the behavior.
+
+---
+
+## Scope
+
+This Code of Conduct applies to all project spaces: GitHub Issues, Discussions, Pull Requests, and any other official communication channels associated with Threadly.
+
+---
+
+## Attribution
+
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1.
