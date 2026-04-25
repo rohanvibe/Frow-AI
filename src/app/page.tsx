@@ -936,7 +936,7 @@ export default function ChatPage() {
                   id={`msg-${msg.id}`}
                   className={`group relative ${highlightedAnchor === msg.id ? 'highlight-bg p-4 -m-4 rounded-2xl bg-blue-500/5 ring-1 ring-blue-500/20' : ''} transition-all duration-700`}
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg ${
+                  <div className={`w-10 h-10 squircle flex items-center justify-center shrink-0 shadow-lg ${
                     msg.role === 'assistant' ? 'bg-blue-600 text-white glow' : 'bg-white/5 text-gray-500'
                   }`}>
                     {msg.role === 'assistant' ? <Zap className="w-5 h-5" /> : <Plus className="w-5 h-5 rotate-45" />}
@@ -1135,7 +1135,7 @@ export default function ChatPage() {
               <div id="tutorial-memory" className="p-6 border-b border-white/5 bg-white/2">
                 <div className="flex items-center justify-between mb-6">
                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white shadow-xl shadow-blue-600/20 uppercase">
+                      <div className="w-10 h-10 squircle bg-blue-600 flex items-center justify-center font-black text-white shadow-xl shadow-blue-600/20 uppercase">
                          {user?.email?.[0] || 'U'}
                       </div>
                       <div className="flex flex-col">
@@ -1679,12 +1679,12 @@ function BigSignupModal({ onClose, onAction }: { onClose: () => void, onAction: 
                 initial={{ opacity: 0, scale: 0.9, y: 20 }} 
                 animate={{ opacity: 1, scale: 1, y: 0 }} 
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative w-full max-w-lg bg-[#09090b] border border-white/5 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+                className="relative w-full max-w-lg bg-[#0d0d0f]/90 backdrop-blur-3xl border border-white/10 rounded-[3rem] overflow-hidden apple-shadow"
             >
                 <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600" />
                 
                 <div className="p-10 text-center">
-                    <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-600/40 rotate-3 animate-pulse">
+                    <div className="w-16 h-16 bg-blue-600 squircle flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-600/40 rotate-3 animate-pulse">
                         <Sparkles className="w-8 h-8 text-white" />
                     </div>
                     
@@ -1748,10 +1748,10 @@ function EmptyState({ onCreateNew }: { onCreateNew: () => void }) {
       className="h-full flex flex-col items-center justify-center text-center space-y-12 px-6 max-w-2xl mx-auto py-20"
     >
       <div className="relative group">
-        <div className="w-24 h-24 rounded-[2.5rem] bg-linear-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xl relative z-10">
+        <div className="w-24 h-24 squircle bg-linear-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xl relative z-10">
           <Sparkles className="w-10 h-10 text-white" />
         </div>
-        <div className="absolute inset-0 rounded-[2.5rem] bg-blue-500 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity animate-pulse" />
+        <div className="absolute inset-0 squircle bg-blue-500 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity animate-pulse" />
       </div>
 
       <div className="space-y-4">
