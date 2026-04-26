@@ -812,13 +812,14 @@ export default function ChatPage() {
       <div id="spotlight" />
       <div className="fixed inset-0 pointer-events-none z-10 grain-texture opacity-[0.03]" />
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {isNavOpen && (
           <motion.div 
+            layout
             initial={isMobile ? { x: -300 } : { width: 0, opacity: 0 }}
             animate={isMobile ? { x: 0 } : { width: 280, opacity: 1 }}
             exit={isMobile ? { x: -300 } : { width: 0, opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+            transition={{ type: 'spring', damping: 32, stiffness: 180 }}
             className={`${isMobile ? 'absolute inset-y-0 left-0 w-80 z-50' : 'w-72 relative'} border-r border-white/5 flex flex-col bg-[#09090b]/80 backdrop-blur-2xl h-full shadow-2xl overflow-hidden`}
           >
             <div className="p-6 flex items-center justify-between shrink-0">
@@ -873,7 +874,9 @@ export default function ChatPage() {
                         />
                       </div>
                     ) : (
-                      <button
+                      <motion.button
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => { setCurrentChatId(chat.id); if (isMobile) setIsNavOpen(false); }}
                         className={`w-full text-left p-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-3 group relative overflow-hidden ${
                           currentChatId === chat.id ? 'bg-blue-600/10 text-blue-500' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'
@@ -882,9 +885,12 @@ export default function ChatPage() {
                         <MessageSquare className={`w-4 h-4 shrink-0 transition-all ${currentChatId === chat.id ? 'text-blue-500 scale-110' : 'text-gray-600 group-hover:text-gray-400'}`} />
                         <span className="truncate">{chat.title}</span>
                         {currentChatId === chat.id && (
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-600 rounded-r-full" />
+                          <motion.div 
+                            layoutId="active-chat-indicator"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-600 rounded-r-full" 
+                          />
                         )}
-                      </button>
+                      </motion.button>
                     )}
                     
                     {editingChatId !== chat.id && (
@@ -968,7 +974,7 @@ export default function ChatPage() {
 
       <FeedbackWidget />
 
-      <div className={`flex-1 flex flex-col relative bg-[#09090b] ${isMobile ? 'pt-14' : ''}`}>
+      <motion.div layout transition={{ type: 'spring', damping: 32, stiffness: 180 }} className={`flex-1 flex flex-col relative bg-[#09090b] ${isMobile ? 'pt-14' : ''}`}>
         <AnimatePresence>
           {isMobile && (isNavOpen || isSidebarOpen) && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setIsNavOpen(false); setIsSidebarOpen(false); }} className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40" />
@@ -1029,14 +1035,17 @@ export default function ChatPage() {
             <EmptyState onCreateNew={() => createNewChat()} />
           ) : (
             <div className="max-w-3xl mx-auto p-6 md:p-10 space-y-12 pb-32">
-              <motion.div drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.05} className="space-y-12">
-              {messages.map((msg, i) => (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  transition={{ delay: i * 0.05 }}
-                  key={msg.id} 
-                  id={`msg-${msg.id}`}
+              <motion.div layout drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.05} className="space-y-12">
+                <AnimatePresence mode="popLayout">
+                  {messages.map((msg, i) => (
+                    <motion.div 
+                      layout
+                      initial={{ opacity: 0, y: 10 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ type: 'spring', damping: 28, stiffness: 220, delay: i * 0.05 }}
+                      key={msg.id} 
+                      id={`msg-${msg.id}`}
                   className={`group relative ${highlightedAnchor === msg.id ? 'highlight-bg p-4 -m-4 rounded-2xl bg-blue-500/5 ring-1 ring-blue-500/20' : ''} transition-all duration-700`}
                 >
                   <div className={`w-10 h-10 squircle flex items-center justify-center shrink-0 shadow-lg ${
@@ -1146,8 +1155,9 @@ export default function ChatPage() {
                   </div>
                 </motion.div>
               ))}
-              </motion.div>
-            </div>
+            </AnimatePresence>
+          </motion.div>
+        </div>
           )}
           <div ref={messagesEndRef} className="h-20" />
         </div>
@@ -1194,7 +1204,7 @@ export default function ChatPage() {
               </div>
            </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Global shortcut context menu */}
       <ShortcutContextMenu
@@ -1207,10 +1217,11 @@ export default function ChatPage() {
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div 
+            layout
             initial={isMobile ? { x: '100%' } : { width: 0, opacity: 0 }}
             animate={isMobile ? { x: 0 } : { width: 320, opacity: 1 }}
             exit={isMobile ? { x: '100%' } : { width: 0, opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+            transition={{ type: 'spring', damping: 32, stiffness: 180 }}
             className={`${isMobile ? 'absolute inset-y-0 right-0 w-[85%] z-50' : 'w-80 relative'} border-l border-white/5 flex flex-col bg-[#09090b]/60 backdrop-blur-3xl h-full shadow-2xl sidebar-tint`}
           >
             <div className="flex flex-col h-full">
