@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="/public/icon.png" alt="Threadly AI" width="80" />
+<img src="public/icon.png" alt="Threadly AI" width="80" />
 
 # Threadly AI
 
@@ -169,9 +169,9 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Screenshots
 
-![Chat Interface](./public/Screenshot 2026-04-17 at 21-35-58 Threadly AI.png)
-![Thread Sidebar](./public/Screenshot 2026-04-17 at 21-36-37 Threadly AI.png)
-![Mobile Responsive](./public/Screenshot 2026-04-17 at 21-36-57 Threadly AI.png)
+![Chat Interface](public/Screenshot%202026-04-17%20at%2021-35-58%20Threadly%20AI.png)
+![Thread Sidebar](public/Screenshot%202026-04-17%20at%2021-36-37%20Threadly%20AI.png)
+![Mobile Responsive](public/Screenshot%202026-04-17%20at%2021-36-57%20Threadly%20AI.png)
 
 
 ---
