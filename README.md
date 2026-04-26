@@ -169,7 +169,10 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Screenshots
 
-> Screenshots coming soon. Pull requests adding screenshots are welcome.
+![Chat Interface](./public/Screenshot 2026-04-17 at 21-35-58 Threadly AI.png)
+![Thread Sidebar](./public/Screenshot 2026-04-17 at 21-36-37 Threadly AI.png)
+![Mobile Responsive](./public/Screenshot 2026-04-17 at 21-36-57 Threadly AI.png)
+
 
 ---
 

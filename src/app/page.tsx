@@ -64,6 +64,76 @@ import { Suspense } from 'react'
 import { trackEvent } from '@/utils/analytics'
 import { FeedbackWidget } from '@/components/FeedbackWidget'
 
+// --- Premium Components ---
+
+function AppleTooltip({ text, children }: { text: string, children: React.ReactNode }) {
+  return (
+    <div className="group relative">
+      {children}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-100 translate-y-1 group-hover:translate-y-0">
+        <div className="bg-[#18181b] border border-white/10 px-3 py-1.5 rounded-xl shadow-2xl glass-dark no-border">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white whitespace-nowrap">{text}</p>
+        </div>
+        <div className="w-2 h-2 bg-[#18181b] rotate-45 mx-auto -mt-1" />
+      </div>
+    </div>
+  )
+}
+
+function LandingPage({ onEnter }: { onEnter: () => void }) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-12 surface-foundation grain-texture">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="max-w-3xl space-y-6"
+      >
+        <div className="flex justify-center mb-12">
+          <div className="w-16 h-16 squircle bg-blue-600 flex items-center justify-center shadow-2xl shadow-blue-500/20">
+             <Globe className="w-8 h-8 text-white" />
+          </div>
+        </div>
+        <h1 className="text-5xl md:text-7xl font-black tracking-tightest leading-tight text-white">
+          Your Thoughts, <br/> <span className="text-blue-500">Refined by AI.</span>
+        </h1>
+        <p className="text-xl text-gray-400 font-medium max-w-xl mx-auto leading-relaxed">
+          The flagship workspace for high-performance builders. 
+          Context-aware memory, smart prompt history, and an unforgettable interface.
+        </p>
+        <div className="pt-8">
+          <Button 
+            onClick={onEnter} 
+            className="px-12 py-8 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-sm hover:bg-gray-200 transition-all active:scale-95 shadow-2xl shadow-white/10"
+          >
+            Enter Workspace
+          </Button>
+        </div>
+      </motion.div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full pt-20">
+        {[
+          { icon: Zap, title: "Command Center", desc: "Instant response with SambaNova Llama-3." },
+          { icon: Sparkles, title: "AI Memory", desc: "It remembers your preferences and projects." },
+          { icon: List, title: "Smart Sidebar", desc: "Your entire creative session, indexed." }
+        ].map((f, i) => (
+          <motion.div 
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 + i * 0.1 }}
+            className="p-8 rounded-3xl surface-elevated text-left space-y-4"
+          >
+            <f.icon className="w-6 h-6 text-blue-500" />
+            <h3 className="text-lg font-black uppercase tracking-widest text-white">{f.title}</h3>
+            <p className="text-sm text-gray-500 font-medium leading-relaxed">{f.desc}</p>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // Types
 type Message = {
   id: string
@@ -132,6 +202,11 @@ export default function ChatPage() {
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [showLanding, setShowLanding] = useState(true)
+
+  useEffect(() => {
+    if (user || chats.length > 0) setShowLanding(false)
+  }, [user, chats])
   const abortControllerRef = useRef<AbortController | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const skipFetchRef = useRef(false)
@@ -721,13 +796,14 @@ export default function ChatPage() {
     }
   }
 
+  if (showLanding && isGuest) {
+    return <LandingPage onEnter={() => setShowLanding(false)} />
+  }
+
   return (
-    <div className="flex h-dvh bg-[#09090b] text-white overflow-hidden relative font-sans">
-      {/* Dynamic Background */}
-      <div className="absolute inset-0 bg-[#09090b] pointer-events-none">
-         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full" />
-         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 blur-[120px] rounded-full" />
-      </div>
+    <div className="flex h-dvh surface-foundation text-white overflow-hidden relative font-sans selection:bg-blue-500/30">
+      <div id="spotlight" />
+      <div className="fixed inset-0 pointer-events-none z-10 grain-texture opacity-[0.03]" />
 
       <AnimatePresence mode="wait">
         {isNavOpen && (
@@ -737,31 +813,33 @@ export default function ChatPage() {
             exit={isMobile ? { x: -300 } : { width: 0, opacity: 0 }}
             className={`${isMobile ? 'absolute inset-y-0 left-0 w-80 z-50' : 'w-72 relative'} border-r border-white/5 flex flex-col bg-[#09090b]/80 backdrop-blur-2xl h-full shadow-2xl overflow-hidden`}
           >
-            <div className="p-5 flex items-center justify-between shrink-0">
-              <h1 className="font-black text-2xl flex items-center gap-3 tracking-tighter">
-                <Globe className="w-6 h-6 text-blue-500 animate-pulse" />
+            <div className="p-6 flex items-center justify-between shrink-0">
+              <h1 className="font-black text-xl flex items-center gap-2.5 tracking-tighter text-white">
+                <div className="w-8 h-8 squircle bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                   <Globe className="w-4 h-4 text-white" />
+                </div>
                 THREADLY
               </h1>
-              <Button variant="ghost" size="icon" onClick={() => setIsNavOpen(false)}>
+              <Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5" onClick={() => setIsNavOpen(false)}>
                 <ChevronLeft className="w-5 h-5 text-gray-500" />
               </Button>
             </div>
 
-            <div className="px-4 mb-4 space-y-3">
-              <motion.div whileTap={{ scale: 0.97 }}>
-                <Button onClick={createNewChat} className="w-full py-6 rounded-2xl flex items-center gap-2 group shadow-lg shadow-white/5 bg-white text-black hover:bg-gray-200">
+            <div className="px-6 mb-6 space-y-4">
+              <motion.div whileTap={{ scale: 0.98 }}>
+                <Button onClick={createNewChat} className="w-full py-7 rounded-2xl flex items-center gap-2 group shadow-2xl shadow-blue-500/10 bg-blue-600 text-white hover:bg-blue-500 no-border">
                   <Plus className="w-5 h-5 transition-transform group-hover:rotate-90" />
-                  <span className="font-black uppercase tracking-widest text-[10px]">New Thread</span>
+                  <span className="font-black uppercase tracking-widest text-[10px]">New Session</span>
                 </Button>
               </motion.div>
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <div className="relative group">
+                <Search className="w-3.5 h-3.5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
-                  placeholder="Filter threads..."
+                  placeholder="Search thoughts..."
                   value={chatSearch}
                   onChange={(e) => setChatSearch(e.target.value)}
-                  className="w-full bg-white/5 border border-white/5 rounded-xl py-2 pl-9 pr-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                  className="w-full bg-white/5 border-none rounded-2xl py-3.5 pl-11 pr-4 text-[11px] font-bold text-white placeholder-gray-600 focus:ring-1 focus:ring-blue-500/30 outline-none transition-all"
                 />
               </div>
             </div>
@@ -789,13 +867,15 @@ export default function ChatPage() {
                     ) : (
                       <button
                         onClick={() => { setCurrentChatId(chat.id); if (isMobile) setIsNavOpen(false); }}
-                        className={`w-full text-left p-3.5 rounded-xl text-xs font-bold transition-all flex items-center gap-3 pr-12 group overflow-hidden ${
-                          currentChatId === chat.id ? 'bg-white/10 text-white ring-1 ring-white/10' : 'text-gray-500 hover:bg-white/3 hover:text-gray-300'
+                        className={`w-full text-left p-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-3 group relative overflow-hidden ${
+                          currentChatId === chat.id ? 'bg-blue-600/10 text-blue-500' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'
                         }`}
                       >
-                        <MessageSquare className="w-4 h-4 shrink-0 transition-all group-hover:text-blue-500" />
-                        <span className="truncate uppercase tracking-wider">{chat.title}</span>
-                        <div className="absolute inset-y-0 left-0 w-1 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <MessageSquare className={`w-4 h-4 shrink-0 transition-all ${currentChatId === chat.id ? 'text-blue-500 scale-110' : 'text-gray-600 group-hover:text-gray-400'}`} />
+                        <span className="truncate">{chat.title}</span>
+                        {currentChatId === chat.id && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-600 rounded-r-full" />
+                        )}
                       </button>
                     )}
                     
@@ -1064,48 +1144,45 @@ export default function ChatPage() {
           <div ref={messagesEndRef} className="h-20" />
         </div>
 
-        <div className="p-4 md:p-10 relative z-20">
-           {!isMobile && messages.length > 0 && messages.length < 10 && (
-             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto mb-4 px-2">
-                <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
-                   <HelpCircle className="w-3 h-3 text-blue-500" />
-                   Tip: Use the right sidebar to revisit points in this flow instantly.
-                </p>
-             </motion.div>
-           )}
-
-           <div id="tutorial-input" className="w-full max-w-3xl mx-auto relative group">
+        <div className="p-6 md:p-12 relative z-20">
+           <div id="tutorial-input" className="w-full max-w-4xl mx-auto relative group">
               <form onSubmit={sendMessage}>
-                <div className="relative">
+                <div className="relative glass-dark rounded-4xl p-2 apple-shadow group-focus-within:ring-1 ring-blue-500/20 transition-all">
                   <textarea 
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        sendMessage()
+                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
+                        if (!e.shiftKey || (e.metaKey || e.ctrlKey)) {
+                           e.preventDefault()
+                           sendMessage()
+                        }
                       }
                     }}
                     rows={1}
-                    placeholder={loading ? "Waiting for AI..." : "Ask Threadly anything..."}
-                    className="w-full pr-32 py-5 pl-6 bg-[#18181b]/80 backdrop-blur-xl border border-white/5 focus:border-blue-500/50 hover:border-gray-700 transition-all rounded-2xl text-base outline-none resize-none shadow-2xl max-h-40 custom-scrollbar"
+                    placeholder={loading ? "Generating response..." : "What's on your mind?"}
+                    className="w-full pr-32 py-6 pl-8 bg-transparent text-lg outline-none resize-none custom-scrollbar placeholder:text-gray-600 font-medium tracking-tight"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
                     {loading ? (
-                      <Button onContextMenu={e => openContextMenu(e, 'stopResponse')} onClick={stopResponding} variant="outline" size="icon" className="w-10 h-10 rounded-xl border-white/10 hover:border-red-500/50 hover:text-red-500">
-                        <Square className="w-4 h-4" />
+                      <Button onClick={stopResponding} variant="ghost" size="icon" className="w-12 h-12 rounded-2xl bg-white/5 hover:bg-red-500/10 hover:text-red-500 transition-all">
+                        <Square className="w-5 h-5 fill-current" />
                       </Button>
                     ) : (
-                      <Button onContextMenu={e => openContextMenu(e, 'sendMessage')} type="submit" disabled={!input.trim()} size="icon" className="w-10 h-10 rounded-xl bg-blue-600 shadow-xl shadow-blue-600/20 active:scale-90 disabled:opacity-30 disabled:grayscale">
-                        <Send className="w-4 h-4 text-white" />
+                      <Button type="submit" disabled={!input.trim()} size="icon" className="w-12 h-12 rounded-2xl bg-blue-600 text-white shadow-2xl shadow-blue-600/30 active:scale-90 disabled:opacity-20 transition-all no-border">
+                        <ArrowRight className="w-6 h-6" />
                       </Button>
                     )}
                   </div>
                 </div>
               </form>
-              <div className="flex justify-between items-center mt-3 px-2">
-                 <p className="text-[8px] font-black text-gray-800 uppercase tracking-[0.4em]">SambaNova Accelerated Compute</p>
-                 <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest hidden md:block">Press Enter to Send · Shift + Enter for New Line</p>
+              <div className="flex justify-between items-center mt-6 px-4">
+                 <div className="flex items-center gap-3">
+                    <span className="text-[9px] font-black text-gray-700 uppercase tracking-[0.4em]">SambaNova Llama-3</span>
+                    <div className="w-1 h-1 rounded-full bg-gray-800" />
+                    <span className="text-[9px] font-black text-gray-700 uppercase tracking-[0.4em]">Optimized Inference</span>
+                 </div>
+                 <p className="text-[9px] font-bold text-gray-700 uppercase tracking-widest hidden md:block opacity-50">⌘ + Enter to dispatch</p>
               </div>
            </div>
         </div>
@@ -1361,96 +1438,117 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
   }
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 md:p-6 overflow-y-auto">
-      <Card className="w-full max-w-xl border-white/5 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
-        <CardHeader className="border-b border-white/5 pb-2">
-          <div className="flex items-center justify-between mb-2">
-             <CardTitle className="uppercase tracking-[0.3em] text-[10px] font-black flex items-center gap-2">
-                <Settings className="w-4 h-4 text-blue-500" />
-                Workspace Infrastructure
-             </CardTitle>
-             <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl"><X className="w-4 h-4" /></Button>
+    <div className="fixed inset-0 z-200 flex items-center justify-center p-6">
+      <motion.div 
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+        onClick={onClose}
+      />
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-2xl relative z-20"
+      >
+        <div className="glass-dark rounded-[2.5rem] overflow-hidden apple-shadow border border-white/5 flex flex-col max-h-[85vh]">
+          <div className="p-8 border-b border-white/5 flex items-center justify-between">
+             <div className="flex items-center gap-4">
+                <div className="w-10 h-10 squircle bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                   <Settings className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                   <h3 className="text-sm font-black uppercase tracking-[0.3em] text-white">Workspace Infrastructure</h3>
+                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Configure your intelligent environment</p>
+                </div>
+             </div>
+             <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl hover:bg-white/5"><X className="w-5 h-5 text-gray-500" /></Button>
           </div>
-          <div className="flex gap-6 mt-4 overflow-x-auto">
+
+          <div className="flex bg-white/1 px-8 py-2 gap-8 border-b border-white/5">
              {['general', 'personalization', 'shortcuts'].map((tab) => (
                 <button 
                   key={tab}
                   onClick={() => setActiveTab(tab as any)}
-                  className={`pb-2 text-[9px] font-black uppercase tracking-[0.2em] transition-all border-b-2 shrink-0 ${
-                    activeTab === tab ? 'border-blue-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                  className={`py-4 text-[9px] font-black uppercase tracking-[0.4em] transition-all relative ${
+                    activeTab === tab ? 'text-white' : 'text-gray-600 hover:text-gray-400'
                   }`}
                 >
                   {tab}
+                  {activeTab === tab && (
+                     <motion.div layoutId="settings-tab" className="absolute bottom-0 inset-x-0 h-0.5 bg-blue-500 rounded-full" />
+                  )}
                 </button>
              ))}
           </div>
-        </CardHeader>
 
-        <CardContent className="py-8 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
-          {activeTab === 'general' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-              <div className="space-y-3">
-                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">OpenAI API Key (BYOK Tunnel)</label>
-                <Input type="password" value={keys.openai} onChange={(e) => setKeys({...keys, openai: e.target.value})} placeholder="sk-..." className="bg-black py-7 rounded-2xl border-white/5" />
-              </div>
-            </motion.div>
-          )}
+          <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+            {activeTab === 'general' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 ml-2">OpenAI BYOK Interface</label>
+                  <Input type="password" value={keys.openai} onChange={(e) => setKeys({...keys, openai: e.target.value})} placeholder="sk-••••••••••••••••••••••••" className="bg-white/5 py-8 rounded-2xl border-white/5 focus:ring-1 focus:ring-blue-500/30" />
+                </div>
+              </motion.div>
+            )}
 
-          {activeTab === 'personalization' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-              <div className="space-y-4">
-                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Custom Response Logic</label>
-                <textarea 
-                  value={profile.custom_instructions}
-                  onChange={(e) => setProfile({...profile, custom_instructions: e.target.value})}
-                  className="w-full bg-black border border-white/5 rounded-2xl p-5 text-sm font-bold outline-none focus:border-blue-500/50 min-h-[140px] resize-none custom-scrollbar transition-all"
-                  placeholder="e.g. Always respond in TypeScript. Use a helpful engineer persona."
-                />
-              </div>
-
-              <div className="space-y-4">
-                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Managed AI Memory</label>
-                <div className="flex gap-2">
-                  <Input 
-                    value={newMemory}
-                    onChange={(e) => setNewMemory(e.target.value)}
-                    placeholder="Fact to remember..."
-                    className="bg-black border-white/5 rounded-xl h-12 text-xs"
-                    onKeyDown={(e) => e.key === 'Enter' && addMemory()}
+            {activeTab === 'personalization' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
+                <div className="space-y-4">
+                  <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 ml-2">Response Directives</label>
+                  <textarea 
+                    value={profile.custom_instructions}
+                    onChange={(e) => setProfile({...profile, custom_instructions: e.target.value})}
+                    className="w-full bg-white/5 border border-white/5 rounded-3xl p-6 text-sm font-bold outline-none focus:border-blue-500/50 min-h-[160px] resize-none custom-scrollbar transition-all"
+                    placeholder="Define how the AI should behave..."
                   />
-                  <Button onClick={addMemory} className="h-12 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4"><Plus className="w-4 h-4" /></Button>
                 </div>
-                <div className="space-y-2">
-                  {profile.ai_memory.map((mem, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-white/2 border border-white/5 group">
-                      <span className="text-xs font-bold text-gray-300">{mem}</span>
-                      <button onClick={() => removeMemory(idx)} className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500/50 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  ))}
-                  {profile.ai_memory.length === 0 && (
-                    <p className="text-[9px] text-gray-600 uppercase tracking-widest text-center py-4 italic">No memories recorded yet.</p>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-          {activeTab === 'shortcuts' && (
-            <ShortcutsTab shortcuts={shortcuts} updateShortcut={updateShortcut} resetShortcuts={resetShortcuts} />
-          )}
-        </CardContent>
 
-        <CardFooter className="border-t border-white/5 py-8 flex justify-end gap-3 px-8">
-          <Button variant="ghost" onClick={onClose} className="font-black text-[9px] uppercase tracking-widest px-8 rounded-xl opacity-50 hover:opacity-100">Discard</Button>
-          <Button 
-            onClick={saveAll} 
-            disabled={saving}
-            className="bg-blue-600 hover:bg-blue-500 rounded-xl px-12 font-black text-[9px] uppercase tracking-widest shadow-2xl shadow-blue-500/20 active:scale-95 transition-all h-12"
-          >
-            {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin mr-2" /> : null}
-            Commit All Changes
-          </Button>
-        </CardFooter>
-      </Card>
+                <div className="space-y-4">
+                  <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 ml-2">Long-term Memory Registry</label>
+                  <div className="flex gap-3">
+                    <Input 
+                      value={newMemory}
+                      onChange={(e) => setNewMemory(e.target.value)}
+                      placeholder="Inject fact into memory..."
+                      className="bg-white/5 border-white/5 rounded-2xl h-14 text-sm"
+                      onKeyDown={(e) => e.key === 'Enter' && addMemory()}
+                    />
+                    <Button onClick={addMemory} className="h-14 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl px-6"><Plus className="w-5 h-5" /></Button>
+                  </div>
+                  <div className="space-y-3">
+                    {profile.ai_memory.map((mem, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-5 rounded-2xl bg-white/2 border border-white/5 group hover:border-blue-500/20 transition-all">
+                        <span className="text-xs font-bold text-gray-400">{mem}</span>
+                        <button onClick={() => removeMemory(idx)} className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500/50 hover:text-red-500 p-2"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    ))}
+                    {profile.ai_memory.length === 0 && (
+                      <div className="py-12 text-center border-2 border-dashed border-white/5 rounded-4xl">
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-700">Memory Registry Empty</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            
+            {activeTab === 'shortcuts' && (
+              <ShortcutsTab shortcuts={shortcuts} updateShortcut={updateShortcut} resetShortcuts={resetShortcuts} />
+            )}
+          </div>
+
+          <div className="p-8 bg-white/1 border-t border-white/5 flex justify-end gap-4">
+            <Button variant="ghost" onClick={onClose} className="font-black text-[10px] uppercase tracking-widest px-8 rounded-2xl opacity-40 hover:opacity-100 transition-opacity">Discard</Button>
+            <Button 
+              onClick={saveAll} 
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-500 text-white rounded-2xl px-12 font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-blue-500/20 active:scale-95 transition-all h-14 no-border"
+            >
+              {saving ? <RefreshCw className="w-4 h-4 animate-spin mr-3" /> : <Zap className="w-4 h-4 mr-3" />}
+              Commit Configuration
+            </Button>
+          </div>
+        </div>
+      </motion.div>
     </div>
   )
 }
@@ -1765,19 +1863,7 @@ function BigSignupModal({ onClose, onAction }: { onClose: () => void, onAction: 
     )
 }
 
-function AppleTooltip({ text, children }: { text: string, children: React.ReactNode }) {
-  return (
-    <div className="group relative">
-      {children}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-100 translate-y-1 group-hover:translate-y-0">
-        <div className="bg-[#18181b] border border-white/10 px-3 py-1.5 rounded-xl shadow-2xl glass-dark">
-          <p className="text-[10px] font-black uppercase tracking-widest text-white whitespace-nowrap">{text}</p>
-        </div>
-        <div className="w-2 h-2 bg-[#18181b] border-r border-b border-white/10 rotate-45 mx-auto -mt-1" />
-      </div>
-    </div>
-  )
-}
+
 
 function EmptyState({ onCreateNew }: { onCreateNew: () => void }) {
   return (
@@ -1796,9 +1882,13 @@ function EmptyState({ onCreateNew }: { onCreateNew: () => void }) {
         <div className="absolute inset-0 squircle bg-blue-500 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity animate-pulse" />
       </div>
 
-      <div className="space-y-4">
-        <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white leading-tight">Focus on your ideas,<br/><span className="text-gray-500">not the interface.</span></h2>
-        <p className="text-gray-500 text-sm font-medium leading-relaxed max-w-md mx-auto">Threadly is your high-performance workspace for deep thinking. Start a new thread to begin your intelligent workflow.</p>
+      <div className="space-y-6">
+        <h2 className="text-5xl md:text-6xl font-black tracking-tightest text-white leading-tight">
+          Clear mind. <br/> <span className="text-gray-600">Complex thoughts.</span>
+        </h2>
+        <p className="text-lg text-gray-500 font-medium leading-relaxed max-w-lg mx-auto">
+          Welcome back to your high-performance workspace. Your intelligent session is ready when you are.
+        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
