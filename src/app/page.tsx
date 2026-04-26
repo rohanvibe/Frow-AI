@@ -114,40 +114,43 @@ function LandingPage({ onEnter }: { onEnter: () => void }) {
              <Sparkles className="w-8 h-8 text-white" />
           </div>
         </div>
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight text-white">
-          Your Thoughts, <br/> <span className="text-(--apple-gray)">Refined.</span>
+      <div className="space-y-6">
+        <h1 className="hero-headline text-white">
+          Your Thoughts, <br/> <span className="text-(--apple-gray-muted)">Refined.</span>
         </h1>
-        <p className="text-lg text-(--apple-gray) font-medium max-w-xl mx-auto leading-relaxed">
+        <p className="text-[21px] text-(--apple-gray-muted) font-medium max-w-xl mx-auto leading-relaxed">
           The next evolution of thought infrastructure. <br/>
           Built for clarity, designed for precision.
         </p>
-        <div className="pt-8">
-          <Button 
-            onClick={() => { playSFX('pop'); onEnter(); }} 
-            className="px-12 py-8 rounded-2xl bg-white text-black font-bold tracking-tight text-lg hover:bg-gray-100 transition-all active:scale-95 shadow-2xl"
-          >
-            Enter Workspace
-          </Button>
-        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+        <Button 
+          onClick={() => { playSFX('pop'); onEnter(); }}
+          className="h-12 px-10 rounded-(--radius-pill) bg-(--apple-blue) text-white font-medium text-[17px] hover:bg-blue-600 transition-all btn-press shadow-2xl"
+        >
+          Enter Workspace
+        </Button>
+        <button 
+          onClick={() => { playSFX('pop'); onEnter(); }}
+          className="text-(--apple-blue) font-medium text-[17px] hover:underline transition-all px-6 py-2"
+        >
+          Learn more <ArrowRight className="w-4 h-4 inline-block ml-1" />
+        </button>
+      </div>
       </motion.div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full pt-20">
+      {/* Feature Grid - Low Density Museum Style */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-[980px] w-full pt-12">
         {[
-          { icon: Zap, title: "Command Center", desc: "Instant responses with ultra-fast AI." },
-          { icon: Sparkles, title: "AI Memory", desc: "It remembers your preferences and projects." },
-          { icon: List, title: "Smart Sidebar", desc: "Your entire creative session, indexed." }
-        ].map((f, i) => (
-          <motion.div 
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 + i * 0.1 }}
-            className="p-8 rounded-3xl surface-elevated text-left space-y-4"
-          >
-            <f.icon className="w-6 h-6 text-blue-500" />
-            <h3 className="text-lg font-black uppercase tracking-widest text-white">{f.title}</h3>
-            <p className="text-sm text-gray-500 font-medium leading-relaxed">{f.desc}</p>
-          </motion.div>
+          { title: "Deep Context", desc: "Long-form threads that never lose the plot." },
+          { title: "Neural Memory", desc: "Your persistent digital twin, evolved." },
+          { title: "Pro Workflow", desc: "Built for speed. Designed for builders." }
+        ].map((feature, i) => (
+          <div key={i} className="text-center space-y-3">
+             <h3 className="text-[21px] font-semibold text-white tracking-tight">{feature.title}</h3>
+             <p className="text-[17px] text-(--apple-gray-muted) leading-relaxed">{feature.desc}</p>
+          </div>
         ))}
       </div>
     </div>
@@ -1007,40 +1010,43 @@ export default function ChatPage() {
             <button onClick={() => { playSFX('slide'); setIsNavOpen(true); }} className="p-2 hover:bg-white/5 rounded-xl"><Menu className="w-5 h-5 text-(--apple-gray)" /></button>
             <h1 className="font-bold text-[13px] tracking-tight text-white">Threadly</h1>
             <div className="flex items-center gap-1">
-               {currentChatId && (
-                  <button onClick={() => { playSFX('pop'); shareChat(); }} className="p-2 hover:bg-white/5 rounded-xl text-(--apple-blue) transition-all active:scale-95">
-                     <Share2 className="w-5 h-5" />
-                  </button>
-               )}
                <button onClick={() => { playSFX('slide'); setIsSidebarOpen(!isSidebarOpen); }} className={`p-2 rounded-xl transition-all ${isSidebarOpen ? 'text-(--apple-blue)' : 'text-(--apple-gray)'}`}><History className="w-5 h-5" /></button>
             </div>
           </div>
         )}
 
-        {/* Desktop Header Actions */}
-        {!isMobile && (
-           <div className="absolute top-8 right-8 z-40 flex items-center gap-3">
+        {/* Header - Apple Product Sub-Nav frosted style */}
+        <header className="h-[52px] border-b border-white/5 glass-dark flex items-center justify-between px-6 sticky top-0 z-40">
+           <div className="flex items-center gap-4">
+              <span className="text-[21px] font-semibold text-white tracking-tight">
+                {chats.find(c => c.id === currentChatId)?.title || 'New Thread'}
+              </span>
               {currentChatId && (
-                 <Button 
-                   variant="ghost" 
-                   size="sm" 
-                   onClick={() => { playSFX('pop'); shareChat(); }}
-                   onContextMenu={e => openContextMenu(e, 'shareChat')}
-                   className="rounded-2xl px-5 py-5 flex items-center gap-2 border-none bg-white text-black hover:bg-gray-100 shadow-xl"
-                 >
-                   <Share2 className="w-3.5 h-3.5" />
-                   <span className="text-[12px] font-bold tracking-tight">Share Flow</span>
-                 </Button>
+                <div className="hidden md:flex items-center gap-4 border-l border-white/10 pl-4">
+                  {['Research', 'Drafting', 'Strategy'].map(l => (
+                    <span key={l} className="text-[14px] font-medium text-(--apple-gray-muted) hover:text-white cursor-pointer transition-colors">{l}</span>
+                  ))}
+                </div>
               )}
-              <button 
-               onContextMenu={e => openContextMenu(e, 'toggleSidebar')} 
-               onClick={() => { playSFX('slide'); setIsSidebarOpen(!isSidebarOpen); }} 
-               className={`p-3 rounded-2xl transition-all shadow-xl ${isSidebarOpen ? 'bg-(--apple-blue) text-white' : 'bg-(--surface) text-(--apple-gray) hover:text-white'}`}
-              >
-                <History className="w-5 h-5" />
-              </button>
            </div>
-        )}
+           
+           <div className="flex items-center gap-3">
+             <Button 
+               variant="ghost" 
+               size="sm" 
+               className="text-(--apple-gray-muted) hover:text-white text-[14px] font-medium px-4 h-8 rounded-(--radius-pill)"
+               onClick={() => { playSFX('slide'); setIsSidebarOpen(!isSidebarOpen); }}
+             >
+               Memory Store
+             </Button>
+             <Button 
+               className="bg-(--apple-blue) text-white text-[14px] font-medium px-5 h-8 rounded-(--radius-pill) hover:bg-blue-600 transition-all shadow-xl btn-press"
+               onClick={() => createNewChat()}
+             >
+               New
+             </Button>
+           </div>
+        </header>
 
         <div className={`flex-1 ${messages.length === 0 ? 'overflow-hidden' : 'overflow-y-auto'} custom-scrollbar scroll-smooth relative z-10`} id="chat-messages-container">
           {fetchingMessages ? (
@@ -1072,7 +1078,7 @@ export default function ChatPage() {
                     {msg.role === 'assistant' ? <Zap className="w-5 h-5" /> : <Plus className="w-5 h-5 rotate-45" />}
                   </div>
                   <div className="flex-1 space-y-4 min-w-0 overflow-hidden">
-                    <div className={`p-6 md:p-8 rounded-[2.5rem] glass-dark shadow-2xl relative overflow-hidden border border-white/5 ${
+                    <div className={`p-6 md:p-8 rounded-apple-card bg-(--surface) relative overflow-hidden border border-white/5 transition-all ${
                       msg.role === 'assistant' ? 'ring-1 ring-blue-500/10' : ''
                     }`}>
                       <div className="flex items-center justify-between mb-6">
@@ -1215,8 +1221,8 @@ export default function ChatPage() {
               </form>
               <div className="flex justify-between items-center mt-6 px-4">
                  <div className="flex items-center gap-3">
-                    <span className="text-[9px] font-black text-gray-700 uppercase tracking-[0.4em]">SambaNova Llama-3</span>
-                    <div className="w-1 h-1 rounded-full bg-gray-800" />
+                    <span className="text-[9px] font-black text-gray-700 uppercase tracking-[0.4em] hidden md:block">SambaNova Llama-3</span>
+                    <div className="w-1 h-1 rounded-full bg-gray-800 hidden md:block" />
                     <span className="text-[9px] font-black text-gray-700 uppercase tracking-[0.4em]">Optimized Inference</span>
                  </div>
                  <p className="text-[9px] font-bold text-gray-700 uppercase tracking-widest hidden md:block opacity-50">⌘ + Enter to dispatch</p>
@@ -1909,29 +1915,26 @@ function BigSignupModal({ onClose, onAction }: { onClose: () => void, onAction: 
     )
 }
 
-
-
 function EmptyState({ onCreateNew }: { onCreateNew: () => void }) {
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      transition={{ type: 'spring', damping: 28, stiffness: 220 }} 
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       drag="y"
       dragConstraints={{ top: 0, bottom: 0 }}
       dragElastic={0.1}
-      className="h-full flex flex-col items-center justify-center text-center space-y-8 px-6 max-w-2xl mx-auto py-10"
+      className="h-full flex flex-col items-center justify-center text-center space-y-10 px-6 max-w-2xl mx-auto py-10"
     >
       <div className="relative group">
-        <div className="w-24 h-24 squircle bg-(--apple-blue) flex items-center justify-center shadow-2xl relative z-10">
-          <Sparkles className="w-10 h-10 text-white" />
+        <div className="w-24 h-24 squircle bg-(--apple-blue) flex items-center justify-center shadow-2xl relative z-10 btn-press">
+          <Zap className="w-10 h-10 text-white" />
         </div>
-        <div className="absolute inset-0 squircle bg-blue-500 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity animate-pulse" />
+        <div className="absolute inset-0 squircle bg-blue-500 blur-3xl opacity-20 group-hover:opacity-40 transition-opacity animate-pulse" />
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-5xl md:text-6xl font-bold tracking-tight text-white leading-tight">
-          Clear mind. <br/> <span className="text-(--apple-gray)">Complex flow.</span>
+        <h2 className="tile-headline text-white">
+          Clear mind. <br/> <span className="text-(--apple-gray-muted)">Complex flow.</span>
         </h2>
         <p className="text-base text-(--apple-gray) font-medium leading-relaxed max-w-lg mx-auto">
           Welcome to your high-performance workspace. Your intelligent session is ready when you are.

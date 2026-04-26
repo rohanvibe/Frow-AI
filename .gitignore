@@ -42,3 +42,6 @@ Thumbs.db
 # PWA
 public/sw.js
 public/sw.js.map
+
+# Design
+design-apple.md
