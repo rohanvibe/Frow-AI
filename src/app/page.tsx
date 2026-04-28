@@ -74,15 +74,15 @@ function AppleTooltip({ text, children }: { text: string, children: React.ReactN
       {children}
       <AnimatePresence>
         <motion.div 
-          initial={{ opacity: 0, y: 10, x: '-50%', scale: 0.95 }}
+          initial={{ opacity: 0, y: 8, x: '-50%', scale: 0.96 }}
           whileHover={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-          className="absolute bottom-full left-1/2 mb-2 pointer-events-none z-100 opacity-0 group-hover:opacity-100"
+          transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+          className="absolute bottom-full left-1/2 mb-3 pointer-events-none z-100 opacity-0 group-hover:opacity-100"
         >
-          <div className="bg-[#18181b] border border-white/10 px-3 py-1.5 rounded-xl shadow-2xl glass-dark no-border">
-            <p className="text-[10px] font-black uppercase tracking-widest text-white whitespace-nowrap">{text}</p>
+          <div className="bg-[#1c1c1e] border border-white/8 px-3.5 py-2 rounded-full shadow-2xl backdrop-blur-xl">
+            <p className="text-[11px] font-bold tracking-tight text-white whitespace-nowrap">{text}</p>
           </div>
-          <div className="w-2 h-2 bg-[#18181b] rotate-45 mx-auto -mt-1" />
+          <div className="w-2 h-2 bg-[#1c1c1e] rotate-45 mx-auto -mt-1 border-r border-b border-white/8" />
         </motion.div>
       </AnimatePresence>
     </div>
@@ -91,51 +91,54 @@ function AppleTooltip({ text, children }: { text: string, children: React.ReactN
 
 function LandingPage({ onEnter }: { onEnter: () => void }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-12 surface-foundation grain-texture">
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-16 surface-foundation grain-texture">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-        className="max-w-3xl space-y-6"
+        className="max-w-4xl space-y-8"
       >
-        <div className="flex justify-center mb-12">
-          <div className="w-16 h-16 squircle bg-(--apple-blue) flex items-center justify-center shadow-2xl shadow-blue-500/20">
-             <Sparkles className="w-8 h-8 text-white" />
+        <div className="flex justify-center mb-16">
+          <div className="w-20 h-20 squircle bg-[#0a84ff] flex items-center justify-center shadow-2xl shadow-[#0a84ff]/20">
+             <Sparkles className="w-10 h-10 text-white" />
           </div>
         </div>
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight text-white">
-          Your Thoughts, <br/> <span className="text-(--apple-gray)">Refined.</span>
+        <h1 className="text-6xl md:text-8xl font-bold tracking-tight leading-[1.05] text-white">
+          Deep thoughts. <br/> <span className="opacity-48 italic">Effortless flow.</span>
         </h1>
-        <p className="text-lg text-(--apple-gray) font-medium max-w-xl mx-auto leading-relaxed">
-          The next evolution of thought infrastructure. <br/>
+        <p className="text-xl md:text-2xl text-white/72 font-medium max-w-2xl mx-auto leading-relaxed tracking-tight">
+          The next evolution of your creative workspace. <br/>
           Built for clarity, designed for precision.
         </p>
-        <div className="pt-8">
+        <div className="pt-12">
           <Button 
             onClick={() => { onEnter(); }} 
-            className="px-12 py-8 rounded-2xl bg-white text-black font-bold tracking-tight text-lg hover:bg-gray-100 transition-all active:scale-95 shadow-2xl"
+            size="lg"
+            className="px-16 py-8 h-auto text-lg shadow-2xl"
           >
             Enter Workspace
           </Button>
         </div>
       </motion.div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full pt-20">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full pt-24">
         {[
-          { icon: Zap, title: "Command Center", desc: "Instant responses with ultra-fast AI." },
-          { icon: Sparkles, title: "AI Memory", desc: "It remembers your preferences and projects." },
-          { icon: List, title: "Smart Sidebar", desc: "Your entire creative session, indexed." }
+          { icon: Zap, title: "Command Center", desc: "Instant responses with ultra-fast AI inference." },
+          { icon: Sparkles, title: "Persistent Brain", desc: "It intelligently remembers your projects and preferences." },
+          { icon: List, title: "Deep Indexing", desc: "Your entire conversation history, semantic and searchable." }
         ].map((f, i) => (
           <motion.div 
             key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 + i * 0.1 }}
-            className="p-8 rounded-3xl surface-elevated text-left space-y-4"
+            className="p-10 rounded-[24px] bg-[#1c1c1e] border border-white/8 text-left space-y-5 group hover:border-[#0a84ff]/30 transition-all"
           >
-            <f.icon className="w-6 h-6 text-blue-500" />
-            <h3 className="text-lg font-black uppercase tracking-widest text-white">{f.title}</h3>
-            <p className="text-sm text-gray-500 font-medium leading-relaxed">{f.desc}</p>
+            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#0a84ff]/10 group-hover:text-[#0a84ff] transition-colors">
+              <f.icon className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold tracking-tight text-white">{f.title}</h3>
+            <p className="text-base text-white/48 font-medium leading-relaxed">{f.desc}</p>
           </motion.div>
         ))}
       </div>
@@ -868,93 +871,82 @@ export default function ChatPage() {
             animate={isMobile ? { x: 0 } : { width: 280, opacity: 1 }}
             exit={isMobile ? { x: -300 } : { width: 0, opacity: 0 }}
             transition={{ type: 'spring', damping: 32, stiffness: 180 }}
-            className={`${isMobile ? 'absolute inset-y-0 left-0 w-80 z-50' : 'w-72 relative'} border-r border-white/5 flex flex-col bg-[#09090b]/80 backdrop-blur-2xl h-full shadow-2xl overflow-hidden`}
+            className={`${isMobile ? 'absolute inset-y-0 left-0 w-80 z-50' : 'w-72 relative'} border-r border-white/8 flex flex-col bg-[#09090b] h-full shadow-2xl overflow-hidden`}
           >
             <div className="p-8 flex items-center justify-between shrink-0">
               <h1 className="font-bold text-xl flex items-center gap-3 tracking-tight text-white">
-                <div className="w-8 h-8 squircle bg-(--apple-blue) flex items-center justify-center shadow-lg shadow-blue-500/20">
-                   <Globe className="w-4 h-4 text-white" />
+                <div className="w-9 h-9 squircle bg-[#0a84ff] flex items-center justify-center shadow-lg shadow-[#0a84ff]/20">
+                   <Globe className="w-5 h-5 text-white" />
                 </div>
                 Threadly
               </h1>
               <AppleTooltip text="Dismiss">
-                <Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5" onClick={() => { setIsNavOpen(false); }}>
-                  <X className="w-4 h-4 text-gray-500" />
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/5" onClick={() => { setIsNavOpen(false); }}>
+                  <X className="w-5 h-5 text-white/48" />
                 </Button>
               </AppleTooltip>
             </div>
 
-            <div className="px-8 mb-8 space-y-4">
+            <div className="px-6 mb-8 space-y-4">
               <motion.div whileTap={{ scale: 0.98 }}>
-                <Button onClick={() => { createNewChat(); }} className="w-full py-7 rounded-2xl flex items-center gap-2 group shadow-2xl bg-white text-black hover:bg-gray-100 no-border font-bold text-[13px] tracking-tight">
+                <Button onClick={() => { createNewChat(); }} className="w-full py-6 rounded-full flex items-center gap-2 group shadow-xl bg-white text-black hover:bg-white/90 no-border font-bold text-sm tracking-tight">
                   <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
                   New Session
                 </Button>
               </motion.div>
               <div className="relative group">
-                <Search className="w-3.5 h-3.5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-white/48 group-focus-within:text-[#0a84ff] transition-colors" />
                 <input
                   type="text"
                   placeholder="Search thoughts..."
                   value={chatSearch}
                   onChange={(e) => setChatSearch(e.target.value)}
-                  className="w-full bg-(--surface) border-none rounded-2xl py-3.5 pl-11 pr-4 text-[13px] font-medium text-white placeholder-(--apple-gray) focus:ring-1 focus:ring-blue-500/30 outline-none transition-all"
+                  className="w-full bg-[#1c1c1e] border border-white/5 rounded-full py-3.5 pl-11 pr-4 text-[13px] font-medium text-white placeholder-white/24 focus:ring-2 focus:ring-[#0a84ff]/20 outline-none transition-all"
                 />
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-3 space-y-1.5 py-2 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto px-4 space-y-1 py-2 custom-scrollbar">
               {chats.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center p-6 space-y-4 opacity-50 mt-10">
-                  <MessageSquare className="w-8 h-8 text-gray-500" />
-                  <p className="text-xs font-bold text-gray-400">Empty workspace.</p>
-                  <p className="text-[10px] text-gray-500">Kick off a new intelligent session.</p>
+                <div className="flex flex-col items-center justify-center text-center p-8 space-y-4 opacity-48 mt-10">
+                  <MessageSquare className="w-8 h-8" />
+                  <p className="text-xs font-bold tracking-tight">Empty workspace.</p>
                 </div>
               ) : (
                 chats.filter(c => chatSearch.trim() === '' || c.title.toLowerCase().includes(chatSearch.toLowerCase())).map(chat => (
                   <div key={chat.id} className="group relative">
                     {editingChatId === chat.id ? (
-                      <div className="flex items-center gap-2 p-2 bg-white/5 rounded-xl border border-blue-500/50">
+                      <div className="flex items-center gap-2 p-2 bg-white/5 rounded-2xl border border-[#0a84ff]/30">
                         <input 
                           value={editingTitle}
                           onChange={e => setEditingTitle(e.target.value)}
-                          className="bg-transparent border-none outline-none text-xs w-full font-medium"
+                          className="bg-transparent border-none outline-none text-sm w-full font-bold px-2"
                           autoFocus
                           onKeyDown={e => e.key === 'Enter' && updateChatTitle(chat.id)}
                         />
                       </div>
                     ) : (
                       <motion.button
-                        whileHover={{ x: 4 }}
+                        whileHover={{ x: 2 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => { setCurrentChatId(chat.id); if (isMobile) setIsNavOpen(false); }}
                         className={`w-full text-left p-4 rounded-2xl text-[13px] font-bold tracking-tight transition-all flex items-center gap-3 group relative overflow-hidden ${
-                          currentChatId === chat.id ? 'bg-(--apple-blue)/10 text-(--apple-blue)' : 'text-(--apple-gray) hover:bg-white/5 hover:text-white'
+                          currentChatId === chat.id ? 'bg-[#0a84ff]/10 text-[#0a84ff]' : 'text-white/48 hover:bg-white/5 hover:text-white'
                         }`}
                       >
-                        <MessageSquare className={`w-4 h-4 shrink-0 transition-all ${currentChatId === chat.id ? 'text-(--apple-blue) scale-110' : 'text-(--apple-gray) group-hover:text-gray-300'}`} />
+                        <MessageSquare className={`w-4 h-4 shrink-0 transition-all ${currentChatId === chat.id ? 'text-[#0a84ff] scale-110' : 'group-hover:text-white/72'}`} />
                         <span className="truncate">{chat.title}</span>
-                        {currentChatId === chat.id && (
-                          <motion.div 
-                            layoutId="active-chat-indicator"
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-(--apple-blue) rounded-r-full" 
-                          />
-                        )}
                       </motion.button>
                     )}
                     
                     {editingChatId !== chat.id && (
-                      <div className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                        <AppleTooltip text="Edit Title">
-                          <Button variant="ghost" size="icon" className="w-7 h-7" onClick={(e) => { e.stopPropagation(); setEditingChatId(chat.id); setEditingTitle(chat.title); }}>
-                            <Edit2 className="w-3 h-3" />
-                          </Button>
-                        </AppleTooltip>
-                        <AppleTooltip text="Delete Thread">
-                          <Button variant="destructive" size="icon" className="w-7 h-7" onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}>
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </AppleTooltip>
+                      <div className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                        <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full" onClick={(e) => { e.stopPropagation(); setEditingChatId(chat.id); setEditingTitle(chat.title); }}>
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full hover:text-[#ff453a]" onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1104,19 +1096,19 @@ export default function ChatPage() {
                       id={`msg-${msg.id}`}
                   className={`group relative ${highlightedAnchor === msg.id ? 'highlight-bg p-4 -m-4 rounded-2xl bg-blue-500/5 ring-1 ring-blue-500/20' : ''} transition-all duration-700`}
                 >
-                  <div className={`w-10 h-10 squircle flex items-center justify-center shrink-0 shadow-lg ${
-                    msg.role === 'assistant' ? 'bg-(--apple-blue) text-white' : 'bg-(--surface) text-(--apple-gray)'
+                  <div className={`w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-2xl flex items-center justify-center transition-all ${
+                    msg.role === 'assistant' ? 'bg-[#0a84ff] text-white shadow-xl shadow-[#0a84ff]/20' : 'bg-[#1c1c1e] text-white/48'
                   }`}>
-                    {msg.role === 'assistant' ? <Zap className="w-5 h-5" /> : <Plus className="w-5 h-5 rotate-45" />}
+                    {msg.role === 'assistant' ? <Zap className="w-5 h-5 md:w-6 md:h-6" /> : <Plus className="w-5 h-5 md:w-6 md:h-6 rotate-45" />}
                   </div>
                   <div className="flex-1 space-y-4 min-w-0 overflow-hidden">
-                    <div className={`p-5 md:p-8 rounded-3xl md:rounded-[2.5rem] glass-dark shadow-2xl relative overflow-hidden border border-white/5 ${
-                      msg.role === 'assistant' ? 'ring-1 ring-blue-500/10' : ''
+                    <div className={`p-6 md:p-10 rounded-[24px] md:rounded-[32px] bg-[#1c1c1e] shadow-sm relative overflow-hidden border border-white/8 ${
+                      msg.role === 'assistant' ? 'ring-1 ring-[#0a84ff]/5' : ''
                     }`}>
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-[12px] tracking-tight text-(--apple-gray) pt-1">
-                            {msg.role === 'assistant' ? 'Threadly Assistant' : 'Current Thought'}
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-4">
+                          <span className="font-bold text-[13px] tracking-tight text-white/48">
+                            {msg.role === 'assistant' ? 'Threadly Assistant' : 'Your Thought'}
                           </span>
                           <AnimatePresence>
                             {savedMemoryMsgId === msg.id && (
@@ -1124,22 +1116,22 @@ export default function ChatPage() {
                                  initial={{ opacity: 0, scale: 0.8, x: -10 }}
                                  animate={{ opacity: 1, scale: 1, x: 0 }}
                                  exit={{ opacity: 0, scale: 0.8 }}
-                                 className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20"
+                                 className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#32d74b]/10 border border-[#32d74b]/20"
                                >
-                                  <Check className="w-3 h-3 text-blue-500" />
-                                  <span className="text-[8px] font-black uppercase tracking-widest text-blue-500 pt-px">Saved</span>
+                                  <CheckCircle2 className="w-3 h-3 text-[#32d74b]" />
+                                  <span className="text-[10px] font-bold tracking-tight text-[#32d74b]">Persisted</span>
                                </motion.div>
                             )}
                           </AnimatePresence>
                         </div>
-                        <div className={`flex items-center gap-1 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                        <div className={`flex items-center gap-2 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                            {msg.role === 'user' && (
-                              <Button variant="ghost" size="icon" title="Edit" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => handleEditMessage(msg)}><Edit2 className="w-3.5 h-3.5" /></Button>
+                              <Button variant="ghost" size="icon" title="Edit" className="w-9 h-9 rounded-full" onClick={() => handleEditMessage(msg)}><Edit2 className="w-4 h-4" /></Button>
                            )}
-                           <Button variant="ghost" size="icon" title="Copy" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => copyToClipboard(msg.content)}><Copy className="w-3.5 h-3.5" /></Button>
-                           <Button variant="ghost" size="icon" title="Export Image" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => exportAsImage(msg.id)}><Camera className="w-3.5 h-3.5" /></Button>
+                           <Button variant="ghost" size="icon" title="Copy" className="w-9 h-9 rounded-full" onClick={() => copyToClipboard(msg.content)}><Copy className="w-4 h-4" /></Button>
+                           <Button variant="ghost" size="icon" title="Export Flow" className="w-9 h-9 rounded-full" onClick={() => exportAsImage(msg.id)}><Camera className="w-4 h-4" /></Button>
                            {msg.role === 'assistant' && (
-                              <Button variant="ghost" size="icon" title="Regenerate" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => sendMessage(undefined, messages[i-1]?.content)}><RefreshCw className="w-3.5 h-3.5" /></Button>
+                              <Button variant="ghost" size="icon" title="Regenerate" className="w-9 h-9 rounded-full" onClick={() => sendMessage(undefined, messages[i-1]?.content)}><RefreshCw className="w-4 h-4" /></Button>
                            )}
                         </div>
                       </div>
@@ -1235,28 +1227,28 @@ export default function ChatPage() {
                     }}
                     rows={1}
                     placeholder={loading ? "Generating response..." : "What's on your mind?"}
-                    className="w-full pr-24 md:pr-32 py-4 md:py-6 pl-6 md:pl-8 bg-transparent text-base md:text-lg outline-none resize-none custom-scrollbar placeholder:text-gray-600 font-medium tracking-tight"
+                    className="w-full pr-24 md:pr-32 py-5 md:py-8 pl-6 md:pl-10 bg-transparent text-base md:text-lg outline-none resize-none custom-scrollbar placeholder:text-white/24 font-medium tracking-tight"
                   />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                  <div className="absolute right-5 md:right-8 top-1/2 -translate-y-1/2 flex items-center gap-4">
                     {loading ? (
-                      <Button onClick={stopResponding} variant="ghost" size="icon" className="w-12 h-12 rounded-2xl bg-white/5 hover:bg-red-500/10 hover:text-red-500 transition-all">
+                      <Button onClick={stopResponding} variant="ghost" size="icon" className="w-12 h-12 rounded-full bg-white/5 hover:bg-[#ff453a]/10 hover:text-[#ff453a] transition-all">
                         <Square className="w-5 h-5 fill-current" />
                       </Button>
                     ) : (
-                      <Button type="submit" disabled={!input.trim()} size="icon" className="w-12 h-12 rounded-2xl bg-(--apple-blue) text-white shadow-2xl active:scale-90 disabled:opacity-20 transition-all no-border" >
-                        <ArrowRight className="w-6 h-6" />
+                      <Button type="submit" disabled={!input.trim()} size="icon" className="w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl active:scale-95 disabled:opacity-20 transition-all" >
+                        <ArrowRight className="w-7 h-7" />
                       </Button>
                     )}
                   </div>
                 </div>
               </form>
-              <div className="hidden md:flex justify-between items-center mt-6 px-4">
-                 <div className="flex items-center gap-3">
-                    <span className="text-[9px] font-black text-gray-700 uppercase tracking-[0.4em]">SambaNova Llama-3</span>
-                    <div className="w-1 h-1 rounded-full bg-gray-800" />
-                    <span className="text-[9px] font-black text-gray-700 uppercase tracking-[0.4em]">Optimized Inference</span>
+              <div className="hidden md:flex justify-between items-center mt-8 px-6">
+                 <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-bold text-white/24 uppercase tracking-[0.3em]">Llama 3.3 70B</span>
+                    <div className="w-1 h-1 rounded-full bg-white/10" />
+                    <span className="text-[10px] font-bold text-white/24 uppercase tracking-[0.3em]">SambaNova Inference</span>
                  </div>
-                 <p className="text-[9px] font-bold text-gray-700 uppercase tracking-widest opacity-50">⌘ + Enter to dispatch</p>
+                 <p className="text-[10px] font-bold text-white/24 uppercase tracking-widest">⌘ + Enter to dispatch</p>
               </div>
            </div>
         </div>
@@ -1516,61 +1508,61 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
   }
 
   return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-200 flex items-center justify-center p-8">
       <motion.div 
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         transition={{ duration: 0.4 }}
-        className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+        className="absolute inset-0 bg-black/85 backdrop-blur-xl" 
         onClick={onClose}
       />
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        initial={{ opacity: 0, scale: 0.98, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+        exit={{ opacity: 0, scale: 0.98, y: 10 }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         className="w-full max-w-2xl relative z-20"
       >
-        <div className="glass-dark rounded-[2.5rem] overflow-hidden apple-shadow border border-white/5 flex flex-col max-h-[85vh]">
-          <div className="p-8 border-b border-white/5 flex items-center justify-between">
-             <div className="flex items-center gap-4">
-                <div className="w-10 h-10 squircle bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                   <Settings className="w-5 h-5 text-white" />
+        <div className="bg-[#1c1c1e] rounded-[32px] overflow-hidden apple-shadow border border-white/8 flex flex-col max-h-[85vh]">
+          <div className="p-10 border-b border-white/8 flex items-center justify-between">
+             <div className="flex items-center gap-5">
+                <div className="w-12 h-12 squircle bg-[#0a84ff] flex items-center justify-center shadow-xl shadow-[#0a84ff]/20">
+                   <Settings className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                   <h3 className="text-sm font-black uppercase tracking-[0.3em] text-white">Workspace Infrastructure</h3>
-                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Configure your intelligent environment</p>
+                   <h3 className="text-xl font-bold tracking-tight text-white leading-none mb-1">System Preferences</h3>
+                   <p className="text-[13px] font-medium text-white/48 tracking-tight">Configure your intelligent workspace</p>
                 </div>
              </div>
-             <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl hover:bg-white/5"><X className="w-5 h-5 text-gray-500" /></Button>
+             <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-white/5"><X className="w-6 h-6 text-white/48" /></Button>
           </div>
 
-          <div className="flex bg-white/1 px-8 py-2 gap-8 border-b border-white/5">
+          <div className="flex bg-black/20 px-10 py-2 gap-10 border-b border-white/8">
              {['general', 'personalization', 'shortcuts'].map((tab) => (
                 <button 
                   key={tab}
                   onClick={() => setActiveTab(tab as any)}
-                  className={`py-4 text-[9px] font-black uppercase tracking-[0.4em] transition-all relative ${
-                    activeTab === tab ? 'text-white' : 'text-gray-600 hover:text-gray-400'
+                  className={`py-5 text-xs font-bold tracking-tight transition-all relative capitalize ${
+                    activeTab === tab ? 'text-[#0a84ff]' : 'text-white/48 hover:text-white'
                   }`}
                 >
                   {tab}
                   {activeTab === tab && (
-                     <motion.div layoutId="settings-tab" className="absolute bottom-0 inset-x-0 h-0.5 bg-blue-500 rounded-full" />
+                     <motion.div layoutId="settings-tab" className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0a84ff] rounded-full" />
                   )}
                 </button>
              ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-10 space-y-12 custom-scrollbar">
             {activeTab === 'general' && (
               <motion.div 
                 initial={{ opacity: 0, y: 10 }} 
                 animate={{ opacity: 1, y: 0 }} 
-                transition={{ type: 'spring', damping: 30, stiffness: 250 }}
-                className="space-y-6"
+                className="space-y-8"
               >
-                <div className="space-y-3">
-                  <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 ml-2">AI API Key</label>
-                  <Input type="password" value={keys.openai} onChange={(e) => setKeys({...keys, openai: e.target.value})} placeholder="sk-••••••••••••••••••••••••" className="bg-white/5 py-8 rounded-2xl border-white/5 focus:ring-1 focus:ring-blue-500/30" />
+                <div className="space-y-4">
+                  <label className="text-xs font-bold text-white/48 tracking-tight ml-1">AI Service Authentication</label>
+                  <Input type="password" value={keys.openai} onChange={(e) => setKeys({...keys, openai: e.target.value})} placeholder="sk-••••••••••••••••••••••••" className="py-7 rounded-[18px] bg-black/40" />
                 </div>
               </motion.div>
             )}
@@ -1579,41 +1571,40 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }} 
                 animate={{ opacity: 1, y: 0 }} 
-                transition={{ type: 'spring', damping: 30, stiffness: 250 }}
-                className="space-y-10"
+                className="space-y-12"
               >
                 <div className="space-y-4">
-                  <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 ml-2">AI Instructions</label>
+                  <label className="text-xs font-bold text-white/48 tracking-tight ml-1">Persistent Context Instructions</label>
                   <textarea 
                     value={profile.custom_instructions}
                     onChange={(e) => setProfile({...profile, custom_instructions: e.target.value})}
-                    className="w-full bg-white/5 border border-white/5 rounded-3xl p-6 text-sm font-bold outline-none focus:border-blue-500/50 min-h-[160px] resize-none custom-scrollbar transition-all"
-                    placeholder="Define how the AI should behave..."
+                    className="w-full bg-black/40 border border-white/8 rounded-[24px] p-6 text-sm font-bold text-white outline-none focus:border-[#0a84ff] min-h-[160px] resize-none custom-scrollbar transition-all"
+                    placeholder="Define your deep persona..."
                   />
                 </div>
 
-                <div className="space-y-4">
-                  <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 ml-2">AI Memory</label>
-                  <div className="flex gap-3">
+                <div className="space-y-6">
+                  <label className="text-xs font-bold text-white/48 tracking-tight ml-1">Long-Term Memory Store</label>
+                  <div className="flex gap-4">
                     <Input 
                       value={newMemory}
                       onChange={(e) => setNewMemory(e.target.value)}
-                      placeholder="Save a fact..."
-                      className="bg-white/5 border-white/5 rounded-2xl h-14 text-sm"
+                      placeholder="Commit a fact to memory..."
+                      className="bg-black/40 rounded-[18px] h-14"
                       onKeyDown={(e) => e.key === 'Enter' && addMemory()}
                     />
-                    <Button onClick={addMemory} className="h-14 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl px-6"><Plus className="w-5 h-5" /></Button>
+                    <Button onClick={addMemory} className="h-14 px-8 shadow-xl"><Plus className="w-5 h-5" /></Button>
                   </div>
                   <div className="space-y-3">
                     {profile.ai_memory.map((mem, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-5 rounded-2xl bg-white/2 border border-white/5 group hover:border-blue-500/20 transition-all">
-                        <span className="text-xs font-bold text-gray-400">{mem}</span>
-                        <button onClick={() => removeMemory(idx)} className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500/50 hover:text-red-500 p-2"><Trash2 className="w-4 h-4" /></button>
+                      <div key={idx} className="flex items-center justify-between p-5 rounded-[18px] bg-black/20 border border-white/5 group hover:border-[#0a84ff]/30 transition-all">
+                        <span className="text-sm font-bold text-white/72">{mem}</span>
+                        <button onClick={() => removeMemory(idx)} className="opacity-0 group-hover:opacity-100 transition-opacity text-[#ff453a] hover:scale-110 p-2"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     ))}
                     {profile.ai_memory.length === 0 && (
-                      <div className="py-12 text-center border-2 border-dashed border-white/5 rounded-4xl">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-700">No memories saved</p>
+                      <div className="py-16 text-center border border-dashed border-white/8 rounded-[24px]">
+                        <p className="text-xs font-bold text-white/24 uppercase tracking-widest">No memories indexed</p>
                       </div>
                     )}
                   </div>
@@ -1626,15 +1617,15 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
             )}
           </div>
 
-          <div className="p-8 bg-white/1 border-t border-white/5 flex justify-end gap-4">
-            <Button variant="ghost" onClick={onClose} className="font-black text-[10px] uppercase tracking-widest px-8 rounded-2xl opacity-40 hover:opacity-100 transition-opacity">Discard</Button>
+          <div className="p-10 bg-black/20 border-t border-white/8 flex justify-end gap-5">
+            <Button variant="ghost" onClick={onClose} className="px-10 rounded-full font-bold">Discard</Button>
             <Button 
               onClick={saveAll} 
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-500 text-white rounded-2xl px-12 font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-blue-500/20 active:scale-95 transition-all h-14 no-border"
+              className="px-12 h-14 shadow-2xl"
             >
-              {saving ? <RefreshCw className="w-4 h-4 animate-spin mr-3" /> : <Zap className="w-4 h-4 mr-3" />}
-              Save Changes
+              {saving ? <RefreshCw className="w-5 h-5 animate-spin mr-3" /> : <CheckCircle2 className="w-5 h-5 mr-3" />}
+              Save Workspace
             </Button>
           </div>
         </div>
@@ -1673,39 +1664,45 @@ function PromptManager({ userId, onClose, onSelect }: { userId: string, onClose:
     }
 
     return (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
-            <Card className="w-full max-w-3xl border-white/5 flex flex-col max-h-[85vh] shadow-2xl">
-                <CardHeader className="shrink-0 border-b border-white/5">
-                    <CardTitle className="uppercase tracking-widest text-sm flex items-center gap-2">
-                       <Command className="w-4 h-4 text-blue-500" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xl p-8">
+            <Card className="w-full max-w-3xl border-white/8 bg-[#1c1c1e] flex flex-col max-h-[85vh] shadow-2xl rounded-[32px] overflow-hidden">
+                <CardHeader className="shrink-0 border-b border-white/8 p-10">
+                    <CardTitle className="text-xl font-bold tracking-tight flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-2xl bg-[#0a84ff]/10 flex items-center justify-center">
+                          <Command className="w-5 h-5 text-[#0a84ff]" />
+                       </div>
                        Prompt Library
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="flex-1 overflow-y-auto space-y-8 p-6 custom-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CardContent className="flex-1 overflow-y-auto space-y-10 p-10 custom-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         {prompts.map(p => (
-                            <div key={p.id} className="p-5 rounded-2xl border border-white/5 bg-white/2 hover:bg-blue-600/5 hover:border-blue-500/20 text-left transition-all active:scale-[0.98] group relative">
-                                <h4 className="font-black text-[10px] uppercase tracking-widest text-blue-500 mb-2">{p.title}</h4>
-                                <p className="text-xs text-gray-500 font-bold line-clamp-2 leading-relaxed mb-4">{p.template}</p>
-                                <div className="flex items-center gap-2">
-                                   <Button size="sm" onClick={() => { onSelect(p.template); onClose(); }} className="h-8 rounded-lg bg-white text-black text-[9px] font-black uppercase px-4 hover:bg-gray-200">Use</Button>
-                                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg border border-white/5 text-gray-500 hover:text-white" onClick={() => copyToClipboard(`${window.location.origin}/p/${p.id}`)}>
-                                      <LinkIcon className="w-3.5 h-3.5" />
+                            <div key={p.id} className="p-6 rounded-[24px] border border-white/8 bg-black/20 hover:border-[#0a84ff]/30 text-left transition-all group relative flex flex-col justify-between">
+                                <div>
+                                   <h4 className="font-bold text-sm tracking-tight text-[#0a84ff] mb-2">{p.title}</h4>
+                                   <p className="text-[13px] text-white/48 font-medium line-clamp-2 leading-relaxed mb-6">{p.template}</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                   <Button size="sm" onClick={() => { onSelect(p.template); onClose(); }} className="px-6 rounded-full shadow-lg">Use</Button>
+                                   <Button variant="ghost" size="icon" className="w-9 h-9 rounded-full" onClick={() => copyToClipboard(`${window.location.origin}/p/${p.id}`)}>
+                                      <LinkIcon className="w-4 h-4 text-white/48" />
                                    </Button>
                                 </div>
                             </div>
                         ))}
                     </div>
                     
-                    <div className="p-6 rounded-2xl border border-white/10 bg-white/1 space-y-4">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Inject New Preset</h4>
-                        <Input placeholder="Architecture Pattern / Function Name" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="bg-black py-6" />
-                        <textarea className="w-full h-32 rounded-2xl border border-white/5 bg-black px-4 py-3 text-sm font-bold custom-scrollbar outline-none focus:border-blue-500/50 transition-all" placeholder="Enter full template logic..." value={newTemplate} onChange={e => setNewTemplate(e.target.value)} />
-                        <Button className="w-full py-6 rounded-2xl bg-blue-600 hover:bg-blue-700" onClick={savePrompt}>Commit to Store</Button>
+                    <div className="p-10 rounded-[24px] border border-white/8 bg-black/20 space-y-6">
+                        <h4 className="text-sm font-bold tracking-tight text-white/48">Inject New Pattern</h4>
+                        <div className="space-y-4">
+                           <Input placeholder="Descriptive Label" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="bg-black/40 h-14" />
+                           <textarea className="w-full h-40 rounded-[20px] border border-white/8 bg-black/40 px-5 py-4 text-sm font-bold text-white custom-scrollbar outline-none focus:border-[#0a84ff] transition-all resize-none" placeholder="Enter logic or multi-step prompt template..." value={newTemplate} onChange={e => setNewTemplate(e.target.value)} />
+                           <Button className="w-full py-7 shadow-xl" onClick={savePrompt}>Commit to Workspace</Button>
+                        </div>
                     </div>
                 </CardContent>
-                <CardFooter className="shrink-0 justify-end border-t border-white/5 pt-6">
-                    <Button variant="ghost" onClick={onClose} className="rounded-xl">Exit Manager</Button>
+                <CardFooter className="shrink-0 justify-end border-t border-white/8 p-10 bg-black/10">
+                    <Button variant="ghost" onClick={onClose} className="px-10 rounded-full font-bold">Exit Library</Button>
                 </CardFooter>
             </Card>
         </div>
@@ -1757,40 +1754,40 @@ function ShortcutsTab({
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Keyboard Shortcuts</p>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+      <div className="flex items-center justify-between mb-4 px-2">
+        <p className="text-xs font-bold text-white/48 tracking-tight">Keyboard Mappings</p>
         <button
           onClick={resetShortcuts}
-          className="text-[9px] font-bold text-blue-500 hover:text-blue-400 uppercase tracking-widest transition-colors"
+          className="text-xs font-bold text-[#0a84ff] hover:text-[#2997ff] tracking-tight transition-colors"
         >
-          Reset to Defaults
+          Reset to Default
         </button>
       </div>
 
       {Object.entries(shortcuts).map(([id, key]) => (
-        <div key={id} className="flex items-center justify-between p-3 rounded-xl bg-white/2 border border-white/5 group">
-          <span className="text-xs font-bold text-gray-300">{LABELS[id] || id}</span>
+        <div key={id} className="flex items-center justify-between p-5 rounded-[18px] bg-black/20 border border-white/5 group hover:border-[#0a84ff]/20 transition-all">
+          <span className="text-sm font-bold text-white/72">{LABELS[id] || id}</span>
           {editingId === id ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div
                 tabIndex={0}
                 autoFocus
                 onKeyDown={(e) => handleKeyDown(e as any, id)}
-                className="px-2 py-1 rounded-lg border-2 border-blue-500/60 bg-blue-500/5 text-xs font-mono text-white outline-none min-w-[80px] text-center"
+                className="px-4 py-2 rounded-full border-2 border-[#0a84ff]/50 bg-[#0a84ff]/10 text-[13px] font-bold text-white outline-none min-w-[100px] text-center"
               >
-                {captured ?? <span className="text-gray-500 animate-pulse text-[9px]">Press keys...</span>}
+                {captured ?? <span className="text-white/24 animate-pulse">Press keys...</span>}
               </div>
-              <button onClick={() => confirm(id)} className="text-[9px] font-black text-blue-500 hover:text-blue-400 uppercase">Save</button>
-              <button onClick={cancel} className="text-[9px] font-black text-gray-600 hover:text-white uppercase">✕</button>
+              <button onClick={() => confirm(id)} className="text-xs font-bold text-[#0a84ff] hover:text-[#2997ff] uppercase">Save</button>
+              <button onClick={cancel} className="text-xs font-bold text-white/24 hover:text-white uppercase">✕</button>
             </div>
           ) : (
             <button
               onClick={() => { setEditingId(id); setCaptured(null) }}
-              className="flex items-center gap-2 group/btn"
+              className="flex items-center gap-3 group/btn"
             >
-              <kbd className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono text-gray-300 group-hover/btn:border-blue-500/40 transition-all">{key as string}</kbd>
-              <span className="text-[8px] text-gray-600 group-hover/btn:text-blue-400 transition-colors uppercase tracking-widest opacity-0 group-hover/btn:opacity-100">Edit</span>
+              <kbd className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-bold text-white/48 group-hover/btn:border-[#0a84ff]/40 group-hover/btn:text-white transition-all">{key as string}</kbd>
+              <span className="text-[10px] text-white/24 group-hover/btn:text-[#0a84ff] transition-colors font-bold uppercase tracking-tight opacity-0 group-hover/btn:opacity-100">Edit</span>
             </button>
           )}
         </div>
@@ -1849,31 +1846,32 @@ function OnboardingTutorial({ step, onNext, onComplete }: { step: number, onNext
       />
 
       {/* The Tooltip */}
-      <motion.div
+      <motion.div 
         animate={{
-          top: Math.min(window.innerHeight - 200, rect.top + rect.height + 24),
-          left: Math.min(window.innerWidth - 340, Math.max(20, rect.left + rect.width / 2 - 150)),
+          top: Math.min(window.innerHeight - 250, rect.top + rect.height + 24),
+          left: Math.min(window.innerWidth - 360, Math.max(20, rect.left + rect.width / 2 - 160)),
         }}
-        transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-        className="absolute w-[300px] bg-[#18181b] border border-white/10 rounded-2xl p-5 shadow-2xl z-102 pointer-events-auto"
+        transition={{ type: 'spring', damping: 32, stiffness: 200 }}
+        className="absolute w-[320px] bg-[#1c1c1e] border border-white/8 rounded-[24px] p-6 shadow-2xl z-102 pointer-events-auto"
       >
-        <div className="flex items-center gap-2 mb-2">
-            <div className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-widest">Step {step + 1}/{steps.length}</div>
-            <h4 className="text-xs font-black uppercase tracking-widest text-white">{current.title}</h4>
+        <div className="flex items-center gap-3 mb-3">
+            <div className="px-2 py-0.5 rounded-full bg-[#0a84ff]/10 text-[#0a84ff] text-[10px] font-bold tracking-tight">Step {step + 1}/{steps.length}</div>
+            <h4 className="text-sm font-bold tracking-tight text-white">{current.title}</h4>
         </div>
-        <p className="text-[11px] text-gray-400 leading-relaxed mb-4">{current.text}</p>
+        <p className="text-[13px] text-white/48 font-medium leading-relaxed mb-6">{current.text}</p>
         <div className="flex items-center justify-between">
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
                 {steps.map((_, i) => (
-                    <div key={i} className={`w-1 h-1 rounded-full transition-all ${i === step ? 'bg-blue-500 w-3' : 'bg-gray-700'}`} />
+                    <div key={i} className={`w-1 h-1 rounded-full transition-all ${i === step ? 'bg-[#0a84ff] w-3' : 'bg-white/10'}`} />
                 ))}
             </div>
-            <button 
+            <Button 
+                size="sm"
                 onClick={isLast ? onComplete : onNext}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
+                className="px-5 rounded-full text-xs font-bold shadow-lg"
             >
-                {isLast ? 'Finish Tour' : 'Next Step'}
-            </button>
+                {isLast ? 'Finish' : 'Next'}
+            </Button>
         </div>
       </motion.div>
     </div>
@@ -1882,65 +1880,64 @@ function OnboardingTutorial({ step, onNext, onComplete }: { step: number, onNext
 
 function BigSignupModal({ onClose, onAction }: { onClose: () => void, onAction: () => void }) {
     return (
-        <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-200 flex items-center justify-center p-8">
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+                className="absolute inset-0 bg-black/85 backdrop-blur-xl" 
                 onClick={onClose}
             />
             <motion.div 
-                initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+                initial={{ opacity: 0, scale: 0.98, y: 10 }} 
                 animate={{ opacity: 1, scale: 1, y: 0 }} 
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-                className="relative w-full max-w-lg bg-[#0d0d0f]/90 backdrop-blur-3xl border border-white/10 rounded-[3rem] overflow-hidden apple-shadow"
+                exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                transition={{ type: 'spring', damping: 32, stiffness: 200 }}
+                className="relative w-full max-w-lg bg-[#1c1c1e] border border-white/8 rounded-[40px] overflow-hidden apple-shadow"
             >
-                <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600" />
-                
-                <div className="p-10 text-center">
-                    <div className="w-16 h-16 bg-blue-600 squircle flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-600/40 rotate-3 animate-pulse">
-                        <Sparkles className="w-8 h-8 text-white" />
+                <div className="p-12 text-center">
+                    <div className="w-20 h-20 bg-[#0a84ff] squircle flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-[#0a84ff]/20">
+                        <Sparkles className="w-10 h-10 text-white" />
                     </div>
                     
-                    <h2 className="text-4xl font-bold text-white tracking-tight mb-4">Claim Your Pro Flow</h2>
-                    <p className="text-(--apple-gray) leading-relaxed mb-8">
-                        Join the world's most elite builders using Threadly to supercharge their output. Unlock infinite flow, smart memory, and lightning-fast inference.
+                    <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-6">Upgrade Your Flow.</h2>
+                    <p className="text-white/48 font-medium leading-relaxed mb-10 tracking-tight text-lg">
+                        Unlock the full potential of your workspace. Persistent brain, infinite context, and priority infrastructure.
                     </p>
                     
-                    <div className="grid grid-cols-1 gap-3 mb-8 text-left">
+                    <div className="grid grid-cols-1 gap-4 mb-12 text-left">
                         {[
-                            { icon: <History className="w-5 h-5 text-(--apple-blue)" />, text: "Infinite Cross-Device History" },
-                            { icon: <Zap className="w-5 h-5 text-(--apple-orange)" />, text: "Self-Learning AI Memory" },
-                            { icon: <Globe className="w-5 h-5 text-(--apple-green)" />, text: "Priority System Infrastructure" }
+                            { icon: <History className="w-5 h-5 text-[#0a84ff]" />, text: "Infinite Cross-Device Session History" },
+                            { icon: <Zap className="w-5 h-5 text-[#32d74b]" />, text: "Autonomous Multi-Fact Memory Engine" },
+                            { icon: <Globe className="w-5 h-5 text-[#5856d6]" />, text: "Tier-1 Dedicated Cloud Infrastructure" }
                         ].map((feat, i) => (
-                            <div key={i} className="flex items-center gap-4 p-5 rounded-3xl bg-(--surface) border-none">
-                                {feat.icon}
-                                <span className="text-[13px] font-bold text-gray-100">{feat.text}</span>
+                            <div key={i} className="flex items-center gap-5 p-6 rounded-[24px] bg-black/20 border border-white/5">
+                                <div className="shrink-0">{feat.icon}</div>
+                                <span className="text-[14px] font-bold text-white/72 tracking-tight">{feat.text}</span>
                             </div>
                         ))}
                     </div>
 
-                    <div className="flex flex-col gap-4">
-                        <button 
+                    <div className="flex flex-col gap-5">
+                        <Button 
                             onClick={() => { onAction(); }}
-                            className="w-full py-5 bg-white text-black font-bold rounded-2xl shadow-2xl hover:bg-gray-100 transition-all active:scale-95"
+                            size="lg"
+                            className="w-full py-8 text-lg shadow-2xl"
                         >
-                            Claim Workspace
-                        </button>
+                            Claim Pro Workspace
+                        </Button>
                         <button 
                             onClick={onClose}
-                            className="text-[10px] font-bold text-gray-600 hover:text-white uppercase tracking-widest transition-colors py-2"
+                            className="text-xs font-bold text-white/24 hover:text-white uppercase tracking-widest transition-colors py-2"
                         >
-                            I'll explore more first
+                            I'll continue as Guest
                         </button>
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-white/5">
-                        <p className="text-[8px] font-black text-gray-700 uppercase tracking-[0.3em] mb-4">Powered by Infrastructure From</p>
-                        <div className="flex justify-center gap-8 opacity-20 grayscale brightness-200">
-                             <span className="text-[10px] font-black tracking-tighter text-white italic">SambaNova</span>
-                             <span className="text-[10px] font-black tracking-tighter text-white italic">Vercel</span>
-                             <span className="text-[10px] font-black tracking-tighter text-white italic">Supabase</span>
+                    <div className="mt-12 pt-8 border-t border-white/8">
+                        <p className="text-[10px] font-bold text-white/24 uppercase tracking-[0.3em] mb-6">Engineered with precision</p>
+                        <div className="flex justify-center gap-10 opacity-30 grayscale contrast-125">
+                             <span className="text-[11px] font-black tracking-tight text-white italic">SAMBANOVA</span>
+                             <span className="text-[11px] font-black tracking-tight text-white italic">VERCEL</span>
+                             <span className="text-[11px] font-black tracking-tight text-white italic">SUPABASE</span>
                         </div>
                     </div>
                 </div>
@@ -1954,36 +1951,34 @@ function BigSignupModal({ onClose, onAction }: { onClose: () => void, onAction: 
 function EmptyState({ onCreateNew }: { onCreateNew: () => void }) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }} 
+      initial={{ opacity: 0, y: 30 }} 
       animate={{ opacity: 1, y: 0 }} 
-      transition={{ type: 'spring', damping: 28, stiffness: 220 }} 
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={0.1}
-      className="h-full flex flex-col items-center justify-center text-center space-y-6 md:space-y-8 px-6 max-w-2xl mx-auto py-10"
+      transition={{ type: 'spring', damping: 32, stiffness: 200 }} 
+      className="h-full flex flex-col items-center justify-center text-center space-y-12 px-8 max-w-3xl mx-auto py-20"
     >
       <div className="relative group hidden md:block">
-        <div className="w-24 h-24 squircle bg-(--apple-blue) flex items-center justify-center shadow-2xl relative z-10">
-          <Sparkles className="w-10 h-10 text-white" />
+        <div className="w-24 h-24 squircle bg-[#0a84ff] flex items-center justify-center shadow-2xl relative z-10">
+          <Sparkles className="w-12 h-12 text-white" />
         </div>
-        <div className="absolute inset-0 squircle bg-blue-500 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity animate-pulse" />
+        <div className="absolute inset-0 squircle bg-[#0a84ff] blur-3xl opacity-15 group-hover:opacity-30 transition-opacity animate-pulse" />
       </div>
 
-      <div className="space-y-2 md:space-y-4">
-        <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-white leading-tight">
-          Clear mind. <br/> <span className="text-(--apple-gray)">Complex flow.</span>
+      <div className="space-y-6">
+        <h2 className="text-5xl md:text-7xl font-bold tracking-tight text-white leading-[1.1]">
+          Clear mind. <br/> <span className="opacity-48 italic">Complex flow.</span>
         </h2>
-        <p className="hidden md:block text-base text-(--apple-gray) font-medium leading-relaxed max-w-lg mx-auto">
-          Welcome to your high-performance workspace. Your intelligent session is ready when you are.
+        <p className="hidden md:block text-xl text-white/48 font-medium leading-relaxed max-w-xl mx-auto tracking-tight">
+          Welcome to your high-performance workspace. <br/>
+          Your intelligent session is ready when you are.
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-         <Button onClick={onCreateNew} className="px-8 py-5 md:py-6 rounded-2xl bg-white text-black hover:bg-gray-200 font-bold transition-all active:scale-95 group shadow-xl">
-            <Plus className="w-4 h-4 mr-2 transition-transform group-hover:rotate-90" />
+      <div className="flex flex-col sm:flex-row gap-5 w-full justify-center pt-8">
+         <Button onClick={onCreateNew} size="lg" className="px-10 py-7 shadow-2xl group">
+            <Plus className="w-5 h-5 mr-3 transition-transform group-hover:rotate-90" />
             Start a New Thread
          </Button>
-         <Button variant="outline" onClick={() => (document.getElementById('tutorial-prompts') as HTMLElement)?.click()} className="hidden md:flex px-8 py-6 rounded-2xl border-white/10 hover:bg-white/5 text-white font-bold transition-all">
+         <Button variant="outline" size="lg" onClick={() => (document.getElementById('tutorial-prompts') as HTMLElement)?.click()} className="hidden md:flex px-10 py-7 rounded-full border-white/8 hover:bg-white/5 text-white shadow-xl">
             Browse Registry
          </Button>
       </div>
