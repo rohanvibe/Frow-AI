@@ -28,9 +28,9 @@ export async function POST(req: Request) {
         messages: [
           { 
             role: 'system', 
-            content: 'You are a title generator. Generate a short, 3-5 word creative and descriptive title for this conversation. Output ONLY the title, no quotes or punctuation at the end.' 
+            content: 'You are a professional session indexer. Generate a concise, 3-5 word high-impact title for this conversation based on the context. If the message is a simple greeting, infer a creative session name. Output ONLY the title. No quotes, no periods, no filler like "Title:".' 
           },
-          ...messages.slice(0, 3).map((m: any) => ({ role: m.role, content: m.content }))
+          ...messages.slice(0, 5).map((m: any) => ({ role: m.role, content: m.content }))
         ],
         max_tokens: 20
       })

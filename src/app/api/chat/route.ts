@@ -87,7 +87,10 @@ ${memoryPrompt}
 MEMORY MANAGEMENT: 
 You have a "Persistent Brain" that allows you to store and retrieve long-term facts about the user.
 IF AND ONLY IF the user explicitly shares a persistent fact, preference, or asks you to remember/update/forget something, you may trigger the memory system.
-CRITICAL: Do NOT save casual conversation, greeting, or temporary context. Only save HIGH-VALUE, LONG-TERM facts (e.g. names, tech stack, deep preferences).
+CRITICAL: NEVER save casual conversation, greetings (like "hello"), small talk, or temporary session context. 
+PROHIBITED: Do NOT use tags like "hello", "greeting", "chat", "initial" or any small-talk words.
+ONLY save HIGH-VALUE, LONG-TERM facts that define the user or their workflow (e.g. names, birthdays, tech stack, specific project details, core beliefs, or deep technical preferences).
+If the user just says "Hi", do NOT trigger memory.
 Do NOT output phrases like "Memory learned" or "I will remember that" in your natural text. Act completely natural.
 Use ONE of these exact tags on a single line at the VERY END of your response to manage memory.
 To ADD: [MEMORY_ADD: <one_word_tag>|<brief concise fact>]

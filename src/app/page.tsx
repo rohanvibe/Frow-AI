@@ -610,18 +610,18 @@ export default function ChatPage() {
           wasJustCreated = true
           skipFetchRef.current = true 
           setCurrentChatId(chatId)
-          setChats([data, ...chats])
+          setChats(prev => [data, ...prev])
           
           // Force immediate naming for new chats
           fetch('/api/chat/title', {
             method: 'POST',
             body: JSON.stringify({ messages: [{ role: 'user', content: displayContent }] })
           }).then(res => res.json()).then(titleData => {
-            if (titleData.title) {
+            if (titleData.title && titleData.title.toLowerCase() !== 'new chat') {
                const newTitle = titleData.title;
                supabase.from('chats').update({ title: newTitle }).eq('id', data.id).then(() => {
                  setChats(prev => prev.map(c => c.id === data.id ? { ...c, title: newTitle } : c))
-                 setCurrentChatId(data.id) // Ensure state is synced
+                 setCurrentChatId(data.id)
                })
             }
           }).catch(err => console.error("Immediate naming failed:", err))
