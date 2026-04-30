@@ -126,8 +126,11 @@ Use these tags on a single line at the VERY END of your response ONLY when neces
 
     // Tier-Based Model Routing Logic (Groq Free Tier)
     const prompt = (message || '').toLowerCase()
-    const complexKeywords = ['code', 'math', 'mermaid', 'diagram', 'draw', 'visualize', 'prove', 'solve', 'complex', 'analyze', 'search', 'latest', 'news', 'calculate', 'architecture']
-    const isComplex = complexKeywords.some(k => prompt.includes(k)) || prompt.length > 600
+    const complexKeywords = ['code', 'math', 'mermaid', 'diagram', 'draw', 'visualize', 'prove', 'solve', 'complex', 'analyze', 'search', 'latest', 'news', 'calculate', 'architecture', 'show', 'find']
+    
+    // Simple greetings should NEVER use tools or 70B to save quota and prevent "empty" responses
+    const isSimpleGreeting = (prompt.length < 15 && (prompt.includes('hello') || prompt.includes('hi') || prompt.includes('hey') || prompt.includes('hola'))) || prompt.length < 5
+    const isComplex = !isSimpleGreeting && (complexKeywords.some(k => prompt.includes(k)) || prompt.length > 500)
     
     // Model Selection
     const model70B = 'llama-3.3-70b-versatile'
@@ -161,8 +164,9 @@ Use these tags on a single line at the VERY END of your response ONLY when neces
       body: JSON.stringify({
         model: primaryModel,
         messages: apiMessages,
-        tools: tools,
-        tool_choice: 'auto',
+        // Only send tools if NOT a simple greeting
+        tools: isSimpleGreeting ? undefined : tools,
+        tool_choice: isSimpleGreeting ? undefined : 'auto',
         temperature: 0.1,
       })
     })
@@ -199,9 +203,9 @@ Use these tags on a single line at the VERY END of your response ONLY when neces
     const data = await aiResponse.json()
     const messageObj = data.choices[0].message
 
-    // Fallback for empty content (common with some tool-calling models)
+    // Fallback for empty content
     if (!messageObj.content && (!messageObj.tool_calls || messageObj.tool_calls.length === 0)) {
-       messageObj.content = "I'm ready. What would you like to build or analyze?"
+       messageObj.content = isSimpleGreeting ? "Hello! How can I help you build today?" : "I'm ready. What would you like to build or analyze?"
     }
 
     // Step 2: Handle Tool Calls
@@ -247,22 +251,24 @@ Use these tags on a single line at the VERY END of your response ONLY when neces
       return NextResponse.json({ content: messageObj.content })
     }
 
-    // If no tool was used but streaming is requested, we already have the full content from the non-streaming call.
-    // To maintain the "typing" effect on the frontend, we'll manually stream the content we already got.
     const encoder = new TextEncoder()
     const content = messageObj.content || ''
     
     const manualStream = new ReadableStream({
       async start(controller) {
-        const chunks = content.split(' ')
-        for (const chunk of chunks) {
-          controller.enqueue(encoder.encode(chunk + ' '))
-          await new Promise(r => setTimeout(r, 10)) // Simple typing simulation
+        // Stream character by character or word by word for better effect
+        const words = content.split(' ')
+        for (let i = 0; i < words.length; i++) {
+          controller.enqueue(encoder.encode(words[i] + (i === words.length - 1 ? '' : ' ')))
+          await new Promise(r => setTimeout(r, 15))
         }
         controller.close()
       }
     })
 
+    return new Response(manualStream, {
+      headers: { 'Content-Type': 'text/event-stream' }
+    })
     return new Response(manualStream, {
       headers: { 'Content-Type': 'text/event-stream' }
     })
