@@ -1365,9 +1365,20 @@ export default function ChatPage() {
                                        </div>
                                        
                                        {alt && (
-                                         <div className="px-8 py-5 bg-black/60 border-t border-white/5 backdrop-blur-xl flex justify-between items-center">
-                                           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 drop-shadow-sm">{alt}</p>
-                                           <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                                         <div className="px-8 py-5 bg-black/60 border-t border-white/5 backdrop-blur-xl flex justify-between items-center group/caption">
+                                           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 drop-shadow-sm line-clamp-1">{alt}</p>
+                                           <div className="flex items-center gap-4">
+                                              <a 
+                                                href={src as string} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="text-[9px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors flex items-center gap-1.5"
+                                              >
+                                                <span>Source</span>
+                                                <ExternalLink className="w-2.5 h-2.5" />
+                                              </a>
+                                              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                                           </div>
                                          </div>
                                        )}
                                      </div>
