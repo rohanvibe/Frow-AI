@@ -211,42 +211,82 @@ Use these tags on a single line at the VERY END of your response ONLY when neces
        messageObj.content = isSimpleGreeting ? "Hello! How can I help you build today?" : "I'm ready. What would you like to build or analyze?"
     }
 
-    // Step 2: Handle Tool Calls
+    // Step 2: Handle Tool Calls (Multiple)
     if (messageObj.tool_calls && messageObj.tool_calls.length > 0) {
-      const toolCall = messageObj.tool_calls[0]
-      if (toolCall.function.name === 'search_web') {
-        try {
-          const { query } = JSON.parse(toolCall.function.arguments)
-          const { searchWeb } = await import('@/utils/search')
-          const searchResult = await searchWeb(query)
+      const toolCalls = messageObj.tool_calls
+      apiMessages.push(messageObj)
 
-          apiMessages.push(messageObj)
-          apiMessages.push({
-            role: 'tool',
-            tool_call_id: toolCall.id,
-            name: 'search_web',
-            content: searchResult,
-          })
+      for (const toolCall of toolCalls) {
+        if (toolCall.function.name === 'search_web') {
+          try {
+            const { query } = JSON.parse(toolCall.function.arguments)
+            const { searchWeb } = await import('@/utils/search')
+            const searchResult = await searchWeb(query)
 
-          const finalResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
-            },
-            body: JSON.stringify({
-              model: model70B, 
-              messages: apiMessages,
-              stream: true
+            apiMessages.push({
+              role: 'tool',
+              tool_call_id: toolCall.id,
+              name: 'search_web',
+              content: searchResult,
             })
-          })
-
-          if (!finalResponse.ok) throw new Error('Groq final stream failed')
-          return handleStreaming(finalResponse)
-        } catch (e) {
-          console.error('Tool execution failed:', e)
+          } catch (e) {
+            console.error('Tool execution failed:', e)
+          }
         }
       }
+
+      // Final call after all tools are executed
+      const finalResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: model70B, 
+          messages: apiMessages,
+          stream: true
+        })
+      })
+
+      if (!finalResponse.ok) throw new Error('Groq final stream failed')
+      return handleStreaming(finalResponse)
+    }
+
+    // Step 2.5: Catch "hallucinated" text-based function calls (e.g. <function=...>)
+    const rawTagMatch = messageObj.content?.match(/<function=([^>]+)>/i)
+    if (rawTagMatch) {
+       console.log('Caught hallucinated function tag:', rawTagMatch[1])
+       try {
+         const tagContent = rawTagMatch[1]
+         const toolName = tagContent.split('{')[0].trim()
+         const toolArgs = tagContent.slice(toolName.length)
+         
+         if (toolName === 'search_web') {
+            const { query } = JSON.parse(toolArgs)
+            const { searchWeb } = await import('@/utils/search')
+            const searchResult = await searchWeb(query)
+            
+            apiMessages.push({ role: 'assistant', content: messageObj.content.replace(/<function=[^>]+>/g, '') })
+            apiMessages.push({ role: 'user', content: `Search Result for "${query}": ${searchResult}` })
+            
+            const finalResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+              },
+              body: JSON.stringify({
+                model: model70B, 
+                messages: apiMessages,
+                stream: true
+              })
+            })
+            return handleStreaming(finalResponse)
+         }
+       } catch (e) {
+         console.error('Hallucinated tag parsing failed:', e)
+       }
     }
 
     // Step 3: No tool used, just return content or stream
