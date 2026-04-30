@@ -119,11 +119,13 @@ function PythonSandbox({ code }: { code: string }) {
 }
 
 function Mermaid({ chart }: { chart: string }) {
-  const ref = useRef<HTMLDivElement>(null)
   const [svg, setSvg] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const render = async () => {
+      if (!chart) return
+      setError(null)
       try {
         mermaid.initialize({ 
           startOnLoad: false, 
@@ -131,16 +133,20 @@ function Mermaid({ chart }: { chart: string }) {
           securityLevel: 'loose'
         })
         const id = 'mermaid-' + Math.random().toString(36).substring(7)
-        const { svg: renderedSvg } = await mermaid.render(id, chart)
+        // Clean the chart code: remove any leading/trailing backticks or language tags
+        const cleanChart = chart.replace(/```mermaid\n?|```/g, '').trim()
+        const { svg: renderedSvg } = await mermaid.render(id, cleanChart)
         setSvg(renderedSvg)
-      } catch (err) {
+      } catch (err: any) {
         console.error('Mermaid render error:', err)
+        setError('Diagram has a syntax error. Retrying with simpler prompt might help.')
       }
     }
     render()
   }, [chart])
 
-  if (!svg) return <div className="p-4 text-xs text-gray-600 animate-pulse">Drawing diagram...</div>
+  if (error) return <div className="p-4 text-xs text-red-500 bg-red-500/10 rounded-xl border border-red-500/20 my-4">{error}</div>
+  if (!svg) return <div className="p-4 text-xs text-gray-600 animate-pulse bg-white/5 rounded-xl border border-white/5 my-4">Drawing diagram...</div>
 
   return (
     <div 
