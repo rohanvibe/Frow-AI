@@ -253,39 +253,49 @@ Use these tags on a single line at the VERY END of your response ONLY when neces
       return handleStreaming(finalResponse)
     }
 
-    // Step 2.5: Catch "hallucinated" text-based function calls (e.g. <function=...>)
-    const rawTagMatch = messageObj.content?.match(/<function=([^>]+)>/i)
-    if (rawTagMatch) {
-       console.log('Caught hallucinated function tag:', rawTagMatch[1])
-       try {
-         const tagContent = rawTagMatch[1]
-         const toolName = tagContent.split('{')[0].trim()
-         const toolArgs = tagContent.slice(toolName.length)
+    // Step 2.5: Catch "hallucinated" text-based function calls (Multiple)
+    const rawTags = [...(messageObj.content || '').matchAll(/<function=([\s\S]*?)<\/function>/gi)]
+    if (rawTags.length > 0) {
+       console.log(`Caught ${rawTags.length} hallucinated function tags`)
+       let strippedContent = messageObj.content || ''
+       let combinedSearchResults = ''
+
+       for (const match of rawTags) {
+         const tagContent = match[1]
+         strippedContent = strippedContent.replace(match[0], '')
          
-         if (toolName === 'search_web') {
-            const { query } = JSON.parse(toolArgs)
-            const { searchWeb } = await import('@/utils/search')
-            const searchResult = await searchWeb(query)
-            
-            apiMessages.push({ role: 'assistant', content: messageObj.content.replace(/<function=[^>]+>/g, '') })
-            apiMessages.push({ role: 'user', content: `Search Result for "${query}": ${searchResult}` })
-            
-            const finalResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
-              },
-              body: JSON.stringify({
-                model: model70B, 
-                messages: apiMessages,
-                stream: true
-              })
-            })
-            return handleStreaming(finalResponse)
+         try {
+           const toolName = tagContent.split('{')[0].trim()
+           const toolArgs = tagContent.slice(toolName.length)
+           
+           if (toolName === 'search_web') {
+              const { query } = JSON.parse(toolArgs)
+              const { searchWeb } = await import('@/utils/search')
+              const searchResult = await searchWeb(query)
+              combinedSearchResults += `\n\nSEARCH RESULT FOR "${query}":\n${searchResult}`
+           }
+         } catch (e) {
+           console.error('Hallucinated tag parsing failed:', e)
          }
-       } catch (e) {
-         console.error('Hallucinated tag parsing failed:', e)
+       }
+
+       if (combinedSearchResults) {
+          apiMessages.push({ role: 'assistant', content: strippedContent })
+          apiMessages.push({ role: 'user', content: `USE THESE REAL SEARCH RESULTS TO PROVIDE LINKS AND IMAGES IN YOUR FINAL RESPONSE. DO NOT SAY "I CAN'T PROVIDE LINKS": ${combinedSearchResults}` })
+          
+          const finalResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: model70B, 
+              messages: apiMessages,
+              stream: true
+            })
+          })
+          return handleStreaming(finalResponse)
        }
     }
 
