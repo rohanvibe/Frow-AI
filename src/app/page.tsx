@@ -130,16 +130,33 @@ function Mermaid({ chart }: { chart: string }) {
         mermaid.initialize({ 
           startOnLoad: false, 
           theme: 'dark',
-          securityLevel: 'loose'
+          securityLevel: 'loose',
+          fontFamily: 'Inter, system-ui, sans-serif'
         })
         const id = 'mermaid-' + Math.random().toString(36).substring(7)
-        // Clean the chart code: remove any leading/trailing backticks or language tags
-        const cleanChart = chart.replace(/```mermaid\n?|```/g, '').trim()
+        
+        // --- DEFENSIVE AUTO-FIX ENGINE ---
+        let cleanChart = chart.replace(/```mermaid\n?|```/g, '').trim()
+        
+        // 1. Header Fallback (Default to graph TD if missing)
+        const validHeaders = ['graph', 'flowchart', 'sequenceDiagram', 'gantt', 'classDiagram', 'stateDiagram', 'erDiagram', 'journey', 'pie', 'gitGraph', 'mindmap', 'timeline', 'quadrantChart', 'sankey', 'xychart']
+        const firstWord = cleanChart.split(/[\s\n]/)[0]
+        if (!validHeaders.includes(firstWord)) {
+           cleanChart = 'graph TD\n' + cleanChart
+        }
+
+        // 2. Fix unquoted labels with special characters (common LLM failure)
+        // Matches Node[Label (Text)] and converts to Node["Label (Text)"]
+        cleanChart = cleanChart.replace(/([\[\(\{])\s*([^"\]\)\}]*?[\(\)\{\}\[\]].*?)\s*([\]\)\}])/g, '$1"$2"$3')
+
+        // 3. Strip out any trailing junk or comments that might confuse the parser
+        cleanChart = cleanChart.split('\n').filter(line => !line.trim().startsWith('```')).join('\n')
+
         const { svg: renderedSvg } = await mermaid.render(id, cleanChart)
         setSvg(renderedSvg)
       } catch (err: any) {
         console.error('Mermaid render error:', err)
-        setError('Diagram has a syntax error. Retrying with simpler prompt might help.')
+        setError('Diagram has a syntax error. I will attempt to re-render in a simpler format next time.')
       }
     }
     render()

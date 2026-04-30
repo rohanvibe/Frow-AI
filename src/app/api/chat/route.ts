@@ -85,7 +85,10 @@ export async function POST(req: Request) {
 - If a simpler word exists, use it. (e.g., use "help" instead of "facilitate").
 - ALWAYS use Markdown formatting. Use bold text, lists, and headings to make your answers easy to read. Markdown is your default way of writing.
 - **Visuals**: Use Mermaid diagrams for architecture or workflows. 
-  - **MERMAID TIPS**: Use quotes for node labels with special characters (e.g. \`A["Start (v1)"]\`). Keep diagrams simple and always start with a type like \`graph TD\`.
+  - **MERMAID GOLD STANDARD**: 
+    1. ALWAYS start with an explicit type like \`graph TD\` or \`flowchart LR\`.
+    2. ALWAYS wrap node labels in double quotes (e.g., \`A["My Process (v1)"]\`). This is the #1 way to prevent syntax errors.
+    3. Keep diagrams simple and linear. Avoid complex nesting.
 - **CRITICAL**: Unless the user specifically asks for photos with people, always find and show "clean" images (product-only, flat lays, or scenery) that **do NOT contain people**.
 - This makes your examples much clearer and easier to use.
 
