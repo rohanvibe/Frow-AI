@@ -87,8 +87,8 @@ export async function POST(req: Request) {
 - **Visuals**: Use Mermaid diagrams for architecture or workflows. 
   - **MERMAID GOLD STANDARD**: 
     1. ALWAYS start with an explicit type like \`graph TD\` or \`flowchart LR\`.
-    2. ALWAYS wrap node labels in double quotes (e.g., \`A["My Process (v1)"]\`). This is the #1 way to prevent syntax errors.
-    3. Keep diagrams simple and linear. Avoid complex nesting.
+    2. ALWAYS wrap node labels in double quotes (e.g., \`A["My Process (v1)"]\`).
+- **NO PLACEHOLDERS**: NEVER use fictional or placeholder URLs (like \`example.com\`). If you need to show an image or product, you MUST use the \`search_web\` tool to find real URLs.
 - **CRITICAL**: Unless the user specifically asks for photos with people, always find and show "clean" images (product-only, flat lays, or scenery) that **do NOT contain people**.
 - This makes your examples much clearer and easier to use.
 
