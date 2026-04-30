@@ -703,6 +703,15 @@ export default function ChatPage() {
     if (!displayContent.trim() || loading) return
     if (!user && !isGuest) return
 
+    // Add user message immediately
+    const tempUserMsg: Message = {
+      id: Math.random().toString(),
+      chat_id: currentChatId || '',
+      role: 'user',
+      content: displayContent,
+      created_at: new Date().toISOString()
+    }
+
     let finalPrompt = displayContent
     if (attachedFile) {
       finalPrompt = `[FILE CONTEXT: ${attachedFile.name}]\n\`\`\`\n${attachedFile.content}\n\`\`\`\n\n${displayContent}`
@@ -721,6 +730,7 @@ export default function ChatPage() {
       trackEvent('chat_started', { method: 'auto' })
       if (isGuest) {
         chatId = 'guest-session-' + Date.now()
+        tempUserMsg.chat_id = chatId
         setCurrentChatId(chatId)
       } else {
         const { data } = await supabase
@@ -730,26 +740,31 @@ export default function ChatPage() {
           .single()
         if (data) {
           chatId = data.id
+          tempUserMsg.chat_id = data.id as string
           wasJustCreated = true
           skipFetchRef.current = true 
           setCurrentChatId(chatId)
           setChats(prev => [data, ...prev])
-          
-          // Force immediate naming for new chats
-          fetch('/api/chat/title', {
-            method: 'POST',
-            body: JSON.stringify({ messages: [{ role: 'user', content: displayContent }] })
-          }).then(res => res.json()).then(titleData => {
-            if (titleData.title && titleData.title.toLowerCase() !== 'new chat') {
-               const newTitle = titleData.title;
-               supabase.from('chats').update({ title: newTitle }).eq('id', data.id).then(() => {
-                 setChats(prev => prev.map(c => c.id === data.id ? { ...c, title: newTitle } : c))
-                 setCurrentChatId(data.id)
-               })
-            }
-          }).catch(err => console.error("Immediate naming failed:", err))
         } else return
       }
+    }
+
+    // Force immediate naming for new chats or if the current title is poor
+    const currentChat = chats.find(c => c.id === chatId)
+    const isPoorTitle = !currentChat || currentChat.title === 'New Chat' || currentChat.title.toLowerCase().includes('help') || currentChat.title.toLowerCase().includes('ai')
+    
+    if (wasJustCreated || isPoorTitle) {
+      fetch('/api/chat/title', {
+        method: 'POST',
+        body: JSON.stringify({ messages: [...messages, tempUserMsg].slice(-5) })
+      }).then(res => res.json()).then(titleData => {
+        if (titleData.title && titleData.title.toLowerCase() !== 'new chat' && !titleData.title.toLowerCase().includes('help')) {
+           const newTitle = titleData.title;
+           supabase.from('chats').update({ title: newTitle }).eq('id', chatId!).then(() => {
+             setChats(prev => prev.map(c => c.id === chatId ? { ...c, title: newTitle } : c))
+           })
+        }
+      }).catch(err => console.error("Naming failed:", err))
     }
 
     setInput('')
@@ -761,14 +776,6 @@ export default function ChatPage() {
     trackEvent('chat_sent', { isGuest, model: modelType })
     abortControllerRef.current = new AbortController()
 
-    // Add user message
-    const tempUserMsg: Message = {
-      id: Math.random().toString(),
-      chat_id: chatId!,
-      role: 'user',
-      content: displayContent,
-      created_at: new Date().toISOString()
-    }
     setMessages(prev => [...prev, tempUserMsg])
     
     // Start DB insert in parallel
