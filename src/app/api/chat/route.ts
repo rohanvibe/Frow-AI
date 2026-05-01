@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 - **Visuals**: ALWAYS use Markdown syntax for images: \`![alt text](url)\`.
 - **CRITICAL**: Place every image on its own **SEPARATE NEW LINE** for maximum visibility.
 - **Tool Selection**: ALWAYS use the \`search_images\` tool when the user asks for a picture, photo, or visual of something (including specific cars, brands, or aesthetic shots). DO NOT use \`search_web\` for image requests.
-- **Visual Sourcing**: Only use URLs from the \`[VERIFIED IMAGES FOUND]\` or \`[VERIFIED IMAGES FOUND FROM PEXELS]\` section of your search results for your Markdown image tags \`![alt](image_url)\`. Never use a standard webpage URL for an image.
+- **Visual Sourcing**: Only use URLs from the \`[VERIFIED IMAGES FOUND]\` or \`[VERIFIED IMAGES FOUND FROM PEXELS]\` blocks. For Pexels, ALWAYS include the provided attribution inside the Markdown title attribute: \`![alt](url "Attribution Text")\`. Never use a standard webpage URL for an image.
 - **Product Links**: Always pair the image with the corresponding webpage URL from the search results as the direct source/purchase link.
 - **Visual Fallback**: If multiple images exist, choose ones that end in \`.jpg\` or \`.png\` for better reliability.
 

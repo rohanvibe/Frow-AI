@@ -1323,11 +1323,11 @@ export default function ChatPage() {
                                   </div>
                                 ),
                                 th: ({ children }) => <th className="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 bg-white/5 whitespace-nowrap">{children}</th>,
-                                td: ({ children }) => <td className="px-6 py-4 text-sm border-t border-white/5 text-gray-300 whitespace-nowrap min-w-[120px]">{children}</td>,
-                                ul: ({ children }) => <ul className="list-disc pl-5 space-y-2 mb-4 wrap-break-word">{children}</ul>,
-                                ol: ({ children }) => <ol className="list-decimal pl-5 space-y-2 mb-4 wrap-break-word">{children}</ol>,
-                                li: ({ children }) => <li className="leading-relaxed wrap-break-word">{children}</li>,
-                                img: ({ src, alt }) => {
+                                 td: ({ children }) => <td className="px-6 py-4 text-sm border-t border-white/5 text-gray-300 whitespace-nowrap min-w-[120px]">{children}</td>,
+                                 ul: ({ children }) => <ul className="list-disc pl-5 space-y-2 mb-4 wrap-break-word">{children}</ul>,
+                                 ol: ({ children }) => <ol className="list-decimal pl-5 space-y-2 mb-4 wrap-break-word">{children}</ol>,
+                                 li: ({ children }) => <li className="leading-relaxed wrap-break-word">{children}</li>,
+                                 img: ({ src, alt, title }: any) => {
                                    const [isLoaded, setIsLoaded] = useState(false);
                                    const [hasError, setHasError] = useState(false);
                                    
@@ -1351,7 +1351,7 @@ export default function ChatPage() {
                                            </div>
                                          ) : (
                                            <img 
-                                             src={src} 
+                                             src={`/api/proxy-image?url=${encodeURIComponent(src as string)}`} 
                                              alt={alt || 'Visual content'} 
                                              onLoad={() => setIsLoaded(true)}
                                              onError={() => setHasError(true)}
@@ -1366,7 +1366,10 @@ export default function ChatPage() {
                                        
                                        {alt && (
                                          <div className="px-8 py-5 bg-black/60 border-t border-white/5 backdrop-blur-xl flex justify-between items-center group/caption">
-                                           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 drop-shadow-sm line-clamp-1">{alt}</p>
+                                           <div className="flex flex-col gap-1">
+                                             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 drop-shadow-sm line-clamp-1">{alt}</p>
+                                             {title && <p className="text-[8px] font-medium text-white/30 uppercase tracking-widest">{title}</p>}
+                                           </div>
                                            <div className="flex items-center gap-4">
                                               <a 
                                                 href={src as string} 

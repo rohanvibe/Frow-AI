@@ -71,36 +71,32 @@ export async function searchWeb(query: string) {
 }
 
 export async function searchImages(query: string) {
-  const apiKey = process.env.PEXELS_API_KEY;
-  if (!apiKey) {
-    return "Image search is disabled. Please add PEXELS_API_KEY to your environment variables.";
-  }
+  const pexelsKey = process.env.PEXELS_API_KEY;
+  if (!pexelsKey) return "Image search is disabled. Please add PEXELS_API_KEY.";
 
   try {
-    const response = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=3`, {
-      headers: {
-        Authorization: apiKey
-      }
-    });
-
-    if (!response.ok) {
-      return `Image search failed with status ${response.status}`;
-    }
-
-    const data = await response.json();
+    // RACE CONDITION: Start Pexels and Tavily simultaneously to minimize latency
+    const pexelsPromise = fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=3`, {
+      headers: { Authorization: pexelsKey }
+    }).then(res => res.json());
     
-    if (!data.photos || data.photos.length === 0) {
-      console.log(`[Pexels] No results for "${query}". Falling back to Web Search...`);
-      return await searchWeb(query);
+    const webSearchPromise = searchWeb(query);
+
+    const pexelsData = await pexelsPromise;
+    
+    if (pexelsData.photos && pexelsData.photos.length > 0) {
+      const imagesStr = pexelsData.photos.map((photo: any) => {
+        // We pass the credit in the title attribute for the frontend to pick up
+        const credit = `Photo by ${photo.photographer} on Pexels`;
+        return `Image URL: ${photo.src.large}\nSource Page: ${photo.url}\nAlt Text: ${photo.alt || query}\nAttribution: ${credit}`;
+      }).join('\n\n');
+      return `[VERIFIED IMAGES FOUND FROM PEXELS]:\n\n${imagesStr}`;
     }
 
-    const imagesStr = data.photos.map((photo: any) => {
-      return `Image URL: ${photo.src.large}\nSource Page: ${photo.url}\nAlt Text: ${photo.alt || query}`;
-    }).join('\n\n');
-
-    return `[VERIFIED IMAGES FOUND FROM PEXELS]:\n\n${imagesStr}`;
+    console.log(`[Pexels] No results for "${query}". Falling back to Web Search results...`);
+    return await webSearchPromise;
   } catch (error) {
-    console.error('Pexels API Error:', error);
+    console.error('Image Search Error:', error);
     return "An error occurred during image search.";
   }
 }
