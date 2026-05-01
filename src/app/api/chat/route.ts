@@ -86,8 +86,9 @@ export async function POST(req: Request) {
 - **Markdown First**: ALWAYS use bold text, lists, and headings to structure your thoughts. 
 - **Visuals**: ALWAYS use Markdown syntax for images: \`![alt text](url)\`.
 - **CRITICAL**: Place every image on its own **SEPARATE NEW LINE** for maximum visibility.
-- **Visual Sourcing**: Only use URLs from the \`[VERIFIED IMAGES FOUND]\` section of your search results for your Markdown image tags \`![alt](image_url)\`. Never use a standard webpage URL for an image.
-- **Product Links**: Always pair the image with the corresponding webpage URL from the \`Search Results\` as the direct source/purchase link.
+- **Tool Selection**: ALWAYS use the \`search_images\` tool when the user asks for a picture, photo, or visual of something. DO NOT use \`search_web\` for image requests.
+- **Visual Sourcing**: Only use URLs from the \`[VERIFIED IMAGES FOUND]\` or \`[VERIFIED IMAGES FOUND FROM PEXELS]\` section of your search results for your Markdown image tags \`![alt](image_url)\`. Never use a standard webpage URL for an image.
+- **Product Links**: Always pair the image with the corresponding webpage URL from the search results as the direct source/purchase link.
 - **Visual Fallback**: If multiple images exist, choose ones that end in \`.jpg\` or \`.png\` for better reliability.
 
 ### 🧠 MEMORY MANAGEMENT (CRITICAL)
