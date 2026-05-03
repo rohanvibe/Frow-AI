@@ -74,23 +74,52 @@ import { FeedbackWidget } from '@/components/FeedbackWidget'
 
 // --- Premium Components ---
 
+// Global Pyodide instance to prevent multiple heavy WASM initializations
+let globalPyodide: any = null;
+
 function PythonSandbox({ code }: { code: string }) {
   const [output, setOutput] = useState<string>('')
   const [isRunning, setIsRunning] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const runCode = async () => {
     setIsRunning(true)
     setError(null)
     try {
-      // @ts-ignore
-      const pyodide = await window.loadPyodide()
-      const result = await pyodide.runPythonAsync(code)
-      setOutput(String(result))
+      if (!globalPyodide) {
+        setIsInitializing(true)
+        // @ts-ignore
+        if (typeof window.loadPyodide === 'undefined') {
+          throw new Error('Python engine (Pyodide) not loaded yet. Please wait a moment and try again.')
+        }
+        // @ts-ignore
+        globalPyodide = await window.loadPyodide({
+          indexURL: "https://cdn.jsdelivr.net/pyodide/v0.23.4/full/"
+        })
+        setIsInitializing(false)
+      }
+
+      // Capture stdout
+      let logs = ''
+      globalPyodide.setStdout({
+        batched: (str: string) => { logs += str + '\n' }
+      })
+
+      const result = await globalPyodide.runPythonAsync(code)
+      
+      // If result is not undefined, show it, otherwise show captured logs
+      if (result !== undefined) {
+        setOutput(logs + String(result))
+      } else {
+        setOutput(logs || 'Execution complete (no output).')
+      }
     } catch (err: any) {
+      console.error('Python execution error:', err)
       setError(err.message)
     } finally {
       setIsRunning(false)
+      setIsInitializing(false)
     }
   }
 
@@ -98,24 +127,31 @@ function PythonSandbox({ code }: { code: string }) {
     <div className="my-6 rounded-(--radius-lg) bg-(--surface) border border-(--border-color) overflow-hidden shadow-2xl">
       <div className="px-4 py-3 bg-(--surface-secondary) border-b border-(--border-color) flex items-center justify-between">
         <div className="flex items-center gap-2">
-           <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-           <span className="text-[10px] font-black uppercase tracking-widest text-(--apple-gray)">Python Sandbox</span>
+           <div className={`w-2 h-2 rounded-full ${isInitializing ? 'bg-blue-500 animate-pulse' : isRunning ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`} />
+           <span className="text-[10px] font-black uppercase tracking-widest text-(--apple-gray)">
+             {isInitializing ? 'Initializing Python...' : isRunning ? 'Python Executing...' : 'Python 3.11 Sandbox'}
+           </span>
         </div>
         <Button 
           size="sm" 
           onClick={runCode} 
-          disabled={isRunning}
-          className="h-8 rounded-full bg-(--foreground) text-(--background) hover:opacity-90 text-[10px] font-black uppercase px-4 transition-all"
+          disabled={isRunning || isInitializing}
+          className="h-8 rounded-full bg-(--foreground) text-(--background) hover:opacity-90 text-[10px] font-black uppercase px-4 transition-all shadow-sm active:scale-95"
         >
-          {isRunning ? 'Running...' : 'Execute Code'}
+          {isInitializing ? 'Loading...' : isRunning ? 'Running...' : 'Execute Code'}
         </Button>
       </div>
-      <div className="p-4 text-[13px] font-mono text-(--foreground) bg-(--background)/20 max-h-[300px] overflow-y-auto">
-        {output && <div className="text-(--apple-blue) mb-2 font-bold uppercase tracking-widest text-[9px]">Output:</div>}
-        {output && <pre className="whitespace-pre-wrap">{output}</pre>}
-        {error && <div className="text-red-500 mb-2 font-bold uppercase tracking-widest text-[9px]">Error:</div>}
-        {error && <pre className="whitespace-pre-wrap text-red-400">{error}</pre>}
-        {!output && !error && <span className="text-(--apple-gray) italic opacity-50">No output yet. Click execute to run.</span>}
+      <div className="p-5 text-[13px] font-mono text-(--foreground) bg-(--background)/40 max-h-[400px] overflow-y-auto custom-scrollbar">
+        {output && <div className="text-(--apple-blue) mb-3 font-bold uppercase tracking-widest text-[9px] flex items-center gap-2"><CheckCircle2 className="w-3 h-3" /> Console Output:</div>}
+        {output && <pre className="whitespace-pre-wrap leading-relaxed opacity-90">{output}</pre>}
+        {error && <div className="text-red-500 mb-3 font-bold uppercase tracking-widest text-[9px] flex items-center gap-2"><X className="w-3 h-3" /> Execution Error:</div>}
+        {error && <pre className="whitespace-pre-wrap text-red-400 bg-red-500/5 p-3 rounded-lg border border-red-500/10">{error}</pre>}
+        {!output && !error && (
+          <div className="flex flex-col items-center justify-center py-8 opacity-30">
+            <Zap className="w-8 h-8 mb-2" />
+            <span className="text-[11px] font-bold uppercase tracking-widest">Isolated Environment Ready</span>
+          </div>
+        )}
       </div>
     </div>
   )
