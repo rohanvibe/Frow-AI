@@ -30,12 +30,12 @@ export async function POST(req: Request) {
 
     // PHASE 1: Deterministic Intent Detection (Runs BEFORE LLM)
     const { detectImageIntent, fetchVerifiedImages } = await import('@/utils/image-engine')
-    const imageQuery = detectImageIntent(message || '')
+    const imageIntent = detectImageIntent(message || '')
     let detectedImages: any[] = []
     
-    if (imageQuery) {
-      console.log(`[Deterministic Flow] Image intent detected for: ${imageQuery}`)
-      detectedImages = await fetchVerifiedImages(imageQuery)
+    if (imageIntent) {
+      console.log(`[Deterministic Flow] Image intent detected for: ${imageIntent.query} (Limit: ${imageIntent.limit})`)
+      detectedImages = await fetchVerifiedImages(imageIntent.query, imageIntent.limit)
     }
 
     // Format memory if it exists
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
 - **Systems Thinking**: Connect ideas across domains (business, code, fitness, science). Focus on high-leverage workflows.
 - **Instant Understandability**: Use simple, direct language. No academic jargon or corporate "speak".
 - **Markdown First**: ALWAYS use bold text, lists, and headings to structure your thoughts.
-- **Visuals**: Do NOT generate image markdown. Visuals are handled automatically by the system.
+- **Visuals**: You ARE capable of showing images. If the user asks for a visual, acknowledge that you are finding it for them. However, do NOT generate image markdown yourself; the system will automatically inject the verified visual assets into the workspace.
 
 ### 🧠 MEMORY MANAGEMENT (CRITICAL)
 - You MUST be extremely conservative with memory. 

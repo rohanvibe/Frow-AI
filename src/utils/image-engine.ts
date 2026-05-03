@@ -20,19 +20,51 @@ export interface ImageEngineResponse {
 const imageCache = new Map<string, { data: ImageResult[], timestamp: number }>();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
+export interface ImageIntent {
+  query: string;
+  limit: number;
+}
+
 /**
  * PHASE 1: Intent Detection
- * Simple but robust keyword + pattern matching to detect image requests.
+ * Detects search query and requested quantity from user message.
  */
-export function detectImageIntent(message: string): string | null {
+export function detectImageIntent(message: string): ImageIntent | null {
   const msg = message.toLowerCase();
   
+  // 1. Determine Quantity Limit
+  let limit = 3; // Default for plural "images"
+  
+  const singlePatterns = [
+    /\b(?:a|an|one|single|the|a single)\s+(?:picture|image|photo|visual)\b/i,
+    /\b(?:picture|image|photo|visual)\s+of\b/i, // "image of bugatti" (singular by implication)
+  ];
+
+  if (singlePatterns.some(p => p.test(msg))) {
+    limit = 1;
+  } else {
+    // Check for explicit numbers
+    const numMatch = msg.match(/\b(\d+)\s+(?:images?|photos?|pictures?|visuals?|galleries)\b/i);
+    if (numMatch) {
+      limit = Math.min(Math.max(parseInt(numMatch[1]), 1), 10);
+    } else {
+      const wordNums: Record<string, number> = { 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'several': 4, 'few': 2, 'many': 6, 'gallery': 5 };
+      for (const [word, val] of Object.entries(wordNums)) {
+        if (msg.includes(word)) {
+          limit = val;
+          break;
+        }
+      }
+    }
+  }
+
+  // 2. Extract Query
   const patterns = [
-    /show me (?:a |an |the )?(?:picture|image|photo|visual) of (.+)/i,
+    /show me (?:a |an |the |some |several )?(?:picture|image|photo|visual|gallery) of (.+)/i,
     /what does (.+) look like/i,
-    /find (?:a |an |the )?(?:picture|image|photo) of (.+)/i,
-    /search (?:for )?(?:a |an |the )?(?:picture|image|photo) of (.+)/i,
-    /get (?:me )?(?:a |an |the )?(?:picture|image|photo) of (.+)/i,
+    /find (?:a |an |the |some |several )?(?:picture|image|photo|visual) of (.+)/i,
+    /search (?:for )?(?:a |an |the |some |several )?(?:picture|image|photo) of (.+)/i,
+    /get (?:me )?(?:a |an |the |some |several )?(?:picture|image|photo) of (.+)/i,
     /images? of (.+)/i,
     /photos? of (.+)/i,
     /pictures? of (.+)/i,
@@ -45,18 +77,17 @@ export function detectImageIntent(message: string): string | null {
   for (const pattern of patterns) {
     const match = msg.match(pattern);
     if (match && match[1]) {
-      return match[1].trim();
+      return { query: match[1].trim(), limit };
     }
   }
 
   // Fallback for simple "bugatti image" or "bugatti photo"
   const keywords = ['image', 'photo', 'picture', 'show', 'gallery', 'visual'];
   if (keywords.some(k => msg.includes(k))) {
-     // Clean up common noise
      const query = msg
-       .replace(/\b(?:image|photo|picture|show|me|of|a|an|the|find|search|get|gallery|visual|visuals)\b/gi, '')
+       .replace(/\b(?:image|photo|picture|show|me|of|a|an|the|find|search|get|gallery|visual|visuals|some|several|many|few)\b/gi, '')
        .trim();
-     if (query.length > 2) return query;
+     if (query.length > 2) return { query, limit };
   }
 
   return null;
