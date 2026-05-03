@@ -1468,34 +1468,47 @@ export default function ChatPage() {
                                   <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400">Verified Visual Assets</span>
                                </div>
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  {msg.images.map((img: any, idx: number) => (
-                                    <div key={idx} className="group/img relative rounded-3xl overflow-hidden border border-white/10 bg-white/2 shadow-2xl transition-all duration-500 hover:border-blue-500/40 hover:shadow-blue-500/20">
-                                      <div className="relative aspect-video overflow-hidden bg-white/5">
-                                        <img 
-                                          src={`/api/proxy-image?url=${encodeURIComponent(img.url)}`}
-                                          alt={img.alt}
-                                          className="w-full h-full object-cover transition-all duration-700 group-hover/img:scale-110"
-                                          loading="lazy"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover/img:opacity-40 transition-opacity" />
-                                      </div>
-                                      <div className="absolute bottom-0 inset-x-0 p-5 backdrop-blur-md bg-black/40 border-t border-white/5 flex flex-col gap-1 translate-y-2 group-hover/img:translate-y-0 transition-transform">
-                                        <p className="text-[11px] font-black uppercase tracking-widest text-white drop-shadow-md truncate">{img.alt}</p>
-                                        <div className="flex items-center justify-between mt-1">
-                                           <span className="text-[9px] font-medium text-gray-400 uppercase tracking-widest">{img.attribution || 'Visual Resource'}</span>
-                                           <a 
-                                             href={img.source} 
-                                             target="_blank" 
-                                             rel="noopener noreferrer"
-                                             className="text-[9px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1"
-                                           >
-                                             Source <ExternalLink className="w-2.5 h-2.5" />
-                                           </a>
+                               <div className="flex flex-col gap-12">
+                                  {msg.images.map((img: any, idx: number) => {
+                                    const aspectRatio = img.width && img.height ? img.width / img.height : 16/10;
+                                    const maxWidth = img.width ? `${Math.min(img.width, 1200)}px` : '100%';
+                                    
+                                    return (
+                                      <div 
+                                        key={idx} 
+                                        style={{ maxWidth }}
+                                        className="group/img relative rounded-3xl overflow-hidden border border-(--border-color) bg-(--surface) shadow-2xl transition-all duration-500 hover:border-blue-500/40 hover:shadow-blue-500/20 mx-auto w-full"
+                                      >
+                                        <div 
+                                          className="relative overflow-hidden bg-(--surface-secondary)"
+                                          style={{ aspectRatio: aspectRatio.toString() }}
+                                        >
+                                          <img 
+                                            src={`/api/proxy-image?url=${encodeURIComponent(img.url)}`}
+                                            alt={img.alt}
+                                            className="w-full h-full object-cover transition-all duration-1000 group-hover/img:scale-105"
+                                            loading="lazy"
+                                          />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover/img:opacity-60 transition-opacity" />
+                                          
+                                          <div className="absolute bottom-0 inset-x-0 p-8 flex flex-col gap-2 translate-y-2 group-hover/img:translate-y-0 transition-transform">
+                                            <p className="text-[14px] font-black uppercase tracking-[0.2em] text-white drop-shadow-2xl line-clamp-2">{img.alt}</p>
+                                            <div className="flex items-center justify-between mt-2 border-t border-white/10 pt-4">
+                                               <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">{img.attribution || 'Visual Resource'}</span>
+                                               <a 
+                                                 href={img.source} 
+                                                 target="_blank" 
+                                                 rel="noopener noreferrer"
+                                                 className="text-[10px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-sm"
+                                               >
+                                                 Source <ExternalLink className="w-3 h-3" />
+                                               </a>
+                                            </div>
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  ))}
+                                    );
+                                  })}
                                </div>
                             </div>
                           )}
