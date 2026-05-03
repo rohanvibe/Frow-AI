@@ -28,13 +28,13 @@
 .dark {
   --background: #000000;
   --foreground: #FFFFFF;
-  --surface: #272729;
-  --surface-secondary: #2a2a2c;
-  --surface-tertiary: #252527;
+  --surface: #000000;
+  --surface-secondary: #000000;
+  --surface-tertiary: #1c1c1e;
   --apple-blue: #2997ff;
   --apple-blue-hover: #0066cc;
-  --glass-bg: rgba(39, 39, 41, 0.8);
-  --border-color: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(0, 0, 0, 0.8);
+  --border-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Apple Design Language - Clarity & Breathing Room */
