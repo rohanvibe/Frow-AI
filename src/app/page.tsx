@@ -409,6 +409,8 @@ type Prompt = {
 export default function ChatPage() {
   const cleanDisplayContent = (content: string) => {
     return content
+      .replace(/\[METADATA\][\s\S]*?\[\/METADATA\]/g, '') // Clean visual metadata
+      .replace(/<expression>(.*?)<\/expression>/gi, '\n```calculator\n$1\n```\n') // Fail-safe for literal tags
       .replace(/\[MEMORY_(ADD|LEARNED|EDIT|DELETE):.*?\]/gi, '')
       .replace(/\n[a-z]+\|.*$/i, '')
       .trim()

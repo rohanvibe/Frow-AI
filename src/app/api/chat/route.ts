@@ -107,9 +107,9 @@ ${memoryPrompt}
 1. **Visual Engine**: Handled automatically. Do NOT generate image markdown.
 2. **Interactive Calculator**: You MUST use the calculator for ALL mathematical operations. 
    - **Rule**: Do NOT provide the numerical result in your text response. Let the calculator show the answer.
-   - **Format**:
+   - **Format (Triple Backticks)**:
    \`\`\`calculator
-   <expression>
+   518 * 12 - 24 + 56
    \`\`\`
 3. **Python Sandbox**: For simulations or scripts, use:
    \`\`\`python
