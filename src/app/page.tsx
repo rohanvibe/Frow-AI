@@ -440,7 +440,7 @@ function ShieldCheck(props: any) {
 }
 
 // Types
-type Message = {
+export type Message = {
   id: string
   chat_id: string
   role: 'user' | 'assistant'
@@ -449,13 +449,13 @@ type Message = {
   images?: any[]
 }
 
-type Chat = {
+export type Chat = {
   id: string
   title: string
   created_at: string
 }
 
-type Prompt = {
+export type Prompt = {
   id: string
   title: string
   template: string
