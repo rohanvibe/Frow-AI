@@ -59,7 +59,7 @@ import {
   Monitor,
   MousePointer2
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -333,13 +333,67 @@ function AppleTooltip({ text, children }: { text: string, children: React.ReactN
 }
 
 function LandingPage({ onEnter, onTryDemo }: { onEnter: () => void, onTryDemo: () => void }) {
+  const { scrollYProgress } = useScroll()
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX.set(e.clientX)
+      mouseY.set(e.clientY)
+    }
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [mouseX, mouseY])
+
+  const cursorX = useSpring(mouseX, { damping: 20, stiffness: 300 })
+  const cursorY = useSpring(mouseY, { damping: 20, stiffness: 300 })
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-12 surface-foundation grain-texture">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-12 surface-foundation grain-texture overflow-hidden relative cursor-none">
+      {/* Scroll Progress Bar */}
+      <motion.div 
+        style={{ scaleX: scrollYProgress }}
+        className="fixed top-0 left-0 right-0 h-1 bg-blue-600 origin-left z-[100] shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+      />
+
+      {/* Custom Cursor */}
+      <motion.div 
+        style={{ x: cursorX, y: cursorY }}
+        className="fixed top-0 left-0 w-6 h-6 rounded-full border border-blue-500/50 pointer-events-none z-[100] -translate-x-1/2 -translate-y-1/2 mix-blend-difference hidden md:block"
+      />
+      <motion.div 
+        style={{ x: cursorX, y: cursorY }}
+        className="fixed top-0 left-0 w-1.5 h-1.5 rounded-full bg-blue-500 pointer-events-none z-[100] -translate-x-1/2 -translate-y-1/2 hidden md:block"
+      />
+
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 180, 270, 360],
+            opacity: [0.1, 0.2, 0.1]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-[20%] -left-[10%] w-[60%] aspect-square bg-blue-500/10 rounded-full blur-[120px]"
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1.2, 1, 1.2],
+            rotate: [360, 270, 180, 90, 0],
+            opacity: [0.05, 0.15, 0.05]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-[20%] -right-[10%] w-[50%] aspect-square bg-indigo-500/10 rounded-full blur-[120px]"
+        />
+      </div>
+
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-        className="max-w-4xl space-y-8"
+        className="max-w-4xl space-y-8 relative z-10"
       >
         <div className="flex justify-center mb-8">
           <div className="w-16 h-16 squircle bg-(--apple-blue) flex items-center justify-center shadow-2xl shadow-blue-500/20">
@@ -347,23 +401,56 @@ function LandingPage({ onEnter, onTryDemo }: { onEnter: () => void, onTryDemo: (
           </div>
         </div>
         
-        <div className="space-y-4">
-          <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] text-(--foreground) selection:bg-blue-500/30">
-            Stop scrolling <br/> 
-            <span className="text-(--apple-gray) opacity-40">through long AI chats.</span>
+        <div className="space-y-6">
+          <h1 className="text-6xl md:text-9xl font-black tracking-tighter leading-[0.85] text-(--foreground) selection:bg-blue-500/30">
+            {["Stop", "scrolling"].map((word, i) => (
+              <motion.span 
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + i * 0.1, type: "spring", damping: 12 }}
+                className="inline-block mr-4"
+              >
+                {word}
+              </motion.span>
+            ))}
+            <br/> 
+            <motion.span 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              transition={{ delay: 0.5, duration: 1 }}
+              className="text-(--apple-gray)"
+            >
+              through long AI chats.
+            </motion.span>
           </h1>
-          <p className="text-xl md:text-2xl text-(--apple-gray) font-medium max-w-2xl mx-auto leading-relaxed">
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="text-xl md:text-2xl text-(--apple-gray) font-medium max-w-2xl mx-auto leading-relaxed"
+          >
             Jump to any answer instantly with Threadly. <br/>
             High-leverage thought infrastructure for elite builders.
-          </p>
+          </motion.p>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-8">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.9, type: "spring" }}
+          className="flex flex-col md:flex-row items-center justify-center gap-4 pt-8"
+        >
           <div className="hidden md:flex">
             <Button 
               onClick={onTryDemo} 
-              className="px-12 py-8 rounded-full bg-blue-600 text-white font-bold tracking-tight text-[19px] hover:bg-blue-500 transition-all active:scale-[0.98] shadow-2xl shadow-blue-500/30 group"
+              className="px-12 py-8 rounded-full bg-blue-600 text-white font-bold tracking-tight text-[19px] hover:bg-blue-500 transition-all active:scale-[0.98] shadow-2xl shadow-blue-500/30 group relative overflow-hidden"
             >
+              <motion.div 
+                animate={{ x: ["-100%", "200%"] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", repeatDelay: 1 }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+              />
               Try Demo
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
@@ -371,25 +458,34 @@ function LandingPage({ onEnter, onTryDemo }: { onEnter: () => void, onTryDemo: (
           <Button 
             variant="ghost"
             onClick={onEnter} 
-            className="w-full md:w-auto px-12 py-8 rounded-full bg-white/5 border border-white/10 text-white font-bold tracking-tight text-[17px] hover:bg-white/10 transition-all active:scale-[0.98]"
+            className="w-full md:w-auto px-12 py-8 rounded-full bg-white/5 border border-white/10 text-white font-bold tracking-tight text-[17px] hover:bg-white/10 hover:border-white/20 transition-all active:scale-[0.98]"
           >
             Start Chat
           </Button>
-        </div>
+        </motion.div>
 
         {/* Product Preview Mockup */}
         <motion.div 
+          style={{ 
+            rotateX: useSpring(useTransform(mouseY, [0, 2000], [0, -10]), { damping: 20 }),
+            rotateY: useSpring(useTransform(mouseX, [0, 2000], [5, -5]), { damping: 20 }),
+            transformStyle: "preserve-3d"
+          }}
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="relative mt-20 pt-10 px-4"
+          className="relative mt-20 pt-10 px-4 group/preview"
         >
-          <div className="relative mx-auto max-w-5xl rounded-[32px] overflow-hidden border border-white/10 bg-black/40 shadow-[0_0_100px_rgba(59,130,246,0.15)] aspect-video">
+          <div className="relative mx-auto max-w-5xl rounded-[32px] overflow-hidden border border-white/10 bg-black/40 shadow-[0_0_100px_rgba(59,130,246,0.15)] aspect-video group-hover/preview:shadow-[0_0_120px_rgba(59,130,246,0.25)] transition-shadow duration-700">
              <div className="absolute inset-0 flex items-center justify-center bg-[#09090b]">
-                <div className="flex flex-col items-center gap-4 opacity-20">
+                <motion.div 
+                  animate={{ scale: [1, 1.05, 1], opacity: [0.2, 0.3, 0.2] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                  className="flex flex-col items-center gap-4"
+                >
                    <Monitor className="w-20 h-20" />
                    <p className="text-sm font-black uppercase tracking-[0.4em]">Interactive Workspace Preview</p>
-                </div>
+                </motion.div>
              </div>
              {/* Subtle overlay gradients */}
              <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-transparent" />
@@ -398,6 +494,7 @@ function LandingPage({ onEnter, onTryDemo }: { onEnter: () => void, onTryDemo: (
       </motion.div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full py-32 border-t border-white/5">
+        {/* Feature Cards with Scroll Animations */}
         {[
           { icon: Map, title: "Thread Navigation", desc: "Instantly jump between prompts with a structured sidebar." },
           { icon: Activity, title: "Real-time Instruments", desc: "Integrated calculators, diagrams, and background Python execution." },
@@ -405,16 +502,21 @@ function LandingPage({ onEnter, onTryDemo }: { onEnter: () => void, onTryDemo: (
         ].map((f, i) => (
           <motion.div 
             key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 + i * 0.1 }}
-            className="p-10 rounded-[32px] bg-white/[0.02] text-left space-y-5 border border-white/5 hover:bg-white/[0.04] transition-colors"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ delay: i * 0.15, type: "spring", damping: 20 }}
+            whileHover={{ y: -8, backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(59,130,246,0.3)" }}
+            className="p-10 rounded-[40px] bg-white/[0.02] text-left space-y-6 border border-white/5 transition-all duration-500 group cursor-default"
           >
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-              <f.icon className="w-6 h-6 text-blue-500" />
-            </div>
-            <h3 className="text-[15px] font-bold uppercase tracking-widest text-white">{f.title}</h3>
-            <p className="text-[17px] text-(--apple-gray) font-medium leading-relaxed">{f.desc}</p>
+            <motion.div 
+              whileHover={{ rotate: 5, scale: 1.1 }}
+              className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors shadow-inner"
+            >
+              <f.icon className="w-8 h-8 text-blue-500 transition-all duration-500 group-hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
+            </motion.div>
+            <h3 className="text-lg font-black uppercase tracking-[0.2em] text-white/90 group-hover:text-white transition-colors">{f.title}</h3>
+            <p className="text-lg text-(--apple-gray) font-medium leading-relaxed group-hover:text-white/70 transition-colors">{f.desc}</p>
           </motion.div>
         ))}
       </div>
