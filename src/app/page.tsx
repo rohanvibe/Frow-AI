@@ -1645,9 +1645,16 @@ export default function ChatPage() {
                     {msg.role === 'assistant' ? <Zap className="w-5 h-5" /> : <Plus className="w-5 h-5 rotate-45" />}
                   </div>
                   <div className="flex-1 space-y-4 min-w-0 overflow-hidden">
-                    <div className={`p-6 md:p-8 rounded-(--radius-lg) bg-(--surface) shadow-xl relative overflow-hidden border border-white/5 ${
-                      msg.role === 'assistant' ? 'ring-1 ring-blue-500/10' : ''
-                    }`}>
+                    <motion.div 
+                      animate={msg.role === 'assistant' && loading && i === messages.length - 1 ? {
+                        boxShadow: ["0 0 0px rgba(37,99,235,0)", "0 0 30px rgba(37,99,235,0.15)", "0 0 0px rgba(37,99,235,0)"],
+                        borderColor: ["rgba(255,255,255,0.05)", "rgba(37,99,235,0.3)", "rgba(255,255,255,0.05)"]
+                      } : {}}
+                      transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                      className={`p-6 md:p-8 rounded-(--radius-lg) bg-(--surface) shadow-xl relative overflow-hidden border border-white/5 ${
+                        msg.role === 'assistant' ? 'ring-1 ring-blue-500/10' : ''
+                      }`}
+                    >
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
                           <span className="font-semibold text-[13px] tracking-tight text-(--apple-gray) pt-1">
@@ -1820,7 +1827,7 @@ export default function ChatPage() {
                           )}
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   </div>
                 </motion.div>
               ))}
@@ -2654,38 +2661,59 @@ function BigSignupModal({ onClose, onAction }: { onClose: () => void, onAction: 
 function EmptyState({ onCreateNew }: { onCreateNew: () => void }) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }} 
-      animate={{ opacity: 1, y: 0 }} 
+      initial={{ opacity: 0, scale: 0.95 }} 
+      animate={{ opacity: 1, scale: 1 }} 
       transition={{ type: 'spring', damping: 28, stiffness: 220 }} 
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={0.1}
       className="h-full flex flex-col items-center justify-center text-center space-y-6 md:space-y-8 px-6 max-w-2xl mx-auto py-10"
     >
-      <div className="relative group hidden md:block">
-        <div className="w-20 h-20 rounded-xl bg-(--apple-blue) flex items-center justify-center shadow-xl relative z-10">
-          <Sparkles className="w-10 h-10 text-white" />
+      <motion.div 
+        animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
+        transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+        className="relative group hidden md:block"
+      >
+        <div className="w-24 h-24 rounded-3xl bg-(--apple-blue) flex items-center justify-center shadow-2xl shadow-blue-500/40 relative z-10 overflow-hidden">
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 12, ease: "linear" }}
+            className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"
+          />
+          <Sparkles className="w-12 h-12 text-white relative z-10" />
         </div>
-      </div>
+      </motion.div>
 
       <div className="space-y-2 md:space-y-4">
-        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-(--foreground) leading-tight">
-          Clear mind. <br/> <span className="text-(--apple-gray)">Simple work.</span>
-        </h2>
-        <p className="hidden md:block text-base text-(--apple-gray) font-medium leading-relaxed max-w-lg mx-auto">
+        <motion.h2 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-5xl md:text-7xl font-bold tracking-tight text-(--foreground) leading-tight"
+        >
+          Clear mind. <br/> <span className="text-(--apple-gray) opacity-50">Simple work.</span>
+        </motion.h2>
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="hidden md:block text-lg text-(--apple-gray) font-medium leading-relaxed max-w-lg mx-auto"
+        >
           Welcome to your new workspace. Ask anything to get started.
-        </p>
+        </motion.p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-          <Button onClick={onCreateNew} className="px-8 py-5 md:py-6 rounded-(--radius-pill) bg-(--foreground) text-(--background) hover:opacity-90 font-semibold transition-all active:scale-[0.98] group shadow-xl border-none">
-            <Plus className="w-4 h-4 mr-2 transition-transform group-hover:rotate-90" />
-            New Chat
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="flex flex-col sm:flex-row gap-4 w-full justify-center"
+      >
+          <Button onClick={onCreateNew} size="lg" className="px-10 py-8 rounded-full bg-(--foreground) text-(--background) hover:opacity-90 font-bold transition-all shadow-2xl border-none">
+            <Plus className="w-5 h-5 mr-2" />
+            New Thread
           </Button>
-          <Button variant="outline" onClick={() => (document.getElementById('tutorial-prompts') as HTMLElement)?.click()} className="hidden md:flex px-8 py-6 rounded-(--radius-pill) border-(--border-color) hover:bg-(--surface-tertiary) text-(--foreground) font-semibold transition-all">
+          <Button variant="outline" size="lg" onClick={() => (document.getElementById('tutorial-prompts') as HTMLElement)?.click()} className="hidden md:flex px-10 py-8 rounded-full border-(--border-color) hover:bg-(--surface-tertiary) text-(--foreground) font-bold transition-all">
             Browse Registry
           </Button>
-      </div>
+      </motion.div>
     </motion.div>
   )
 }

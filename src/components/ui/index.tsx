@@ -19,11 +19,11 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
     const variants = {
-      primary: 'bg-white text-black hover:bg-gray-200 shadow-sm active:scale-95',
-      secondary: 'bg-[#27272a] text-white hover:bg-[#3f3f46] active:scale-95',
-      ghost: 'bg-transparent text-white hover:bg-white/5 active:scale-95',
-      destructive: 'bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white active:scale-95',
-      outline: 'bg-transparent border border-[#27272a] text-white hover:bg-white/5 active:scale-95',
+      primary: 'bg-white text-black hover:bg-gray-200 shadow-sm',
+      secondary: 'bg-[#27272a] text-white hover:bg-[#3f3f46]',
+      ghost: 'bg-transparent text-white hover:bg-white/5',
+      destructive: 'bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white',
+      outline: 'bg-transparent border border-[#27272a] text-white hover:bg-white/5',
     }
     
     const sizes = {
@@ -34,15 +34,18 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }
     
     return (
-      <button
-        ref={ref}
+      <motion.button
+        ref={ref as any}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
         className={cn(
           "inline-flex items-center justify-center rounded-xl font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
           variants[variant],
           sizes[size],
           className
         )}
-        {...props}
+        {...(props as any)}
       />
     )
   }
