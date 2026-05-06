@@ -332,62 +332,9 @@ function AppleTooltip({ text, children }: { text: string, children: React.ReactN
   )
 }
 
-function LandingPage({ onEnter, onTryDemo }: { onEnter: () => void, onTryDemo: () => void }) {
-  const { scrollYProgress } = useScroll()
-  const mouseX = useMotionValue(0)
-  const mouseY = useMotionValue(0)
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX)
-      mouseY.set(e.clientY)
-    }
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [mouseX, mouseY])
-
-  const cursorX = useSpring(mouseX, { damping: 20, stiffness: 300 })
-  const cursorY = useSpring(mouseY, { damping: 20, stiffness: 300 })
-
+function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => void, onTryDemo: () => void, mouseX: any, mouseY: any }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-12 surface-foundation grain-texture overflow-hidden relative cursor-none">
-      {/* Scroll Progress Bar */}
-      <motion.div 
-        style={{ scaleX: scrollYProgress }}
-        className="fixed top-0 left-0 right-0 h-1 bg-blue-600 origin-left z-[100] shadow-[0_0_15px_rgba(59,130,246,0.5)]"
-      />
-
-      {/* Custom Cursor */}
-      <motion.div 
-        style={{ x: cursorX, y: cursorY }}
-        className="fixed top-0 left-0 w-6 h-6 rounded-full border border-blue-500/50 pointer-events-none z-[100] -translate-x-1/2 -translate-y-1/2 mix-blend-difference hidden md:block"
-      />
-      <motion.div 
-        style={{ x: cursorX, y: cursorY }}
-        className="fixed top-0 left-0 w-1.5 h-1.5 rounded-full bg-blue-500 pointer-events-none z-[100] -translate-x-1/2 -translate-y-1/2 hidden md:block"
-      />
-
-      {/* Dynamic Background Elements */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 180, 270, 360],
-            opacity: [0.1, 0.2, 0.1]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-[20%] -left-[10%] w-[60%] aspect-square bg-blue-500/10 rounded-full blur-[120px]"
-        />
-        <motion.div 
-          animate={{ 
-            scale: [1.2, 1, 1.2],
-            rotate: [360, 270, 180, 90, 0],
-            opacity: [0.05, 0.15, 0.05]
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-[20%] -right-[10%] w-[50%] aspect-square bg-indigo-500/10 rounded-full blur-[120px]"
-        />
-      </div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-12 overflow-hidden relative">
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -602,6 +549,18 @@ export default function ChatPage() {
   const [showDemoTooltip, setShowDemoTooltip] = useState(false)
   const [demoInteractionCount, setDemoInteractionCount] = useState(0)
   const [showConversionModal, setShowConversionModal] = useState(false)
+  
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX.set(e.clientX)
+      mouseY.set(e.clientY)
+    }
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [mouseX, mouseY])
 
   // Initial load
   useEffect(() => {
@@ -1395,13 +1354,11 @@ export default function ChatPage() {
   }
 
   if (showLanding) {
-    return <LandingPage onEnter={() => { setShowLanding(false); trackEvent('chat_started'); }} onTryDemo={enterDemo} />
+    return <LandingPage onEnter={() => { setShowLanding(false); trackEvent('chat_started'); }} onTryDemo={enterDemo} mouseX={mouseX} mouseY={mouseY} />
   }
 
   return (
-    <div className="flex h-dvh surface-foundation text-(--foreground) overflow-hidden relative font-sans selection:bg-blue-500/30">
-      <div id="spotlight" />
-      <div className="fixed inset-0 pointer-events-none z-10 grain-texture opacity-[0.03]" />
+    <div className="flex h-dvh text-(--foreground) overflow-hidden relative font-sans selection:bg-blue-500/30">
 
       <AnimatePresence>
         {isNavOpen && (

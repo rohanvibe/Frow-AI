@@ -41,9 +41,7 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
     .order('created_at', { ascending: true })
 
   return (
-    <div className="min-h-screen bg-[#000000] text-white font-sans selection:bg-blue-500/30 overflow-x-hidden">
-      {/* Aesthetic Background */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50 grain-texture" />
+    <div className="min-h-screen text-white font-sans selection:bg-blue-500/30 overflow-x-hidden">
       
       {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b border-white/5 bg-black/60 backdrop-blur-3xl">

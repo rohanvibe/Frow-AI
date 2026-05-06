@@ -18,8 +18,7 @@ export default async function PromptSharePage(props: { params: Promise<{ id: str
   if (!prompt) notFound()
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white selection:bg-blue-500/30">
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50 grain-texture" />
+    <div className="min-h-screen text-white selection:bg-blue-500/30">
       
       <main className="max-w-2xl mx-auto px-6 py-24 md:py-40 flex flex-col items-center">
         <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.4)] mb-10">

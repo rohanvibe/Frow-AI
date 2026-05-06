@@ -39,6 +39,7 @@ export const viewport: Viewport = {
 };
 
 import { ToastProvider } from "@/components/ui";
+import { VisualShell } from "@/components/VisualShell";
 
 export default function RootLayout({
   children,
@@ -61,9 +62,11 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-[#09090b] selection:bg-blue-500/30">
         <ToastProvider>
-           <div id="spotlight" />
-           <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50 grain-texture" />
-           {children}
+           <VisualShell>
+             <div id="spotlight" />
+             <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50 grain-texture" />
+             {children}
+           </VisualShell>
            <Analytics />
         </ToastProvider>
         <script
