@@ -77,27 +77,6 @@ import { FeedbackWidget } from '@/components/FeedbackWidget'
 
 // --- Premium Components ---
 
-function SchittTitle({ children, className = "", delay = 0 }: { children: any, className?: string, delay?: number }) {
-  if (typeof children !== 'string') return <span className={className}>{children}</span>;
-  const words = children.split(/(\s+)/);
-  return (
-    <span className={`animate-title ${className}`}>
-      {words.map((word, i) => {
-        if (word.trim() === '') return <span key={i}>{word}</span>;
-        return (
-          <span 
-            key={i} 
-            className="word" 
-            style={{ animationDelay: `${delay + (i * 0.05)}s` }}
-          >
-            {word}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
-
 function PythonSandbox({ code }: { code: string }) {
   const [output, setOutput] = useState<string>('')
   const [isRunning, setIsRunning] = useState(false)
@@ -355,72 +334,55 @@ function AppleTooltip({ text, children }: { text: string, children: React.ReactN
 
 function LandingPage({ onEnter, onTryDemo }: { onEnter: () => void, onTryDemo: () => void }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center surface-foundation grain-texture overflow-hidden relative">
-      {/* Background ambient glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/5 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/5 blur-[120px] rounded-full pointer-events-none" />
-
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-12 surface-foundation grain-texture">
       <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="max-w-6xl w-full flex flex-col items-center justify-center space-y-16 relative z-10 py-20"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+        className="max-w-4xl space-y-8"
       >
-        <div className="flex justify-center">
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', damping: 20 }}
-            className="w-20 h-20 squircle bg-(--apple-blue) flex items-center justify-center shadow-2xl shadow-blue-500/20"
-          >
-             <Sparkles className="w-10 h-10 text-white" />
-          </motion.div>
+        <div className="flex justify-center mb-8">
+          <div className="w-16 h-16 squircle bg-(--apple-blue) flex items-center justify-center shadow-2xl shadow-blue-500/20">
+             <Sparkles className="w-8 h-8 text-white" />
+          </div>
         </div>
         
-        <div className="space-y-8 flex flex-col items-center">
-          <h1 className="text-6xl md:text-[120px] font-black tracking-tighter leading-[0.85] text-(--foreground) selection:bg-blue-500/30 max-w-5xl">
-            <SchittTitle>Stop scrolling through long AI chats.</SchittTitle>
+        <div className="space-y-4">
+          <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] text-(--foreground) selection:bg-blue-500/30">
+            Stop scrolling <br/> 
+            <span className="text-(--apple-gray) opacity-40">through long AI chats.</span>
           </h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2 }}
-            className="text-xl md:text-3xl text-(--apple-gray) font-medium max-w-3xl mx-auto leading-relaxed"
-          >
+          <p className="text-xl md:text-2xl text-(--apple-gray) font-medium max-w-2xl mx-auto leading-relaxed">
             Jump to any answer instantly with Threadly. <br/>
             High-leverage thought infrastructure for elite builders.
-          </motion.p>
+          </p>
         </div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5 }}
-          className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-2xl"
-        >
-          <div className="hidden md:flex flex-1">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-8">
+          <div className="hidden md:flex">
             <Button 
               onClick={onTryDemo} 
-              className="w-full py-10 rounded-full bg-blue-600 text-white font-bold tracking-tight text-[22px] hover:bg-blue-500 transition-all active:scale-[0.98] shadow-2xl shadow-blue-500/30 group border-none"
+              className="px-12 py-8 rounded-full bg-blue-600 text-white font-bold tracking-tight text-[19px] hover:bg-blue-500 transition-all active:scale-[0.98] shadow-2xl shadow-blue-500/30 group"
             >
               Try Demo
-              <ArrowRight className="ml-2 w-6 h-6 group-hover:translate-x-2 transition-transform" />
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
           <Button 
             variant="ghost"
             onClick={onEnter} 
-            className="w-full md:w-auto px-12 py-10 rounded-full bg-white/5 border border-white/10 text-white font-bold tracking-tight text-[19px] hover:bg-white/10 transition-all active:scale-[0.98]"
+            className="w-full md:w-auto px-12 py-8 rounded-full bg-white/5 border border-white/10 text-white font-bold tracking-tight text-[17px] hover:bg-white/10 transition-all active:scale-[0.98]"
           >
             Start Chat
           </Button>
-        </motion.div>
+        </div>
 
         {/* Product Preview Mockup */}
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.8 }}
-          className="relative mt-20 pt-10 px-4 w-full"
+          transition={{ delay: 0.3 }}
+          className="relative mt-20 pt-10 px-4"
         >
           <div className="relative mx-auto max-w-5xl rounded-[32px] overflow-hidden border border-white/10 bg-black/40 shadow-[0_0_100px_rgba(59,130,246,0.15)] aspect-video">
              <div className="absolute inset-0 flex items-center justify-center bg-[#09090b]">
@@ -429,6 +391,7 @@ function LandingPage({ onEnter, onTryDemo }: { onEnter: () => void, onTryDemo: (
                    <p className="text-sm font-black uppercase tracking-[0.4em]">Interactive Workspace Preview</p>
                 </div>
              </div>
+             {/* Subtle overlay gradients */}
              <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-transparent" />
           </div>
         </motion.div>
@@ -450,9 +413,7 @@ function LandingPage({ onEnter, onTryDemo }: { onEnter: () => void, onTryDemo: (
             <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center">
               <f.icon className="w-6 h-6 text-blue-500" />
             </div>
-            <h3 className="text-[15px] font-bold uppercase tracking-widest text-white">
-              <SchittTitle delay={0.8 + i * 0.1}>{f.title}</SchittTitle>
-            </h3>
+            <h3 className="text-[15px] font-bold uppercase tracking-widest text-white">{f.title}</h3>
             <p className="text-[17px] text-(--apple-gray) font-medium leading-relaxed">{f.desc}</p>
           </motion.div>
         ))}
@@ -1355,7 +1316,7 @@ export default function ChatPage() {
                 <div className="w-8 h-8 squircle bg-(--apple-blue) flex items-center justify-center shadow-lg shadow-blue-500/20">
                    <Globe className="w-4 h-4 text-(--background)" />
                 </div>
-                <SchittTitle>Threadly</SchittTitle>
+                Threadly
               </h1>
               <AppleTooltip text="Dismiss">
                 <Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5" onClick={() => { setIsNavOpen(false); }}>
@@ -2168,9 +2129,7 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
                    <Settings className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-black uppercase tracking-[0.3em] text-(--foreground)">
-                      <SchittTitle>Workspace Infrastructure</SchittTitle>
-                    </h3>
+                    <h3 className="text-sm font-black uppercase tracking-[0.3em] text-(--foreground)">Workspace Infrastructure</h3>
                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Configure your intelligent environment</p>
                 </div>
              </div>
@@ -2312,16 +2271,14 @@ function PromptManager({ userId, onClose, onSelect }: { userId: string, onClose:
                 <CardHeader className="shrink-0 border-b border-white/5">
                     <CardTitle className="uppercase tracking-widest text-sm flex items-center gap-2">
                        <Command className="w-4 h-4 text-blue-500" />
-                       <SchittTitle>Prompt Library</SchittTitle>
+                       Prompt Library
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 overflow-y-auto space-y-8 p-6 custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {prompts.map(p => (
                             <div key={p.id} className="p-5 rounded-2xl border border-white/5 bg-white/2 hover:bg-blue-600/5 hover:border-blue-500/20 text-left transition-all active:scale-[0.98] group relative">
-                                <h4 className="font-black text-[10px] uppercase tracking-widest text-blue-500 mb-2">
-                                  <SchittTitle>{p.title}</SchittTitle>
-                                </h4>
+                                <h4 className="font-black text-[10px] uppercase tracking-widest text-blue-500 mb-2">{p.title}</h4>
                                 <p className="text-xs text-gray-500 font-bold line-clamp-2 leading-relaxed mb-4">{p.template}</p>
                                 <div className="flex items-center gap-2">
                                    <Button size="sm" onClick={() => { onSelect(p.template); onClose(); }} className="h-8 rounded-lg bg-white text-black text-[9px] font-black uppercase px-4 hover:bg-gray-200">Use</Button>
@@ -2334,9 +2291,7 @@ function PromptManager({ userId, onClose, onSelect }: { userId: string, onClose:
                     </div>
                     
                     <div className="p-6 rounded-2xl border border-white/10 bg-white/1 space-y-4">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">
-                          <SchittTitle>Inject New Preset</SchittTitle>
-                        </h4>
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Inject New Preset</h4>
                         <Input placeholder="Architecture Pattern / Function Name" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="bg-black py-6" />
                         <textarea className="w-full h-32 rounded-2xl border border-white/5 bg-black px-4 py-3 text-sm font-bold custom-scrollbar outline-none focus:border-blue-500/50 transition-all" placeholder="Enter full template logic..." value={newTemplate} onChange={e => setNewTemplate(e.target.value)} />
                         <Button className="w-full py-6 rounded-2xl bg-blue-600 hover:bg-blue-700" onClick={savePrompt}>Commit to Store</Button>
@@ -2526,9 +2481,7 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
             <div className="w-8 h-8 rounded-xl bg-blue-600/20 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-blue-500" />
             </div>
-            <h4 className="text-[13px] font-black uppercase tracking-widest text-white">
-              <SchittTitle>{current.title}</SchittTitle>
-            </h4>
+            <h4 className="text-[13px] font-black uppercase tracking-widest text-white">{current.title}</h4>
         </div>
         
         <p className="text-[14px] text-gray-300 leading-relaxed font-medium mb-6">
@@ -2590,9 +2543,7 @@ function BigSignupModal({ onClose, onAction }: { onClose: () => void, onAction: 
                         <Sparkles className="w-8 h-8 text-white" />
                     </div>
                     
-                    <h2 className="text-3xl font-semibold text-white tracking-tight mb-4">
-                      <SchittTitle>Get More Power</SchittTitle>
-                    </h2>
+                    <h2 className="text-3xl font-semibold text-white tracking-tight mb-4">Get More Power</h2>
                     <p className="text-(--apple-gray) leading-relaxed mb-8 text-[15px]">
                         Save your chats, use smarter memory, and get faster answers by creating an account.
                     </p>
@@ -2660,7 +2611,7 @@ function EmptyState({ onCreateNew }: { onCreateNew: () => void }) {
 
       <div className="space-y-2 md:space-y-4">
         <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-(--foreground) leading-tight">
-          <SchittTitle>Clear mind. Simple work.</SchittTitle>
+          Clear mind. <br/> <span className="text-(--apple-gray)">Simple work.</span>
         </h2>
         <p className="hidden md:block text-base text-(--apple-gray) font-medium leading-relaxed max-w-lg mx-auto">
           Welcome to your new workspace. Ask anything to get started.
