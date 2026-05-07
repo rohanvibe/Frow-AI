@@ -450,7 +450,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
         </div>
       </motion.div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full py-40 border-t border-white/5 relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full py-40 relative z-10">
         {/* Feature Cards with Scroll Animations */}
         {[
           { icon: Map, title: "Thread Navigation", desc: "Instantly jump between prompts with a structured sidebar.", color: "text-purple-400" },
