@@ -434,68 +434,6 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
           </Button>
         </motion.div>
 
-        {/* Glowing Arcs (Curoky Style) */}
-        <div className="relative h-[300px] w-full max-w-4xl mx-auto flex items-end justify-center overflow-hidden">
-           {/* Arc 1 (Back) */}
-           <motion.div 
-             initial={{ opacity: 0, y: 100 }}
-             whileInView={{ opacity: 1, y: 0 }}
-             viewport={{ once: true }}
-             transition={{ delay: 0.5, duration: 1 }}
-             className="absolute bottom-[-150px] w-[800px] h-[400px] rounded-[100%] border-t border-purple-500/20 bg-gradient-to-b from-purple-500/10 to-transparent blur-[2px]" 
-           />
-           {/* Arc 2 (Middle) */}
-           <motion.div 
-             initial={{ opacity: 0, y: 120 }}
-             whileInView={{ opacity: 1, y: 0 }}
-             viewport={{ once: true }}
-             transition={{ delay: 0.7, duration: 1 }}
-             className="absolute bottom-[-180px] w-[600px] h-[350px] rounded-[100%] border-t border-magenta-500/30 bg-gradient-to-b from-magenta-500/15 to-transparent blur-[1px]" 
-           />
-           {/* Arc 3 (Front) */}
-           <motion.div 
-             initial={{ opacity: 0, y: 140 }}
-             whileInView={{ opacity: 1, y: 0 }}
-             viewport={{ once: true }}
-             transition={{ delay: 0.9, duration: 1 }}
-             className="absolute bottom-[-210px] w-[400px] h-[300px] rounded-[100%] border-t-2 border-pink-500/40 bg-gradient-to-b from-pink-500/20 to-transparent shadow-[0_-20px_50px_rgba(236,72,153,0.1)]" 
-           />
-
-           {/* Floating Labels on Arcs */}
-           <div className="relative z-20 flex gap-12 pb-12">
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }} 
-                whileInView={{ opacity: 1, y: 0 }} 
-                viewport={{ once: true }}
-                transition={{ delay: 1.2 }} 
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-black/40 backdrop-blur-md shadow-xl translate-y-[-20px] translate-x-[-40px]"
-              >
-                 <Sparkles className="w-3 h-3 text-purple-400" />
-                 <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Semantic Hub</span>
-              </motion.div>
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }} 
-                whileInView={{ opacity: 1, y: 0 }} 
-                viewport={{ once: true }}
-                transition={{ delay: 1.4 }} 
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-black/40 backdrop-blur-md shadow-xl translate-y-[10px]"
-              >
-                 <Activity className="w-3 h-3 text-magenta-400" />
-                 <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Real-time Pulse</span>
-              </motion.div>
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }} 
-                whileInView={{ opacity: 1, y: 0 }} 
-                viewport={{ once: true }}
-                transition={{ delay: 1.6 }} 
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-black/40 backdrop-blur-md shadow-xl translate-y-[-10px] translate-x-[40px]"
-              >
-                 <Zap className="w-3 h-3 text-pink-400" />
-                 <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Neural Flow</span>
-              </motion.div>
-           </div>
-        </div>
-
         {/* Floating Glass Stats Cards - Repositioned to avoid overlap */}
         <div className="absolute -left-32 top-[20%] hidden 2xl:block">
           <motion.div 
