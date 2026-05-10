@@ -48,13 +48,22 @@ export async function POST(req: Request) {
           // 3-LAYER RETRIEVAL & DECAY FILTER
           const now = new Date()
           const filteredMemories = memories.map((m: any, i: number) => {
-             // Basic format check
-             if (typeof m === 'string') return { id: i, content: m, type: 'general', confidence: 0.5 }
-             return { ...m, id: m.id || i }
+             // Standardize memory format
+             if (typeof m === 'string') return { id: i, content: m, type: 'general', confidence: 0.5, tag: '' }
+             return { 
+                id: m.id ?? i, 
+                content: m.content || m.fact || '', 
+                type: m.type || 'general', 
+                confidence: m.confidence ?? 0.5,
+                tag: m.tag || ''
+             }
           }).filter(m => {
+             const mContent = (m.content || '').toLowerCase()
+             const mTag = (m.tag || '').toLowerCase()
+             
              // 🎯 Decision Filter: Load relevant context or high-confidence persistent memory
-             const isRelevant = userContextStr.includes((m.tag || '').toLowerCase()) || 
-                                userContextStr.includes(m.content.toLowerCase()) ||
+             const isRelevant = (mTag && userContextStr.includes(mTag)) || 
+                                (mContent && userContextStr.includes(mContent)) ||
                                 userContextStr.includes('remember') ||
                                 history.length < 3
              
