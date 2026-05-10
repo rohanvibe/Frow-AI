@@ -1172,7 +1172,8 @@ export default function ChatPage() {
            /\[MEMORY_UPSERT:\s*(.*?)\s*\|\s*(.*?)\]/i,
            /\[MEMORY_INCREMENT:\s*(.*?)\]/i,
            /\[MEMORY_DELETE:\s*(.*?)\]/i,
-           /\[MEMORY_(ADD|LEARNED|EDIT):.*?\]/gi, // Legacy cleanup
+           /\[MEMORY_.*?:.*?\]/gi, // Aggressive catch-all for any memory tags
+           /\[MEMORY_.*?\]/gi,      // Catch-all for standalone memory tags
         ]
         
         const upsertMatch = finalContent.match(/\[MEMORY_UPSERT:\s*(.*?)\s*\|\s*(.*?)\]/i)
