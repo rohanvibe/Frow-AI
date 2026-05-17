@@ -59,7 +59,7 @@ import {
   Monitor,
   MousePointer2
 } from 'lucide-react'
-import { motion, AnimatePresence, useScroll, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useMotionValue, useSpring, useTransform, useMotionValueEvent } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -333,6 +333,26 @@ function AppleTooltip({ text, children }: { text: string, children: React.ReactN
 }
 
 function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => void, onTryDemo: () => void, mouseX: any, mouseY: any }) {
+  const { scrollY } = useScroll()
+  const scrollProgress = useTransform(scrollY, [0, 180], [0, 1])
+  
+  const outerPathLength = useTransform(scrollProgress, [0, 1], [0.5, 1])
+  const middlePathLength = useTransform(scrollProgress, [0, 1], [0.5, 1])
+  const innerPathLength = useTransform(scrollProgress, [0, 1], [0.5, 1])
+
+  const [isHovered, setIsHovered] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    if (latest > 120) {
+      setIsScrolled(true)
+    } else {
+      setIsScrolled(false)
+    }
+  })
+
+  const isGlowActive = isHovered || isScrolled
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 text-center overflow-hidden relative bg-[#09090b]">
       
@@ -413,25 +433,126 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
         </div>
 
         {/* Action Buttons & Arch Portal Container */}
-        <div className="relative w-full flex flex-col items-center justify-center pt-2">
-          
-          {/* Curoky Glowing Arch Architecture (Positioned Behind) */}
+        <motion.div className="relative w-full flex flex-col items-center justify-center pt-2 group">
+              {/* Curoky Glowing Arch Architecture (Positioned Behind) */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[15%] w-full h-[400px] flex items-center justify-center z-0 pointer-events-none scale-110 md:scale-125">
             {/* Semicircle Arcs */}
-            <div className="absolute top-0 w-[800px] h-[400px] border-t-[3px] border-purple-500/40 rounded-t-full shadow-[0_-20px_60px_-15px_rgba(168,85,247,0.3)] opacity-80" />
-            <div className="absolute top-20 w-[600px] h-[300px] border-t-[2px] border-magenta-500/30 rounded-t-full shadow-[0_-15px_40px_-10px_rgba(236,72,153,0.2)] opacity-60" />
-            <div className="absolute top-40 w-[400px] h-[200px] border-t-[2px] border-pink-500/20 rounded-t-full shadow-[0_-10px_30px_-5px_rgba(244,114,182,0.15)] opacity-40" />
+            <motion.svg 
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              viewBox="0 0 800 800"
+              initial="normal"
+              animate={isGlowActive ? "hover" : "normal"}
+              variants={{
+                normal: { scale: 1, y: 0 },
+                hover: { scale: 1.05, y: -10 }
+              }}
+              transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+              className="absolute top-0 w-[800px] h-[800px] opacity-80 pointer-events-auto cursor-pointer"
+            >
+              <motion.circle 
+                cx="400" 
+                cy="400" 
+                r="398" 
+                fill="transparent" 
+                strokeWidth="3"
+                transform="rotate(180 400 400)"
+                pathLength={outerPathLength}
+                variants={{
+                  normal: { stroke: "rgba(168, 85, 247, 0.45)" },
+                  hover: { stroke: "rgba(168, 85, 247, 0.85)" }
+                }}
+                transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+              />
+            </motion.svg>
+
+            <motion.svg 
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              viewBox="0 0 600 600"
+              initial="normal"
+              animate={isGlowActive ? "hover" : "normal"}
+              variants={{
+                normal: { scale: 1, y: 0 },
+                hover: { scale: 1.10, y: -20 }
+              }}
+              transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+              className="absolute top-20 w-[600px] h-[600px] opacity-60 pointer-events-auto cursor-pointer"
+            >
+              <motion.circle 
+                cx="300" 
+                cy="300" 
+                r="298.5" 
+                fill="transparent" 
+                strokeWidth="2"
+                transform="rotate(180 300 300)"
+                pathLength={middlePathLength}
+                variants={{
+                  normal: { stroke: "rgba(236, 72, 153, 0.35)" },
+                  hover: { stroke: "rgba(236, 72, 153, 0.75)" }
+                }}
+                transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+              />
+            </motion.svg>
+
+            <motion.svg 
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              viewBox="0 0 400 400"
+              initial="normal"
+              animate={isGlowActive ? "hover" : "normal"}
+              variants={{
+                normal: { scale: 1, y: 0 },
+                hover: { scale: 1.15, y: -30 }
+              }}
+              transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+              className="absolute top-40 w-[400px] h-[400px] opacity-40 pointer-events-auto cursor-pointer"
+            >
+              <motion.circle 
+                cx="200" 
+                cy="200" 
+                r="198.5" 
+                fill="transparent" 
+                strokeWidth="2"
+                transform="rotate(180 200 200)"
+                pathLength={innerPathLength}
+                variants={{
+                  normal: { stroke: "rgba(244, 114, 182, 0.25)" },
+                  hover: { stroke: "rgba(244, 114, 182, 0.6)" }
+                }}
+                transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+              />
+            </motion.svg>
 
             {/* Core Hub Glow */}
-            <div className="absolute top-1/2 -translate-y-1/2 w-48 h-48 bg-purple-600/20 blur-[80px] rounded-full" />
+            <motion.div 
+              initial="normal"
+              animate={isGlowActive ? "hover" : "normal"}
+              variants={{
+                normal: {
+                  scale: 1,
+                  opacity: 0.8,
+                  backgroundColor: "rgba(147, 51, 234, 0.2)",
+                },
+                hover: {
+                  scale: 1.4,
+                  opacity: 1,
+                  backgroundColor: "rgba(168, 85, 247, 0.4)",
+                }
+              }}
+              transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+              className="absolute top-1/2 -translate-y-1/2 w-48 h-48 blur-[80px] rounded-full" 
+            />
           </div>
 
-          {/* Action Buttons (Positioned in Front) */}
+          {/* Action Buttons (Positioned in Front with Comfortable Hover Magnet Target) */}
           <motion.div 
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 1, type: "spring" }}
-            className="flex flex-col md:flex-row items-center justify-center gap-6 relative z-10"
+            className="flex flex-col md:flex-row items-center justify-center gap-6 relative z-10 px-24 py-16 pointer-events-auto"
           >
             <Button 
               onClick={onEnter} 
@@ -447,7 +568,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
               Explore Demo
             </Button>
           </motion.div>
-        </div>
+        </motion.div>
       </motion.div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full py-40 relative z-10">
