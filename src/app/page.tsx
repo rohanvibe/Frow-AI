@@ -46,6 +46,7 @@ import {
   ChevronRight,
   Activity,
   ArrowRight,
+  ArrowDown,
   Paperclip,
   FileText,
   CheckCircle2,
@@ -750,6 +751,23 @@ export default function ChatPage() {
 
   // Shortcut state
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
+  const [chatDrafts, setChatDrafts] = useState<Record<string, string>>({})
+  const [chatScrolls, setChatScrolls] = useState<Record<string, number>>({})
+  const [showJumpToBottom, setShowJumpToBottom] = useState(false)
+  const [isSharedRecently, setIsSharedRecently] = useState(false)
+  const [hasDiscoveredSidebar, setHasDiscoveredSidebar] = useState(true)
+
+  useEffect(() => {
+    if (currentChatId) {
+       setInput(chatDrafts[currentChatId] || '')
+       setTimeout(() => {
+         const container = document.getElementById('chat-messages-container')
+         if (container && chatScrolls[currentChatId] !== undefined) {
+           container.scrollTop = chatScrolls[currentChatId]
+         }
+       }, 50)
+    }
+  }, [currentChatId])
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [showLanding, setShowLanding] = useState(true)
@@ -845,6 +863,9 @@ export default function ChatPage() {
           localStorage.removeItem('google_login_pending')
         }
       }
+      if (typeof window !== 'undefined') {
+        setHasDiscoveredSidebar(!!localStorage.getItem('threadly_sidebar_discovered'))
+      }
     }
     checkUser()
 
@@ -925,7 +946,12 @@ export default function ChatPage() {
        setWowPhase(true)
        localStorage.setItem('threadly_wow_shown', 'true')
     }
-  }, [messages])
+
+    // Feature: Auto-focus Input
+    if (!isMobile && !loading) {
+       document.getElementById('chat-input')?.focus()
+    }
+  }, [messages, loading, currentChatId])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -1093,6 +1119,8 @@ export default function ChatPage() {
      } else {
         copyToClipboard(url)
      }
+     setIsSharedRecently(true)
+     setTimeout(() => setIsSharedRecently(false), 2000)
      setSharing(false)
   }
 
@@ -1732,23 +1760,55 @@ export default function ChatPage() {
                    size="sm" 
                    onClick={() => { shareChat(); }}
                    onContextMenu={e => openContextMenu(e, 'shareChat')}
-                   className="rounded-(--radius-pill) px-5 py-5 flex items-center gap-2 border-none bg-white text-black hover:bg-gray-100 shadow-xl font-semibold text-[13px]"
+                   className="rounded-(--radius-pill) px-5 py-5 flex items-center gap-2 border-none bg-white text-black hover:bg-gray-100 shadow-xl font-semibold text-[13px] transition-all"
                  >
-                   <Share2 className="w-3.5 h-3.5" />
-                   <span>Share Chat</span>
+                   {isSharedRecently ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Share2 className="w-3.5 h-3.5" />}
+                   <span className={isSharedRecently ? "text-green-500" : ""}>{isSharedRecently ? 'Shared' : 'Share Chat'}</span>
                  </Button>
               )}
               <button 
                onContextMenu={e => openContextMenu(e, 'toggleSidebar')} 
-               onClick={() => { setIsSidebarOpen(!isSidebarOpen); }} 
-               className={`p-3 rounded-(--radius-pill) transition-all shadow-xl ${isSidebarOpen ? 'bg-(--apple-blue) text-white' : 'bg-(--surface) text-(--apple-gray) hover:text-(--foreground)'}`}
+               onClick={() => { setIsSidebarOpen(!isSidebarOpen); setHasDiscoveredSidebar(true); localStorage.setItem('threadly_sidebar_discovered', 'true'); }} 
+               className={`relative p-3 rounded-(--radius-pill) transition-all shadow-xl ${isSidebarOpen ? 'bg-(--apple-blue) text-white' : 'bg-(--surface) text-(--apple-gray) hover:text-(--foreground)'}`}
               >
+                {!hasDiscoveredSidebar && messages.length > 2 && (
+                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                     <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                   </span>
+                )}
                 <History className="w-5 h-5" />
               </button>
            </div>
         )}
 
-        <div className={`flex-1 ${messages.length === 0 ? 'overflow-hidden' : 'overflow-y-auto'} custom-scrollbar scroll-smooth relative z-10`} id="chat-messages-container">
+        {/* Conversation Minimap */}
+        {!isMobile && messages.filter(m => m.role === 'user').length > 3 && (
+           <div className="absolute right-6 top-32 bottom-40 w-4 z-40 opacity-30 hover:opacity-100 transition-opacity hidden md:block">
+              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-white/10 rounded-full" />
+              {messages.filter(m => m.role === 'user').map((m, i, arr) => (
+                <AppleTooltip key={m.id} text={m.content.slice(0, 40) + '...'}>
+                  <button
+                    onClick={() => scrollToMessage(m.id)}
+                    className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-(--apple-gray) hover:bg-(--apple-blue) hover:scale-150 hover:shadow-[0_0_10px_rgba(37,99,235,0.5)] transition-all z-10"
+                    style={{ top: `${(i / Math.max(1, arr.length - 1)) * 100}%` }}
+                  />
+                </AppleTooltip>
+              ))}
+           </div>
+        )}
+
+        <div 
+           className={`flex-1 ${messages.length === 0 ? 'overflow-hidden' : 'overflow-y-auto'} custom-scrollbar scroll-smooth relative z-10`} 
+           id="chat-messages-container"
+           onScroll={(e) => {
+              const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+              if (currentChatId) {
+                 setChatScrolls(prev => ({ ...prev, [currentChatId]: scrollTop }))
+              }
+              setShowJumpToBottom(scrollHeight - scrollTop - clientHeight > 300)
+           }}
+        >
           {fetchingMessages ? (
             <div className="max-w-3xl mx-auto p-6 md:p-10 space-y-8">
               <Skeleton className="h-32 w-full rounded-2xl bg-white/5" />
@@ -1973,21 +2033,42 @@ export default function ChatPage() {
 
         <div className="p-4 md:p-12 relative z-20">
            <div id="tutorial-input" className="w-full max-w-4xl mx-auto relative group">
+              <AnimatePresence>
+                {showJumpToBottom && (
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    onClick={scrollToBottom}
+                    className="absolute -top-14 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl flex items-center gap-2 hover:bg-blue-500 transition-all z-50 hover:scale-105 active:scale-95"
+                  >
+                    <ArrowDown className="w-3 h-3" />
+                    Return to latest
+                  </motion.button>
+                )}
+              </AnimatePresence>
               <form onSubmit={sendMessage}>
                 <div className="relative bg-(--surface) rounded-(--radius-lg) p-2 shadow-xl group-focus-within:ring-1 ring-blue-500/20 transition-all border border-(--border-color)">
                   <textarea 
+                    id="chat-input"
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
+                    onChange={(e) => {
+                      setInput(e.target.value)
+                      if (currentChatId) {
+                         setChatDrafts(prev => ({ ...prev, [currentChatId]: e.target.value }))
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
                         if (!e.shiftKey || (e.metaKey || e.ctrlKey)) {
                            e.preventDefault()
+                           if (isMobile) e.currentTarget.blur()
                            sendMessage()
                         }
                       }
                     }}
                     rows={1}
-                    placeholder={loading ? "Generating response..." : "What's on your mind?"}
+                    placeholder={loading ? "Generating response..." : ["Ask anything...", "Continue where you left off...", "Find an old answer instantly...", "Study without losing context..."][(messages.length + (currentChatId ? 1 : 0)) % 4]}
                     className="w-full pr-24 md:pr-32 py-4 md:py-5 pl-6 md:pl-8 bg-transparent text-base md:text-[17px] outline-none resize-none custom-scrollbar placeholder:text-(--apple-gray) font-medium tracking-tight text-(--foreground)"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
@@ -2175,6 +2256,8 @@ export default function ChatPage() {
                                    scrollToMessage(msg.id); 
                                    if (isMobile) setIsSidebarOpen(false); 
                                  }}
+                                 onDoubleClick={() => copyToClipboard(window.location.href.split('#')[0] + '#msg-' + msg.id)}
+                                 title="Double-click to copy direct link"
                                  className="w-full text-left p-2 rounded-xl hover:bg-(--surface-tertiary) transition-all group flex items-center gap-2"
                                >
                                   <span className="w-1 h-1 rounded-full bg-(--apple-gray) group-hover:bg-(--foreground) transition-colors shrink-0" />
@@ -2201,11 +2284,17 @@ export default function ChatPage() {
                              scrollToMessage(msg.id); 
                              if (isMobile) setIsSidebarOpen(false); 
                            }}
+                           onDoubleClick={() => copyToClipboard(window.location.href.split('#')[0] + '#msg-' + msg.id)}
+                           title="Double-click to copy direct link"
                            className={`w-full text-left p-4 rounded-2xl border transition-all group active:scale-[0.98] relative overflow-hidden ${isActive ? 'bg-blue-600/10 border-blue-500/30' : 'border-white/3 bg-white/1 hover:bg-blue-600/5 hover:border-blue-500/20'}`}
                          >
                            <div className="flex items-center justify-between gap-4 relative z-10">
                              <div className="flex items-center gap-3 min-w-0 flex-1">
-                               <span className={`text-[10px] font-black w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${isActive || isBookmarked ? 'text-blue-400 bg-blue-500/20 border-blue-500/30' : 'text-gray-500 bg-white/5 border-white/5 group-hover:text-blue-500'}`}>
+                               <span 
+                                 onClick={(e) => { e.stopPropagation(); copyToClipboard(window.location.href.split('#')[0] + '#msg-' + msg.id); }}
+                                 title="Click to copy direct link"
+                                 className={`cursor-pointer active:scale-95 text-[10px] font-black w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${isActive || isBookmarked ? 'text-blue-400 bg-blue-500/20 border-blue-500/30' : 'text-gray-500 bg-white/5 border-white/5 group-hover:text-blue-500'}`}
+                               >
                                   {idx + 1}
                                </span>
                                <span className={`text-xs font-bold truncate transition-colors ${isActive || isBookmarked ? 'text-gray-200' : 'text-gray-500 group-hover:text-white'}`}>
