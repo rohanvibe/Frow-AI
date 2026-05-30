@@ -1823,11 +1823,11 @@ export default function ChatPage() {
                 <AnimatePresence mode="popLayout">
                   {messages.map((msg, i) => (
                     <motion.div 
-                      layout="position"
+                      layout
                       initial={{ opacity: 0, y: 10 }} 
                       animate={{ opacity: 1, y: 0 }} 
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ type: 'tween', duration: 0.3, ease: 'easeOut', delay: i * 0.02 }}
+                      transition={{ type: 'spring', damping: 30, stiffness: 400 }}
                       key={msg.id} 
                       id={`msg-${msg.id}`}
                   className={`group relative ${highlightedAnchor === msg.id ? 'highlight-bg p-4 -m-4 rounded-2xl bg-blue-500/5 ring-1 ring-blue-500/20' : ''} transition-all duration-700`}
@@ -1839,12 +1839,11 @@ export default function ChatPage() {
                   </div>
                   <div className="flex-1 space-y-4 min-w-0 overflow-hidden">
                     <motion.div 
-                      initial={false}
                       animate={msg.role === 'assistant' && loading && i === messages.length - 1 ? {
                         boxShadow: ["0 0 0px rgba(37,99,235,0)", "0 0 15px rgba(37,99,235,0.1)", "0 0 0px rgba(37,99,235,0)"],
                         borderColor: ["rgba(255,255,255,0.05)", "rgba(37,99,235,0.2)", "rgba(255,255,255,0.05)"]
                       } : {}}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
+                      transition={{ duration: 2, ease: "easeInOut", repeat: Infinity }}
                       className={`p-6 md:p-8 rounded-(--radius-lg) bg-(--surface) shadow-xl relative overflow-hidden border border-white/5 ${
                         msg.role === 'assistant' ? 'ring-1 ring-blue-500/10' : ''
                       }`}
