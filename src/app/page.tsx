@@ -1187,14 +1187,14 @@ export default function ChatPage() {
 
     // Force immediate naming for new chats or if the current title is poor
     const currentChat = chats.find(c => c.id === chatId)
-    const isPoorTitle = !currentChat || currentChat.title === 'New Chat' || currentChat.title.toLowerCase().includes('help') || currentChat.title.toLowerCase().includes('ai')
+    const isPoorTitle = !currentChat || currentChat.title === 'New Chat' || (typeof currentChat.title === 'string' && (currentChat.title.toLowerCase().includes('help') || currentChat.title.toLowerCase().includes('ai')))
     
     if (wasJustCreated || isPoorTitle) {
       fetch('/api/chat/title', {
         method: 'POST',
         body: JSON.stringify({ messages: [...messages, tempUserMsg].slice(-5) })
       }).then(res => res.json()).then(titleData => {
-        if (titleData.title && titleData.title.toLowerCase() !== 'new chat' && !titleData.title.toLowerCase().includes('help')) {
+        if (titleData.title && titleData.title.toLowerCase() !== 'new chat' && typeof titleData.title === 'string' && !titleData.title.toLowerCase().includes('help')) {
            const newTitle = titleData.title;
            supabase.from('chats').update({ title: newTitle }).eq('id', chatId!).then(() => {
              setChats(prev => prev.map(c => c.id === chatId ? { ...c, title: newTitle } : c))
@@ -1544,7 +1544,7 @@ export default function ChatPage() {
                   <p className="text-[10px] text-(--apple-gray)/60">Kick off a new intelligent session.</p>
                 </div>
               ) : (
-                chats.filter(c => chatSearch.trim() === '' || c.title.toLowerCase().includes(chatSearch.toLowerCase())).map(chat => (
+                chats.filter(c => chatSearch.trim() === '' || (typeof c.title === 'string' && c.title.toLowerCase().includes(chatSearch.toLowerCase()))).map(chat => (
                   <div key={chat.id} className="group relative">
                     {editingChatId === chat.id ? (
                       <div className="flex items-center gap-2 p-2 bg-white/5 rounded-xl border border-blue-500/50">
@@ -2089,7 +2089,7 @@ export default function ChatPage() {
                       </div>
                       <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto custom-scrollbar pr-2">
                          {profileMemories.slice(0, 5).map((mem, i) => {
-                            const cleaned = mem.includes('|') ? mem.split('|').slice(1).join('|').trim() : mem;
+                            const cleaned = typeof mem === 'string' ? (mem.includes('|') ? mem.split('|').slice(1).join('|').trim() : mem) : JSON.stringify(mem);
                             return (
                                <div key={i} className="px-3 py-1.5 rounded-xl bg-(--surface) text-[10px] font-medium text-(--apple-gray)">
                                   {cleaned.length > 25 ? cleaned.slice(0, 25) + '...' : cleaned}
@@ -2189,7 +2189,7 @@ export default function ChatPage() {
                 ) : (
                    messages
                      .filter(m => m.role === 'user')
-                     .filter(m => sidebarSearch.trim() === '' || m.content.toLowerCase().includes(sidebarSearch.toLowerCase()))
+                     .filter(m => sidebarSearch.trim() === '' || (typeof m.content === 'string' && m.content.toLowerCase().includes(sidebarSearch.toLowerCase())))
                      .map((msg, idx) => {
                        const isBookmarked = bookmarkedMessages.has(msg.id)
                        const isActive = highlightedMessageId === msg.id

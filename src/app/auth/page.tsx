@@ -134,7 +134,7 @@ export default function AuthPage() {
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`text-[11px] font-bold tracking-tight text-center ${error.includes('Check your email') ? 'text-green-500' : 'text-red-500'}`}
+                  className={`text-[11px] font-bold tracking-tight text-center ${typeof error === 'string' && error.includes('Check your email') ? 'text-green-500' : 'text-red-500'}`}
                 >
                   {error}
                 </motion.p>
