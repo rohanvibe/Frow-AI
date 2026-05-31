@@ -1977,6 +1977,23 @@ export default function ChatPage() {
                                  ul: ({ children }) => <ul className="list-disc pl-5 space-y-2 mb-4 break-words">{children}</ul>,
                                  ol: ({ children }) => <ol className="list-decimal pl-5 space-y-2 mb-4 break-words">{children}</ol>,
                                  li: ({ children }) => <li className="leading-relaxed break-words">{children}</li>,
+                                 img: ({ src, alt }) => (
+                                   <a href={typeof src === 'string' ? src : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
+                                      <img src={typeof src === 'string' ? src : undefined} alt={typeof alt === 'string' ? alt : "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
+                                      <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
+                                   </a>
+                                 ),
+                                 a: ({ href, children, ...props }) => {
+                                   if (href && /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(href)) {
+                                     return (
+                                       <a href={typeof href === 'string' ? href : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
+                                          <img src={typeof href === 'string' ? href : undefined} alt={String(children) || "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
+                                          <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
+                                       </a>
+                                     )
+                                   }
+                                   return <a href={typeof href === 'string' ? href : undefined} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-4" {...props}>{children}</a>
+                                 },
                                  code: ({ node, className, children, ...props }: any) => {
                                    const match = /language-(\w+)/.exec(className || '');
                                   if (match?.[1] === 'calculator') {
