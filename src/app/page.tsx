@@ -771,6 +771,7 @@ export default function ChatPage() {
   }, [currentChatId])
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const userScrolledUpRef = useRef(false)
   const [showLanding, setShowLanding] = useState(true)
   const [hasInteracted, setHasInteracted] = useState(false)
 
@@ -987,11 +988,7 @@ export default function ChatPage() {
   }, [])
 
   const scrollToBottom = () => {
-    const container = document.getElementById('chat-messages-container')
-    if (container && loading) {
-       const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200
-       if (!isNearBottom) return // Don't interrupt if user is reading up
-    }
+    if (loading && userScrolledUpRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: loading ? 'auto' : 'smooth' })
   }
 
@@ -1204,6 +1201,8 @@ export default function ChatPage() {
     const displayContent = customMsg || input
     if (!displayContent.trim() || loading) return
     if (!user && !isGuest) return
+    
+    userScrolledUpRef.current = false
 
     // Add user message immediately
     const tempUserMsg: Message = {
@@ -1844,7 +1843,9 @@ export default function ChatPage() {
               if (currentChatId) {
                  setChatScrolls(prev => ({ ...prev, [currentChatId]: scrollTop }))
               }
-              setShowJumpToBottom(scrollHeight - scrollTop - clientHeight > 300)
+              const isScrolledUp = scrollHeight - scrollTop - clientHeight > 300
+              setShowJumpToBottom(isScrolledUp)
+              userScrolledUpRef.current = isScrolledUp
               
               // Feature 2: Sidebar Auto-Reveals Current Position
               const messageElements = Array.from(document.querySelectorAll('[id^="msg-"]'))
