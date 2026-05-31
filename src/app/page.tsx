@@ -1852,7 +1852,20 @@ export default function ChatPage() {
                  }
               }
               if (currentActive) {
-                 setActiveSidebarMsgId(currentActive)
+                 const msgIndex = messages.findIndex(m => m.id === currentActive)
+                 if (msgIndex !== -1) {
+                    const activeMsg = messages[msgIndex]
+                    if (activeMsg.role === 'user') {
+                       setActiveSidebarMsgId(activeMsg.id)
+                    } else {
+                       for (let i = msgIndex - 1; i >= 0; i--) {
+                          if (messages[i].role === 'user') {
+                             setActiveSidebarMsgId(messages[i].id)
+                             break
+                          }
+                       }
+                    }
+                 }
               }
            }}
         >
@@ -1874,7 +1887,7 @@ export default function ChatPage() {
                       initial={{ opacity: 0, y: 10 }} 
                       animate={{ opacity: 1, y: 0 }} 
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+                      transition={msg.role === 'assistant' && loading && i === messages.length - 1 ? { duration: 0 } : { type: 'spring', damping: 30, stiffness: 400 }}
                       key={msg.id} 
                       id={`msg-${msg.id}`}
                   className={`group relative ${highlightedAnchor === msg.id ? 'highlight-bg p-4 -m-4 rounded-2xl bg-blue-500/5 ring-1 ring-blue-500/20' : ''} transition-all duration-700`}
@@ -1886,11 +1899,6 @@ export default function ChatPage() {
                   </div>
                   <div className="flex-1 space-y-4 min-w-0 overflow-hidden">
                     <motion.div 
-                      animate={msg.role === 'assistant' && loading && i === messages.length - 1 ? {
-                        boxShadow: ["0 0 0px rgba(37,99,235,0)", "0 0 15px rgba(37,99,235,0.1)", "0 0 0px rgba(37,99,235,0)"],
-                        borderColor: ["rgba(255,255,255,0.05)", "rgba(37,99,235,0.2)", "rgba(255,255,255,0.05)"]
-                      } : {}}
-                      transition={{ duration: 2, ease: "easeInOut", repeat: Infinity }}
                       className={`p-6 md:p-8 rounded-(--radius-lg) bg-(--surface) shadow-xl relative overflow-hidden border border-white/5 ${
                         msg.role === 'assistant' ? 'ring-1 ring-blue-500/10' : ''
                       }`}
@@ -2010,7 +2018,7 @@ export default function ChatPage() {
                                 }
                               }}
                             >
-                              {cleanDisplayContent(msg.content)}
+                              {cleanDisplayContent(msg.content) + (msg.role === 'assistant' && loading && i === messages.length - 1 ? ' ▍' : '')}
                             </ReactMarkdown>
                           )}
 
