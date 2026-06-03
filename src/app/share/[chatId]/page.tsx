@@ -20,15 +20,15 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
 
   if (!chat) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-10 font-mono text-xs">
+      <div className="min-h-screen bg-(--background) text-(--foreground) flex flex-col items-center justify-center p-10 font-mono text-xs">
         <h1 className="text-red-500 mb-4 font-black text-xl">VIRAL SHARE DEBUG</h1>
-        <div className="bg-white/5 p-4 rounded-xl space-y-2 border border-white/10 max-w-lg">
-          <p><span className="text-gray-500">Error:</span> {chatError?.message || "Chat record not found in database"}</p>
-          <p><span className="text-gray-500">ID Requested:</span> {chatId}</p>
-          <p><span className="text-gray-500">Next.js Route:</span> /share/[chatId]</p>
-          <p><span className="text-gray-500">Troubleshooting:</span> Ensure you have run the SQL to add 'is_public' and the GUEST RLS policies.</p>
+        <div className="bg-(--surface) p-4 rounded-xl space-y-2 border border-(--border-color) max-w-lg">
+          <p><span className="text-(--apple-gray)">Error:</span> {chatError?.message || "Chat record not found in database"}</p>
+          <p><span className="text-(--apple-gray)">ID Requested:</span> {chatId}</p>
+          <p><span className="text-(--apple-gray)">Next.js Route:</span> /share/[chatId]</p>
+          <p><span className="text-(--apple-gray)">Troubleshooting:</span> Ensure you have run the SQL to add 'is_public' and the GUEST RLS policies.</p>
         </div>
-        <Link href="/" className="mt-8 text-blue-500 hover:underline">Return to Threadly</Link>
+        <Link href="/" className="mt-8 text-(--apple-blue) hover:underline">Return to Threadly</Link>
       </div>
     )
   }
@@ -41,18 +41,18 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
     .order('created_at', { ascending: true })
 
   return (
-    <div className="min-h-screen text-white font-sans selection:bg-blue-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-(--background) text-(--foreground) font-sans selection:bg-(--apple-blue)/30 overflow-x-hidden">
       
       {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/5 bg-black/60 backdrop-blur-3xl">
+      <header className="sticky top-0 z-40 w-full border-b border-(--border-color) bg-(--background)/60 backdrop-blur-3xl">
         <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-             <div className="w-10 h-10 squircle bg-(--apple-blue) flex items-center justify-center shadow-2xl shadow-blue-500/20">
+             <div className="w-10 h-10 squircle bg-(--apple-blue) flex items-center justify-center shadow-2xl shadow-(--apple-blue)/20">
                 <Zap className="w-5 h-5 text-white" />
              </div>
-             <span className="font-bold text-2xl tracking-tight">Threadly</span>
+             <span className="font-bold text-2xl tracking-tight text-(--foreground)">Threadly</span>
           </div>
-          <Link href="/" className="px-6 py-3 rounded-2xl bg-white text-black font-bold text-[13px] hover:bg-gray-100 transition-all flex items-center gap-2 group shadow-2xl">
+          <Link href="/" className="px-6 py-3 rounded-2xl bg-(--foreground) text-(--background) font-bold text-[13px] hover:opacity-90 transition-all flex items-center gap-2 group shadow-2xl">
              Enter Workspace <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
@@ -60,7 +60,7 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
 
       <main className="max-w-4xl mx-auto px-6 py-12 md:py-24">
         <div className="mb-20 space-y-4">
-           <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight text-white">{chat.title}</h1>
+           <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight text-(--foreground)">{chat.title}</h1>
            <p className="text-(--apple-gray) text-[12px] font-medium tracking-tight uppercase">Shared Flow • Refined with Threadly AI</p>
         </div>
 
@@ -78,7 +78,7 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
                       {msg.role === 'assistant' ? 'Threadly Assistant' : 'Shared Thought'}
                     </span>
                   </div>
-                  <div className="text-gray-100 leading-relaxed text-[17px] prose prose-invert prose-lg max-w-none prose-p:leading-[1.8] prose-pre:rounded-3xl prose-code:text-(--apple-blue) break-words whitespace-pre-wrap">
+                  <div className="text-(--foreground) leading-relaxed text-[17px] prose prose-lg dark:prose-invert max-w-none prose-p:leading-[1.8] prose-pre:rounded-3xl prose-code:text-(--apple-blue) break-words whitespace-pre-wrap">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {msg.content}
                     </ReactMarkdown>
@@ -89,12 +89,12 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
         </div>
 
         {/* Footer Viral CTA */}
-        <div className="mt-32 p-12 md:p-20 rounded-[3rem] border-none bg-(--surface) text-center space-y-10 relative overflow-hidden group">
-           <div className="absolute inset-0 bg-linear-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+        <div className="mt-32 p-12 md:p-20 rounded-[3rem] border border-(--border-color) bg-(--surface) text-center space-y-10 relative overflow-hidden group shadow-xl">
+           <div className="absolute inset-0 bg-linear-to-b from-(--apple-blue)/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
            <div className="relative z-10 space-y-8">
-              <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white">Experience high-speed <br/> intelligence.</h2>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-(--foreground)">Experience high-speed <br/> intelligence.</h2>
               <p className="text-(--apple-gray) text-lg font-medium max-w-md mx-auto leading-relaxed">Threadly is a high-performance workspace designed for elite thinkers and builders.</p>
-              <Link href="/" className="inline-flex h-16 items-center justify-center px-12 rounded-[1.25rem] bg-white font-bold text-black hover:bg-gray-100 shadow-2xl transition-all active:scale-95 text-[15px]">
+              <Link href="/" className="inline-flex h-16 items-center justify-center px-12 rounded-[1.25rem] bg-(--foreground) font-bold text-(--background) hover:opacity-90 shadow-2xl transition-all active:scale-95 text-[15px]">
                  Claim Your Workspace
               </Link>
               <div className="pt-6">
