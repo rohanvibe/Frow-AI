@@ -109,8 +109,9 @@ h1, h2, h3, h4, h5, h6 {
 .typing-cursor > *:last-child::after {
   content: '';
   display: inline-block;
-  width: 8px;
-  height: 15px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
   background-color: currentColor;
   margin-left: 4px;
   vertical-align: middle;

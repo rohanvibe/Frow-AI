@@ -1862,15 +1862,14 @@ export default function ChatPage() {
             <EmptyState onCreateNew={() => createNewChat()} />
           ) : (
             <div className="max-w-3xl mx-auto px-4 py-8 md:p-10 space-y-12 pb-32">
-              <motion.div layout drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.05} className="space-y-12">
-                <AnimatePresence mode="popLayout">
+              <div className="space-y-12">
+                <AnimatePresence>
                   {messages.map((msg, i) => (
                     <motion.div 
-                      layout
                       initial={{ opacity: 0, y: 10 }} 
                       animate={{ opacity: 1, y: 0 }} 
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={msg.role === 'assistant' && loading && i === messages.length - 1 ? { duration: 0 } : { type: 'spring', damping: 30, stiffness: 400 }}
+                      transition={{ type: 'spring', damping: 30, stiffness: 400 }}
                       key={msg.id} 
                       id={`msg-${msg.id}`}
                   className={`group relative ${highlightedAnchor === msg.id ? 'highlight-bg p-4 -m-4 rounded-2xl bg-blue-500/5 ring-1 ring-blue-500/20' : ''} transition-all duration-700`}
@@ -1933,11 +1932,8 @@ export default function ChatPage() {
                       ) : (
                         <div className={`text-(--foreground) leading-relaxed text-[17px] prose prose-sm max-w-none prose-p:leading-[1.45] prose-pre:rounded-(--radius-md) prose-code:text-(--apple-blue) break-words selection:bg-blue-500/40 dark:prose-invert ${msg.role === 'assistant' && loading && i === messages.length - 1 ? 'typing-cursor' : ''}`}>
                           {msg.content === '' && loading ? (
-                             <div className="flex items-center gap-4 py-2">
-                                <div className="flex gap-1.5 item-center">
-                                   {[1,2,3].map(d => <motion.div key={d} animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 1, delay: d * 0.2 }} className="w-2 h-2 rounded-full bg-blue-600" />)}
-                                </div>
-<span className="text-[10px] font-black tracking-widest uppercase text-blue-500 pt-0.5">Thinking...</span>
+                             <div className="py-2">
+                               <span className="inline-block w-2.5 h-2.5 rounded-full bg-current opacity-70 animate-blink my-1"></span>
                              </div>
                           ) : (
                             <ReactMarkdown 
@@ -2080,7 +2076,7 @@ export default function ChatPage() {
                 </motion.div>
               ))}
             </AnimatePresence>
-          </motion.div>
+          </div>
         </div>
           )}
           <div ref={messagesEndRef} className="h-20" />
