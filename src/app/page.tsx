@@ -60,14 +60,7 @@ import {
   Monitor,
   MousePointer2,
   Mic,
-  FileUp,
-  GitBranch,
-  ChevronDown,
-  LayoutDashboard,
-  Grid,
-  Archive,
-  TerminalSquare,
-  Box
+  FileUp
 } from 'lucide-react'
 import { motion, AnimatePresence, useScroll, useMotionValue, useSpring, useTransform, useMotionValueEvent } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
@@ -338,73 +331,6 @@ function AppleTooltip({ text, children }: { text: string, children: React.ReactN
           <div className="w-2 h-2 bg-[#18181b] rotate-45 mx-auto -mt-1" />
         </motion.div>
       </AnimatePresence>
-    </div>
-  )
-}
-
-function ArtifactWorkspace({ artifact, onClose }: { artifact: { id: string, title: string, content: string, language: string }, onClose: () => void }) {
-  const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code')
-  const [code, setCode] = useState(artifact.content)
-  const isRunnable = artifact.language === 'python' || artifact.language === 'py' || artifact.language === 'html' || artifact.language === 'svg' || artifact.language === 'mermaid' || artifact.language === 'calculator'
-  
-  useEffect(() => {
-    setCode(artifact.content)
-    setActiveTab(isRunnable ? 'preview' : 'code')
-  }, [artifact.id, artifact.content, isRunnable])
-
-  const copyCode = () => {
-    navigator.clipboard.writeText(code)
-  }
-
-  return (
-    <div className="flex flex-col h-full bg-(--surface) text-(--foreground) shadow-2xl w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-(--border-color) bg-(--surface-secondary) shrink-0">
-        <div className="flex items-center gap-3">
-          <Monitor className="w-4 h-4 text-(--apple-blue)" />
-          <span className="text-[11px] font-black uppercase tracking-widest text-(--apple-gray)">{artifact.title}</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full bg-(--foreground)/10 font-bold uppercase tracking-wider text-(--foreground)/50">{artifact.language}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {isRunnable && (
-             <div className="flex items-center bg-(--surface-tertiary) rounded-lg p-1 mr-2 border border-(--border-color)">
-               <button onClick={() => setActiveTab('code')} className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${activeTab === 'code' ? 'bg-(--foreground)/10 text-(--foreground) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}>Code</button>
-               <button onClick={() => setActiveTab('preview')} className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${activeTab === 'preview' ? 'bg-(--apple-blue) text-white shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}>Preview</button>
-             </div>
-          )}
-          <button onClick={copyCode} className="p-1.5 text-(--apple-gray) hover:text-(--foreground) transition-colors bg-(--surface-tertiary) rounded-lg border border-(--border-color)"><Copy className="w-4 h-4" /></button>
-          <button onClick={onClose} className="p-1.5 text-(--apple-gray) hover:text-red-400 transition-colors bg-(--surface-tertiary) rounded-lg border border-(--border-color) ml-1"><X className="w-4 h-4" /></button>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 overflow-hidden relative">
-        {activeTab === 'code' ? (
-           <textarea
-             value={code}
-             onChange={(e) => setCode(e.target.value)}
-             spellCheck={false}
-             className="w-full h-full bg-[#0e0e11] text-gray-300 p-6 font-mono text-[13px] leading-relaxed resize-none outline-none custom-scrollbar border-none"
-           />
-        ) : (
-           <div className="w-full h-full overflow-y-auto custom-scrollbar p-6 bg-(--surface-tertiary)">
-             {artifact.language === 'python' || artifact.language === 'py' ? (
-               <PythonSandbox code={code} />
-             ) : artifact.language === 'mermaid' ? (
-               <Mermaid chart={code} />
-             ) : artifact.language === 'calculator' ? (
-               <Calculator initialExpression={code} />
-             ) : artifact.language === 'html' || artifact.language === 'svg' ? (
-               <div className="w-full h-full bg-white rounded-xl overflow-hidden shadow-2xl" dangerouslySetInnerHTML={{ __html: code }} />
-             ) : (
-               <div className="flex flex-col items-center justify-center h-full text-(--apple-gray) gap-4">
-                 <Activity className="w-8 h-8 opacity-50" />
-                 <span className="text-[11px] font-bold uppercase tracking-widest">Preview not available for {artifact.language}</span>
-               </div>
-             )}
-           </div>
-        )}
-      </div>
     </div>
   )
 }
@@ -793,8 +719,6 @@ export default function ChatPage() {
   const [profileMemories, setProfileMemories] = useState<string[]>([])
   const [attachedFile, setAttachedFile] = useState<{ name: string, content: string } | null>(null)
   const [isListening, setIsListening] = useState(false)
-  const [activeArtifact, setActiveArtifact] = useState<{ id: string, title: string, content: string, language: string } | null>(null)
-  const [isCodexMode, setIsCodexMode] = useState(false)
   
   // Phase 1 Sidebar States
   const [sidebarSearch, setSidebarSearch] = useState('')
@@ -1705,45 +1629,26 @@ export default function ChatPage() {
               </AppleTooltip>
             </div>
 
-            <div className="px-3 mb-4 space-y-1">
-              <button onClick={() => { setIsCodexMode(false); createNewChat(); }} className="w-full text-left p-3 rounded-xl flex items-center gap-3 group bg-white/5 hover:bg-white/10 transition-colors text-[13px] font-medium tracking-tight">
-                <Plus className="w-4 h-4 text-gray-300 group-hover:text-white" />
-                <span className="text-gray-300 group-hover:text-white">New chat</span>
-              </button>
-              
+            <div className="px-8 mb-8 space-y-4">
+              <motion.div whileTap={{ scale: 0.98 }}>
+                <Button onClick={() => { createNewChat(); }} className="w-full py-7 rounded-2xl flex items-center gap-2 group shadow-2xl bg-white text-black hover:bg-gray-100 no-border font-bold text-[13px] tracking-tight">
+                  <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
+                  New Session
+                </Button>
+              </motion.div>
               <div className="relative group">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" />
+                <Search className="w-3.5 h-3.5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
-                  placeholder="Search chats"
+                  placeholder="Search thoughts..."
                   value={chatSearch}
                   onChange={(e) => setChatSearch(e.target.value)}
-                  className="w-full bg-transparent border-none rounded-xl py-3 pl-10 pr-4 text-[13px] font-medium text-gray-300 placeholder-gray-500 hover:bg-white/5 focus:bg-white/5 outline-none transition-all"
+                  className="w-full bg-(--surface) border border-(--border-color) rounded-2xl py-3.5 pl-11 pr-4 text-[13px] font-medium text-(--foreground) placeholder-(--apple-gray) focus:ring-1 focus:ring-blue-500/30 outline-none transition-all shadow-sm"
                 />
               </div>
-
-              <button onClick={() => setIsCodexMode(false)} className="w-full text-left p-3 rounded-xl flex items-center gap-3 group hover:bg-white/5 transition-colors text-[13px] font-medium tracking-tight">
-                <Archive className="w-4 h-4 text-gray-500 group-hover:text-white" />
-                <span className="text-gray-300 group-hover:text-white">Library</span>
-              </button>
-
-              <button onClick={() => setIsCodexMode(false)} className="w-full text-left p-3 rounded-xl flex items-center gap-3 group hover:bg-white/5 transition-colors text-[13px] font-medium tracking-tight">
-                <Grid className="w-4 h-4 text-gray-500 group-hover:text-white" />
-                <span className="text-gray-300 group-hover:text-white">Apps</span>
-              </button>
-
-              <button onClick={() => setIsCodexMode(true)} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 group hover:bg-white/5 transition-colors text-[13px] font-medium tracking-tight ${isCodexMode ? 'bg-white/10' : ''}`}>
-                <TerminalSquare className={`w-4 h-4 ${isCodexMode ? 'text-white' : 'text-gray-500 group-hover:text-white'}`} />
-                <span className={isCodexMode ? 'text-white font-semibold' : 'text-gray-300 group-hover:text-white'}>Loom</span>
-              </button>
-
-              <button className="w-full text-left p-3 rounded-xl flex items-center gap-3 group hover:bg-white/5 transition-colors text-[13px] font-medium tracking-tight">
-                <MoreVertical className="w-4 h-4 text-gray-500 group-hover:text-white" />
-                <span className="text-gray-300 group-hover:text-white">More</span>
-              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-3 space-y-1 py-2 custom-scrollbar border-t border-white/5 pt-4">
+            <div className="flex-1 overflow-y-auto px-3 space-y-1.5 py-2 custom-scrollbar">
               {chats.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-center p-6 space-y-4 mt-10">
                   <MessageSquare className="w-8 h-8 text-(--apple-gray)" />
@@ -1806,20 +1711,41 @@ export default function ChatPage() {
               )}
             </div>
 
-            <div className="p-4 mt-auto border-t border-white/5">
-              <div className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-colors" onClick={() => setShowSettings(true)}>
-                <div className="w-8 h-8 rounded-full bg-[#1e1e1e] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+            <div className="p-4 border-t border-(--border-color) space-y-2">
+              <div className="flex items-center gap-3 p-4 bg-(--surface) rounded-(--radius-md) border border-(--border-color) mb-4 shadow-sm">
+                <div className="w-10 h-10 rounded-lg bg-(--apple-blue) flex items-center justify-center text-xs font-semibold text-white shadow-lg overflow-hidden">
                   {user?.user_metadata?.avatar_url ? (
                      <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
-                     <div className="w-full h-full bg-gray-600 rounded-full" />
+                     user?.email?.slice(0, 2).toUpperCase()
                   )}
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-[13px] font-medium text-white truncate">{user?.user_metadata?.full_name || 'Mahesh Kumar'}</span>
-                  <span className="text-[11px] text-gray-500 truncate">Free</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-(--apple-gray) mb-0.5">Account</span>
+                  <span className="text-[13px] font-semibold text-(--foreground) truncate">{user?.email}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <AppleTooltip text="Log Out">
+                    <button onClick={handleLogout} className="p-2 hover:bg-(--surface-tertiary) rounded-xl transition-all"><LogOut className="w-4 h-4 text-(--apple-gray)" /></button>
+                  </AppleTooltip>
+                  <AppleTooltip text="Delete Account">
+                    <button onClick={handleDeleteAccount} className="p-2 hover:bg-red-500/5 rounded-xl transition-all group/del"><UserMinus className="w-4 h-4 text-(--apple-gray) group-hover/del:text-red-500" /></button>
+                  </AppleTooltip>
                 </div>
               </div>
+              <Button id="tutorial-prompts" variant="ghost" className="w-full justify-start gap-4 rounded-xl py-6 hover:bg-(--surface-tertiary) text-(--foreground)" onClick={() => { setShowPrompts(true); }} onContextMenu={e => openContextMenu(e, 'openPrompts')}>
+                <Command className="w-4 h-4 text-(--apple-blue)" />
+                <span className="text-[13px] font-semibold tracking-tight">Saved Prompts</span>
+                <span className="ml-auto text-[8px] font-mono text-(--apple-gray)">{getShortcutLabel('openPrompts')}</span>
+              </Button>
+              <Button id="tutorial-settings" variant="ghost" className="w-full justify-start gap-4 rounded-xl py-6 hover:bg-(--surface-tertiary) text-(--foreground)" onClick={() => { 
+                trackEvent('byok_opened')
+                setShowSettings(true); 
+              }} onContextMenu={e => openContextMenu(e, 'openSettings')}>
+                <Settings className="w-4 h-4 text-(--apple-blue)" />
+                <span className="text-[13px] font-semibold tracking-tight">Settings</span>
+                <span className="ml-auto text-[8px] font-mono text-(--apple-gray)">{getShortcutLabel('openSettings')}</span>
+              </Button>
 
               <div className="pt-4 mt-2 border-t border-white/5">
                 <div className="flex bg-(--surface-tertiary) p-1 rounded-xl items-center border border-white/5">
@@ -1866,6 +1792,7 @@ export default function ChatPage() {
           localStorage.setItem('threadly_onboarding_shown', 'true')
         }}
       />
+
       <AnimatePresence>
         {showBigSignup && (
           <BigSignupModal onClose={() => setShowBigSignup(false)} onAction={() => {
@@ -1877,93 +1804,7 @@ export default function ChatPage() {
 
       <FeedbackWidget />
 
-      {isCodexMode ? (
-        <div className="flex-1 flex w-full h-full bg-[#18181b] text-[#cccccc] font-sans text-xs overflow-hidden z-[45] relative">
-          <div className="w-12 border-r border-[#2b2d31] flex flex-col items-center py-2 gap-4 bg-[#18181b] shrink-0">
-             <button className="p-2 text-gray-500 hover:text-white mt-2 mb-4" title="Menu">
-               <Menu className="w-5 h-5" />
-             </button>
-             <button className="p-2 text-blue-400 relative">
-               <FileText className="w-6 h-6" />
-               <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-[#18181b]" />
-             </button>
-             <button className="p-2 text-gray-500 hover:text-white"><Search className="w-6 h-6" /></button>
-             <button className="p-2 text-gray-500 hover:text-white"><GitBranch className="w-6 h-6" /></button>
-             <div className="mt-auto flex flex-col gap-4 mb-4">
-                <button className="p-2 text-gray-500 hover:text-white"><Settings className="w-6 h-6" /></button>
-             </div>
-          </div>
-
-          <div className="w-64 border-r border-[#2b2d31] bg-[#18181b] flex flex-col shrink-0 hidden md:flex">
-             <div className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-b border-[#2b2d31] flex justify-between items-center">
-                Source Control
-                <MoreVertical className="w-4 h-4" />
-             </div>
-             <div className="p-4 flex flex-col gap-1">
-                <div className="flex items-center gap-2 text-gray-400 text-xs py-1 px-2 hover:bg-white/5 rounded cursor-pointer">
-                   <ChevronDown className="w-3.5 h-3.5" />
-                   <b>Changes</b>
-                   <span className="ml-auto bg-white/10 rounded-full px-1.5 text-[9px]">1</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-300 py-1 px-2 hover:bg-white/5 rounded cursor-pointer ml-4">
-                   <Monitor className="w-3.5 h-3.5 text-blue-400" />
-                   <span>page.tsx</span>
-                   <span className="ml-auto text-[9px] text-[#cca700]">M</span>
-                </div>
-             </div>
-          </div>
-
-          <div className="flex-1 flex flex-col min-w-0 bg-[#1e1e1e]">
-             <div className="flex bg-[#18181b] overflow-x-auto custom-scrollbar border-b border-[#2b2d31]">
-                <div className="px-4 py-2 bg-[#1e1e1e] border-t-2 border-t-blue-500 text-white flex items-center gap-2 text-xs">
-                   <Monitor className="w-3.5 h-3.5 text-blue-400" />
-                   page.tsx
-                   <X className="w-3.5 h-3.5 ml-2 text-gray-500 hover:text-white cursor-pointer" />
-                </div>
-             </div>
-             
-             <div className="flex-1 flex flex-col relative items-center justify-center p-8 text-center text-gray-400">
-                <div className="w-16 h-16 rounded-2xl bg-[#ffffff] flex items-center justify-center mb-6 shadow-xl opacity-80">
-                   <div className="w-8 h-8 rounded-full border-4 border-black" style={{ borderTopColor: 'transparent', transform: 'rotate(45deg)' }} />
-                </div>
-                <h2 className="text-xl font-medium text-white mb-8 tracking-tight">Antigravity</h2>
-                <div className="flex flex-col gap-4 text-[12px] w-full max-w-[300px]">
-                   <div className="flex justify-between items-center w-full">
-                      <span className="text-gray-400">Switch to Agent Manager</span> 
-                      <span className="font-mono text-gray-500 bg-white/5 px-2 py-0.5 rounded">Ctrl + E</span>
-                   </div>
-                   <div className="flex justify-between items-center w-full">
-                      <span className="text-gray-400">Code with Agent</span> 
-                      <span className="font-mono text-gray-500 bg-white/5 px-2 py-0.5 rounded">Ctrl + L</span>
-                   </div>
-                </div>
-             </div>
-             
-             <div className="h-64 border-t border-[#2b2d31] bg-[#1e1e1e] flex flex-col hidden md:flex">
-                <div className="flex gap-4 px-4 pt-2 text-[11px] uppercase tracking-wider text-gray-500 border-b border-[#2b2d31]">
-                   <span className="pb-2 cursor-pointer hover:text-white">Problems</span>
-                   <span className="pb-2 cursor-pointer hover:text-white">Output</span>
-                   <span className="pb-2 cursor-pointer hover:text-white">Debug Console</span>
-                   <span className="pb-2 text-white border-b border-blue-500 cursor-pointer">Terminal</span>
-                   <span className="pb-2 cursor-pointer hover:text-white">Ports</span>
-                </div>
-                <div className="p-4 font-mono text-gray-300 text-[13px]">
-                   PS D:\rohan\Documents\threadly&gt; <span className="animate-pulse font-bold text-white">_</span>
-                </div>
-             </div>
-          </div>
-
-          <div className="w-full md:w-[450px] border-l border-[#2b2d31] bg-[#1e1e1e] flex flex-col shrink-0 relative">
-             <div className="px-4 py-3 border-b border-[#2b2d31] flex justify-between items-center shrink-0 bg-[#18181b]">
-                <span className="text-[13px] font-medium text-gray-300">Loom</span>
-                <div className="flex gap-2">
-                   <Plus className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer" />
-                   <History className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer" />
-                   <MoreVertical className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer" />
-                </div>
-             </div>
-             <div className="flex-1 relative overflow-hidden flex flex-col bg-[#1e1e1e] pb-10">
-               <motion.div layout transition={{ type: 'spring', damping: 32, stiffness: 180 }} className="flex-1 flex flex-col relative w-full h-full overflow-hidden">
+      <motion.div layout transition={{ type: 'spring', damping: 32, stiffness: 180 }} className={`flex-1 flex flex-col relative bg-(--background) ${isMobile ? 'pt-14' : ''}`}>
         <AnimatePresence>
           {isMobile && (isNavOpen || isSidebarOpen) && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setIsNavOpen(false); setIsSidebarOpen(false); }} className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40" />
@@ -1994,6 +1835,7 @@ export default function ChatPage() {
           </div>
         )}
 
+        {/* Desktop Header Actions */}
         {!isMobile && (
                <div className="absolute top-8 right-8 z-40 flex items-center gap-3">
               {currentChatId && (
@@ -2024,6 +1866,7 @@ export default function ChatPage() {
            </div>
         )}
 
+        {/* Conversation Minimap */}
         {!isMobile && messages.filter(m => m.role === 'user').length > 3 && (
            <div className="absolute right-6 top-32 bottom-40 w-4 z-40 opacity-30 hover:opacity-100 transition-opacity hidden md:block">
               <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-white/10 rounded-full" />
@@ -2051,6 +1894,7 @@ export default function ChatPage() {
               setShowJumpToBottom(isScrolledUp)
               userScrolledUpRef.current = isScrolledUp
               
+              // Feature 2: Sidebar Auto-Reveals Current Position
               const messageElements = Array.from(document.querySelectorAll('[id^="msg-"]'))
               let currentActive = null
               const middleY = window.innerHeight / 2
@@ -2179,29 +2023,29 @@ export default function ChatPage() {
                                   </div>
                                 ),
                                 th: ({ children }) => <th className="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 bg-white/5 whitespace-nowrap">{children}</th>,
-                                td: ({ children }) => <td className="px-6 py-4 text-sm border-t border-white/5 text-gray-300 whitespace-nowrap min-w-[120px]">{children}</td>,
-                                ul: ({ children }) => <ul className="list-disc pl-5 space-y-2 mb-4 break-words">{children}</ul>,
-                                ol: ({ children }) => <ol className="list-decimal pl-5 space-y-2 mb-4 break-words">{children}</ol>,
-                                li: ({ children }) => <li className="leading-relaxed break-words">{children}</li>,
-                                img: ({ src, alt }) => (
-                                  <a href={typeof src === 'string' ? src : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
-                                     <img src={typeof src === 'string' ? src : undefined} alt={typeof alt === 'string' ? alt : "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
-                                     <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
-                                  </a>
-                                ),
-                                a: ({ href, children, ...props }) => {
-                                  if (href && /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(href)) {
-                                    return (
-                                      <a href={typeof href === 'string' ? href : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
-                                         <img src={typeof href === 'string' ? href : undefined} alt={String(children) || "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
-                                         <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
-                                      </a>
-                                    )
-                                  }
-                                  return <a href={typeof href === 'string' ? href : undefined} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-4" {...props}>{children}</a>
-                                },
-                                code: ({ node, className, children, ...props }: any) => {
-                                  const match = /language-(\w+)/.exec(className || '');
+                                 td: ({ children }) => <td className="px-6 py-4 text-sm border-t border-white/5 text-gray-300 whitespace-nowrap min-w-[120px]">{children}</td>,
+                                 ul: ({ children }) => <ul className="list-disc pl-5 space-y-2 mb-4 break-words">{children}</ul>,
+                                 ol: ({ children }) => <ol className="list-decimal pl-5 space-y-2 mb-4 break-words">{children}</ol>,
+                                 li: ({ children }) => <li className="leading-relaxed break-words">{children}</li>,
+                                 img: ({ src, alt }) => (
+                                   <a href={typeof src === 'string' ? src : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
+                                      <img src={typeof src === 'string' ? src : undefined} alt={typeof alt === 'string' ? alt : "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
+                                      <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
+                                   </a>
+                                 ),
+                                 a: ({ href, children, ...props }) => {
+                                   if (href && /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(href)) {
+                                     return (
+                                       <a href={typeof href === 'string' ? href : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
+                                          <img src={typeof href === 'string' ? href : undefined} alt={String(children) || "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
+                                          <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
+                                       </a>
+                                     )
+                                   }
+                                   return <a href={typeof href === 'string' ? href : undefined} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-4" {...props}>{children}</a>
+                                 },
+                                 code: ({ node, className, children, ...props }: any) => {
+                                   const match = /language-(\w+)/.exec(className || '');
                                   if (match?.[1] === 'calculator') {
                                     return <Calculator initialExpression={String(children).replace(/\n$/, '')} />
                                   }
@@ -2214,12 +2058,10 @@ export default function ChatPage() {
                                         <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
                                           <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
                                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Python Source</span>
-                                            <div className="flex items-center gap-2">
-                                              <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-lg border border-white/5 active:scale-95">
-                                                <Copy className="w-3 h-3" />
-                                                <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
-                                              </button>
-                                            </div>
+                                            <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
+                                              <Copy className="w-3 h-3" />
+                                              <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
+                                            </button>
                                           </div>
                                           <div className="p-4 overflow-x-auto text-[13px] leading-relaxed custom-scrollbar text-gray-300">
                                             <code className={className} {...props}>{children}</code>
@@ -2236,7 +2078,7 @@ export default function ChatPage() {
                                     <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
                                       <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
                                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{match?.[1] || 'Code'}</span>
-                                        <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-lg border border-white/5 active:scale-95">
+                                        <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
                                           <Copy className="w-3 h-3" />
                                           <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
                                         </button>
@@ -2251,6 +2093,58 @@ export default function ChatPage() {
                             >
                               {cleanDisplayContent(msg.content)}
                             </ReactMarkdown>
+                          )}
+
+                          {/* PHASE 7: Deterministic Visual Rendering */}
+                          {msg.role === 'assistant' && msg.images && msg.images.length > 0 && (
+                            <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                               <div className="flex items-center gap-3 mb-2 px-1">
+                                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400">Verified Visual Assets</span>
+                               </div>
+                               <div className="flex flex-col gap-12">
+                                  {msg.images.map((img: any, idx: number) => {
+                                    const aspectRatio = img.width && img.height ? img.width / img.height : 16/10;
+                                    const maxWidth = img.width ? `${Math.min(img.width, 1200)}px` : '100%';
+                                    
+                                    return (
+                                      <div 
+                                        key={idx} 
+                                        style={{ maxWidth }}
+                                        className="group/img relative rounded-3xl overflow-hidden border border-(--border-color) bg-(--surface) shadow-2xl transition-all duration-500 hover:border-blue-500/40 hover:shadow-blue-500/20 mx-auto w-full"
+                                      >
+                                        <div 
+                                          className="relative overflow-hidden bg-(--surface-secondary)"
+                                          style={{ aspectRatio: aspectRatio.toString() }}
+                                        >
+                                          <img 
+                                            src={`/api/proxy-image?url=${encodeURIComponent(img.url)}`}
+                                            alt={img.alt}
+                                            className="w-full h-full object-cover transition-all duration-1000 group-hover/img:scale-105"
+                                            loading="lazy"
+                                          />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover/img:opacity-60 transition-opacity" />
+                                          
+                                          <div className="absolute bottom-0 inset-x-0 p-8 flex flex-col gap-2 translate-y-2 group-hover/img:translate-y-0 transition-transform">
+                                            <p className="text-[14px] font-black uppercase tracking-[0.2em] text-white drop-shadow-2xl line-clamp-2">{img.alt}</p>
+                                            <div className="flex items-center justify-between mt-2 border-t border-white/10 pt-4">
+                                               <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">{img.attribution || 'Visual Resource'}</span>
+                                               <a 
+                                                 href={img.source} 
+                                                 target="_blank" 
+                                                 rel="noopener noreferrer"
+                                                 className="text-[10px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-sm"
+                                               >
+                                                 Source <ExternalLink className="w-3 h-3" />
+                                               </a>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                               </div>
+                            </div>
                           )}
                         </div>
                       )}
@@ -2345,6 +2239,7 @@ export default function ChatPage() {
                 </div>
               </form>
 
+              {/* Hidden file input */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -2353,6 +2248,7 @@ export default function ChatPage() {
                 onChange={handleFileUpload}
               />
 
+              {/* Attached file chip */}
               {attachedFile && (
                 <div className="flex items-center gap-2 mt-3 px-1">
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-(--surface-tertiary) border border-(--border-color) text-sm text-(--foreground) font-medium max-w-xs truncate">
@@ -2365,7 +2261,7 @@ export default function ChatPage() {
                   <span className="text-xs text-(--apple-gray)">AI will read this file</span>
                 </div>
               )}
-
+              
               {messages.length === 0 && !input.trim() && (
                 <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
                    <button 
@@ -2396,38 +2292,16 @@ export default function ChatPage() {
                 </div>
               )}
            </div>
-         </div>
-       </motion.div>
-             </div>
-          </div>
         </div>
-      ) : (
-        <motion.div layout transition={{ type: 'spring', damping: 32, stiffness: 180 }} className={`flex-1 flex flex-col relative bg-(--background) ${isMobile ? 'pt-14' : ''}`}>
-           {/* Normal chat view goes here */}
-        </motion.div>
-      )}
+      </motion.div>
 
+      {/* Global shortcut context menu */}
       <ShortcutContextMenu
         state={contextMenu}
         currentKey={contextMenu ? shortcuts[contextMenu.shortcutId] : ''}
         onAssign={updateShortcut}
         onClose={() => setContextMenu(null)}
       />
-
-      <AnimatePresence>
-        {activeArtifact && (
-           <motion.div
-              layout
-              initial={isMobile ? { y: '100%' } : { width: 0, opacity: 0 }}
-              animate={isMobile ? { y: 0 } : { width: '50%', opacity: 1 }}
-              exit={isMobile ? { y: '100%' } : { width: 0, opacity: 0 }}
-              transition={{ type: 'spring', damping: 32, stiffness: 180 }}
-              className={`${isMobile ? 'absolute inset-0 z-[60]' : 'relative'} border-l border-(--border-color) bg-(--surface) flex flex-col shadow-2xl overflow-hidden`}
-           >
-             <ArtifactWorkspace artifact={activeArtifact} onClose={() => setActiveArtifact(null)} />
-           </motion.div>
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {isSidebarOpen && (
