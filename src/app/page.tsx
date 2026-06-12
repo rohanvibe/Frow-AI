@@ -60,7 +60,14 @@ import {
   Monitor,
   MousePointer2,
   Mic,
-  FileUp
+  FileUp,
+  GitBranch,
+  ChevronDown,
+  LayoutDashboard,
+  Grid,
+  Archive,
+  TerminalSquare,
+  Box
 } from 'lucide-react'
 import { motion, AnimatePresence, useScroll, useMotionValue, useSpring, useTransform, useMotionValueEvent } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
@@ -331,6 +338,73 @@ function AppleTooltip({ text, children }: { text: string, children: React.ReactN
           <div className="w-2 h-2 bg-[#18181b] rotate-45 mx-auto -mt-1" />
         </motion.div>
       </AnimatePresence>
+    </div>
+  )
+}
+
+function ArtifactWorkspace({ artifact, onClose }: { artifact: { id: string, title: string, content: string, language: string }, onClose: () => void }) {
+  const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code')
+  const [code, setCode] = useState(artifact.content)
+  const isRunnable = artifact.language === 'python' || artifact.language === 'py' || artifact.language === 'html' || artifact.language === 'svg' || artifact.language === 'mermaid' || artifact.language === 'calculator'
+  
+  useEffect(() => {
+    setCode(artifact.content)
+    setActiveTab(isRunnable ? 'preview' : 'code')
+  }, [artifact.id, artifact.content, isRunnable])
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(code)
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-(--surface) text-(--foreground) shadow-2xl w-full">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-(--border-color) bg-(--surface-secondary) shrink-0">
+        <div className="flex items-center gap-3">
+          <Monitor className="w-4 h-4 text-(--apple-blue)" />
+          <span className="text-[11px] font-black uppercase tracking-widest text-(--apple-gray)">{artifact.title}</span>
+          <span className="text-[9px] px-2 py-0.5 rounded-full bg-(--foreground)/10 font-bold uppercase tracking-wider text-(--foreground)/50">{artifact.language}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {isRunnable && (
+             <div className="flex items-center bg-(--surface-tertiary) rounded-lg p-1 mr-2 border border-(--border-color)">
+               <button onClick={() => setActiveTab('code')} className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${activeTab === 'code' ? 'bg-(--foreground)/10 text-(--foreground) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}>Code</button>
+               <button onClick={() => setActiveTab('preview')} className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${activeTab === 'preview' ? 'bg-(--apple-blue) text-white shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}>Preview</button>
+             </div>
+          )}
+          <button onClick={copyCode} className="p-1.5 text-(--apple-gray) hover:text-(--foreground) transition-colors bg-(--surface-tertiary) rounded-lg border border-(--border-color)"><Copy className="w-4 h-4" /></button>
+          <button onClick={onClose} className="p-1.5 text-(--apple-gray) hover:text-red-400 transition-colors bg-(--surface-tertiary) rounded-lg border border-(--border-color) ml-1"><X className="w-4 h-4" /></button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-hidden relative">
+        {activeTab === 'code' ? (
+           <textarea
+             value={code}
+             onChange={(e) => setCode(e.target.value)}
+             spellCheck={false}
+             className="w-full h-full bg-[#0e0e11] text-gray-300 p-6 font-mono text-[13px] leading-relaxed resize-none outline-none custom-scrollbar border-none"
+           />
+        ) : (
+           <div className="w-full h-full overflow-y-auto custom-scrollbar p-6 bg-(--surface-tertiary)">
+             {artifact.language === 'python' || artifact.language === 'py' ? (
+               <PythonSandbox code={code} />
+             ) : artifact.language === 'mermaid' ? (
+               <Mermaid chart={code} />
+             ) : artifact.language === 'calculator' ? (
+               <Calculator initialExpression={code} />
+             ) : artifact.language === 'html' || artifact.language === 'svg' ? (
+               <div className="w-full h-full bg-white rounded-xl overflow-hidden shadow-2xl" dangerouslySetInnerHTML={{ __html: code }} />
+             ) : (
+               <div className="flex flex-col items-center justify-center h-full text-(--apple-gray) gap-4">
+                 <Activity className="w-8 h-8 opacity-50" />
+                 <span className="text-[11px] font-bold uppercase tracking-widest">Preview not available for {artifact.language}</span>
+               </div>
+             )}
+           </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -719,6 +793,8 @@ export default function ChatPage() {
   const [profileMemories, setProfileMemories] = useState<string[]>([])
   const [attachedFile, setAttachedFile] = useState<{ name: string, content: string } | null>(null)
   const [isListening, setIsListening] = useState(false)
+  const [activeArtifact, setActiveArtifact] = useState<{ id: string, title: string, content: string, language: string } | null>(null)
+  const [isCodexMode, setIsCodexMode] = useState(false)
   
   // Phase 1 Sidebar States
   const [sidebarSearch, setSidebarSearch] = useState('')
@@ -1629,26 +1705,45 @@ export default function ChatPage() {
               </AppleTooltip>
             </div>
 
-            <div className="px-8 mb-8 space-y-4">
-              <motion.div whileTap={{ scale: 0.98 }}>
-                <Button onClick={() => { createNewChat(); }} className="w-full py-7 rounded-2xl flex items-center gap-2 group shadow-2xl bg-white text-black hover:bg-gray-100 no-border font-bold text-[13px] tracking-tight">
-                  <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
-                  New Session
-                </Button>
-              </motion.div>
+            <div className="px-3 mb-4 space-y-1">
+              <button onClick={() => { setIsCodexMode(false); createNewChat(); }} className="w-full text-left p-3 rounded-xl flex items-center gap-3 group bg-white/5 hover:bg-white/10 transition-colors text-[13px] font-medium tracking-tight">
+                <Plus className="w-4 h-4 text-gray-300 group-hover:text-white" />
+                <span className="text-gray-300 group-hover:text-white">New chat</span>
+              </button>
+              
               <div className="relative group">
-                <Search className="w-3.5 h-3.5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors" />
                 <input
                   type="text"
-                  placeholder="Search thoughts..."
+                  placeholder="Search chats"
                   value={chatSearch}
                   onChange={(e) => setChatSearch(e.target.value)}
-                  className="w-full bg-(--surface) border border-(--border-color) rounded-2xl py-3.5 pl-11 pr-4 text-[13px] font-medium text-(--foreground) placeholder-(--apple-gray) focus:ring-1 focus:ring-blue-500/30 outline-none transition-all shadow-sm"
+                  className="w-full bg-transparent border-none rounded-xl py-3 pl-10 pr-4 text-[13px] font-medium text-gray-300 placeholder-gray-500 hover:bg-white/5 focus:bg-white/5 outline-none transition-all"
                 />
               </div>
+
+              <button onClick={() => setIsCodexMode(false)} className="w-full text-left p-3 rounded-xl flex items-center gap-3 group hover:bg-white/5 transition-colors text-[13px] font-medium tracking-tight">
+                <Archive className="w-4 h-4 text-gray-500 group-hover:text-white" />
+                <span className="text-gray-300 group-hover:text-white">Library</span>
+              </button>
+
+              <button onClick={() => setIsCodexMode(false)} className="w-full text-left p-3 rounded-xl flex items-center gap-3 group hover:bg-white/5 transition-colors text-[13px] font-medium tracking-tight">
+                <Grid className="w-4 h-4 text-gray-500 group-hover:text-white" />
+                <span className="text-gray-300 group-hover:text-white">Apps</span>
+              </button>
+
+              <button onClick={() => setIsCodexMode(true)} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 group hover:bg-white/5 transition-colors text-[13px] font-medium tracking-tight ${isCodexMode ? 'bg-white/10' : ''}`}>
+                <TerminalSquare className={`w-4 h-4 ${isCodexMode ? 'text-white' : 'text-gray-500 group-hover:text-white'}`} />
+                <span className={isCodexMode ? 'text-white font-semibold' : 'text-gray-300 group-hover:text-white'}>Codex</span>
+              </button>
+
+              <button className="w-full text-left p-3 rounded-xl flex items-center gap-3 group hover:bg-white/5 transition-colors text-[13px] font-medium tracking-tight">
+                <MoreVertical className="w-4 h-4 text-gray-500 group-hover:text-white" />
+                <span className="text-gray-300 group-hover:text-white">More</span>
+              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-3 space-y-1.5 py-2 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto px-3 space-y-1 py-2 custom-scrollbar border-t border-white/5 pt-4">
               {chats.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-center p-6 space-y-4 mt-10">
                   <MessageSquare className="w-8 h-8 text-(--apple-gray)" />
@@ -1711,41 +1806,21 @@ export default function ChatPage() {
               )}
             </div>
 
-            <div className="p-4 border-t border-(--border-color) space-y-2">
-              <div className="flex items-center gap-3 p-4 bg-(--surface) rounded-(--radius-md) border border-(--border-color) mb-4 shadow-sm">
-                <div className="w-10 h-10 rounded-lg bg-(--apple-blue) flex items-center justify-center text-xs font-semibold text-white shadow-lg overflow-hidden">
+            <div className="p-4 mt-auto border-t border-white/5">
+              <div className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-colors" onClick={() => setShowSettings(true)}>
+                <div className="w-8 h-8 rounded-full bg-[#1e1e1e] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                   {user?.user_metadata?.avatar_url ? (
                      <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
-                     user?.email?.slice(0, 2).toUpperCase()
+                     <div className="w-full h-full bg-gray-600 rounded-full" />
                   )}
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-(--apple-gray) mb-0.5">Account</span>
-                  <span className="text-[13px] font-semibold text-(--foreground) truncate">{user?.email}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <AppleTooltip text="Log Out">
-                    <button onClick={handleLogout} className="p-2 hover:bg-(--surface-tertiary) rounded-xl transition-all"><LogOut className="w-4 h-4 text-(--apple-gray)" /></button>
-                  </AppleTooltip>
-                  <AppleTooltip text="Delete Account">
-                    <button onClick={handleDeleteAccount} className="p-2 hover:bg-red-500/5 rounded-xl transition-all group/del"><UserMinus className="w-4 h-4 text-(--apple-gray) group-hover/del:text-red-500" /></button>
-                  </AppleTooltip>
+                  <span className="text-[13px] font-medium text-white truncate">{user?.user_metadata?.full_name || 'Mahesh Kumar'}</span>
+                  <span className="text-[11px] text-gray-500 truncate">Free</span>
                 </div>
               </div>
-              <Button id="tutorial-prompts" variant="ghost" className="w-full justify-start gap-4 rounded-xl py-6 hover:bg-(--surface-tertiary) text-(--foreground)" onClick={() => { setShowPrompts(true); }} onContextMenu={e => openContextMenu(e, 'openPrompts')}>
-                <Command className="w-4 h-4 text-(--apple-blue)" />
-                <span className="text-[13px] font-semibold tracking-tight">Saved Prompts</span>
-                <span className="ml-auto text-[8px] font-mono text-(--apple-gray)">{getShortcutLabel('openPrompts')}</span>
-              </Button>
-              <Button id="tutorial-settings" variant="ghost" className="w-full justify-start gap-4 rounded-xl py-6 hover:bg-(--surface-tertiary) text-(--foreground)" onClick={() => { 
-                trackEvent('byok_opened')
-                setShowSettings(true); 
-              }} onContextMenu={e => openContextMenu(e, 'openSettings')}>
-                <Settings className="w-4 h-4 text-(--apple-blue)" />
-                <span className="text-[13px] font-semibold tracking-tight">Settings</span>
-                <span className="ml-auto text-[8px] font-mono text-(--apple-gray)">{getShortcutLabel('openSettings')}</span>
-              </Button>
+            </div>
 
               <div className="pt-4 mt-2 border-t border-white/5">
                 <div className="flex bg-(--surface-tertiary) p-1 rounded-xl items-center border border-white/5">
@@ -1804,7 +1879,100 @@ export default function ChatPage() {
 
       <FeedbackWidget />
 
-      <motion.div layout transition={{ type: 'spring', damping: 32, stiffness: 180 }} className={`flex-1 flex flex-col relative bg-(--background) ${isMobile ? 'pt-14' : ''}`}>
+      {isCodexMode ? (
+        <div className="flex-1 flex w-full h-full bg-[#18181b] text-[#cccccc] font-sans text-xs overflow-hidden z-[45] relative">
+          {/* Activity Bar */}
+          <div className="w-12 border-r border-[#2b2d31] flex flex-col items-center py-2 gap-4 bg-[#18181b] shrink-0">
+             <button className="p-2 text-gray-500 hover:text-white mt-2 mb-4" title="Menu">
+               <Menu className="w-5 h-5" />
+             </button>
+             <button className="p-2 text-blue-400 relative">
+               <FileText className="w-6 h-6" />
+               <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-[#18181b]" />
+             </button>
+             <button className="p-2 text-gray-500 hover:text-white"><Search className="w-6 h-6" /></button>
+             <button className="p-2 text-gray-500 hover:text-white"><GitBranch className="w-6 h-6" /></button>
+             <div className="mt-auto flex flex-col gap-4 mb-4">
+                <button className="p-2 text-gray-500 hover:text-white"><Settings className="w-6 h-6" /></button>
+             </div>
+          </div>
+
+          {/* Primary Side Bar (Source Control/Explorer) */}
+          <div className="w-64 border-r border-[#2b2d31] bg-[#18181b] flex flex-col shrink-0 hidden md:flex">
+             <div className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-b border-[#2b2d31] flex justify-between items-center">
+                Source Control
+                <MoreVertical className="w-4 h-4" />
+             </div>
+             <div className="p-4 flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-gray-400 text-xs py-1 px-2 hover:bg-white/5 rounded cursor-pointer">
+                   <ChevronDown className="w-3.5 h-3.5" />
+                   <b>Changes</b>
+                   <span className="ml-auto bg-white/10 rounded-full px-1.5 text-[9px]">1</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-300 py-1 px-2 hover:bg-white/5 rounded cursor-pointer ml-4">
+                   <Monitor className="w-3.5 h-3.5 text-blue-400" />
+                   <span>page.tsx</span>
+                   <span className="ml-auto text-[9px] text-[#cca700]">M</span>
+                </div>
+             </div>
+          </div>
+
+          {/* Main Editor Area */}
+          <div className="flex-1 flex flex-col min-w-0 bg-[#1e1e1e]">
+             {/* Editor Tabs */}
+             <div className="flex bg-[#18181b] overflow-x-auto custom-scrollbar border-b border-[#2b2d31]">
+                <div className="px-4 py-2 bg-[#1e1e1e] border-t-2 border-t-blue-500 text-white flex items-center gap-2 text-xs">
+                   <Monitor className="w-3.5 h-3.5 text-blue-400" />
+                   page.tsx
+                   <X className="w-3.5 h-3.5 ml-2 text-gray-500 hover:text-white cursor-pointer" />
+                </div>
+             </div>
+             
+             {/* Editor Content */}
+             <div className="flex-1 flex flex-col relative items-center justify-center p-8 text-center text-gray-400">
+                <div className="w-16 h-16 rounded-2xl bg-[#ffffff] flex items-center justify-center mb-6 shadow-xl opacity-80">
+                   <div className="w-8 h-8 rounded-full border-4 border-black" style={{ borderTopColor: 'transparent', transform: 'rotate(45deg)' }} />
+                </div>
+                <h2 className="text-xl font-medium text-white mb-8 tracking-tight">Antigravity</h2>
+                <div className="flex flex-col gap-4 text-[12px] w-full max-w-[300px]">
+                   <div className="flex justify-between items-center w-full">
+                      <span className="text-gray-400">Switch to Agent Manager</span> 
+                      <span className="font-mono text-gray-500 bg-white/5 px-2 py-0.5 rounded">Ctrl + E</span>
+                   </div>
+                   <div className="flex justify-between items-center w-full">
+                      <span className="text-gray-400">Code with Agent</span> 
+                      <span className="font-mono text-gray-500 bg-white/5 px-2 py-0.5 rounded">Ctrl + L</span>
+                   </div>
+                </div>
+             </div>
+             
+             {/* Terminal Area at bottom */}
+             <div className="h-64 border-t border-[#2b2d31] bg-[#1e1e1e] flex flex-col hidden md:flex">
+                <div className="flex gap-4 px-4 pt-2 text-[11px] uppercase tracking-wider text-gray-500 border-b border-[#2b2d31]">
+                   <span className="pb-2 cursor-pointer hover:text-white">Problems</span>
+                   <span className="pb-2 cursor-pointer hover:text-white">Output</span>
+                   <span className="pb-2 cursor-pointer hover:text-white">Debug Console</span>
+                   <span className="pb-2 text-white border-b border-blue-500 cursor-pointer">Terminal</span>
+                   <span className="pb-2 cursor-pointer hover:text-white">Ports</span>
+                </div>
+                <div className="p-4 font-mono text-gray-300 text-[13px]">
+                   PS D:\rohan\Documents\threadly&gt; <span className="animate-pulse font-bold text-white">_</span>
+                </div>
+             </div>
+          </div>
+
+          {/* Right Sidebar (Chat) */}
+          <div className="w-full md:w-[450px] border-l border-[#2b2d31] bg-[#1e1e1e] flex flex-col shrink-0 relative">
+             <div className="px-4 py-3 border-b border-[#2b2d31] flex justify-between items-center shrink-0 bg-[#18181b]">
+                <span className="text-[13px] font-medium text-gray-300">Removing Text Generation Anim...</span>
+                <div className="flex gap-2">
+                   <Plus className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer" />
+                   <History className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer" />
+                   <MoreVertical className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer" />
+                </div>
+             </div>
+             <div className="flex-1 relative overflow-hidden flex flex-col bg-[#1e1e1e] pb-10">
+               <motion.div layout transition={{ type: 'spring', damping: 32, stiffness: 180 }} className="flex-1 flex flex-col relative w-full h-full overflow-hidden">
         <AnimatePresence>
           {isMobile && (isNavOpen || isSidebarOpen) && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setIsNavOpen(false); setIsSidebarOpen(false); }} className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40" />
@@ -2058,10 +2226,16 @@ export default function ChatPage() {
                                         <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
                                           <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
                                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Python Source</span>
-                                            <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
-                                              <Copy className="w-3 h-3" />
-                                              <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                              <button onClick={() => setActiveArtifact({ id: Math.random().toString(), title: 'Python Source', content: String(children).replace(/\n$/, ''), language: 'python' })} className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 rounded-lg border border-blue-500/20 active:scale-95">
+                                                <Monitor className="w-3 h-3" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest">Open Workspace</span>
+                                              </button>
+                                              <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-lg border border-white/5 active:scale-95">
+                                                <Copy className="w-3 h-3" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
+                                              </button>
+                                            </div>
                                           </div>
                                           <div className="p-4 overflow-x-auto text-[13px] leading-relaxed custom-scrollbar text-gray-300">
                                             <code className={className} {...props}>{children}</code>
@@ -2078,10 +2252,16 @@ export default function ChatPage() {
                                     <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
                                       <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
                                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{match?.[1] || 'Code'}</span>
-                                        <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
-                                          <Copy className="w-3 h-3" />
-                                          <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                          <button onClick={() => setActiveArtifact({ id: Math.random().toString(), title: match?.[1] || 'Code', content: String(children).replace(/\n$/, ''), language: match?.[1] || 'text' })} className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 rounded-lg border border-blue-500/20 active:scale-95">
+                                            <Monitor className="w-3 h-3" />
+                                            <span className="text-[9px] font-black uppercase tracking-widest">Open Workspace</span>
+                                          </button>
+                                          <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-lg border border-white/5 active:scale-95">
+                                            <Copy className="w-3 h-3" />
+                                            <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
+                                          </button>
+                                        </div>
                                       </div>
                                       <div className="p-4 overflow-x-auto text-[13px] leading-relaxed custom-scrollbar text-gray-300">
                                         <code className={className} {...props}>{children}</code>
@@ -2293,15 +2473,34 @@ export default function ChatPage() {
               )}
            </div>
         </div>
-      </motion.div>
+      {isCodexMode ? (
+               </motion.div>
+             </div>
+          </div>
+        </div>
+      ) : null}
 
-      {/* Global shortcut context menu */}
       <ShortcutContextMenu
         state={contextMenu}
         currentKey={contextMenu ? shortcuts[contextMenu.shortcutId] : ''}
         onAssign={updateShortcut}
         onClose={() => setContextMenu(null)}
       />
+
+      <AnimatePresence>
+        {activeArtifact && (
+           <motion.div
+              layout
+              initial={isMobile ? { y: '100%' } : { width: 0, opacity: 0 }}
+              animate={isMobile ? { y: 0 } : { width: '50%', opacity: 1 }}
+              exit={isMobile ? { y: '100%' } : { width: 0, opacity: 0 }}
+              transition={{ type: 'spring', damping: 32, stiffness: 180 }}
+              className={`${isMobile ? 'absolute inset-0 z-[60]' : 'relative'} border-l border-(--border-color) bg-(--surface) flex flex-col shadow-2xl overflow-hidden`}
+           >
+             <ArtifactWorkspace artifact={activeArtifact} onClose={() => setActiveArtifact(null)} />
+           </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isSidebarOpen && (
