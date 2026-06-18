@@ -184,12 +184,28 @@ Use these tags ONLY for long-term facts.
         tools: isSimpleGreeting ? undefined : tools,
         tool_choice: isSimpleGreeting ? undefined : 'auto',
         temperature: 0.1,
+        max_tokens: 4096,
         forceModel: selectedModel,
         forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('llama') ? 'groq' : undefined,
       })
     } catch (error: any) {
       console.error('[Chat API] AI Service Error:', error)
-      return NextResponse.json({ error: error.message || 'AI service failed' }, { status: 500 })
+      // Fallback: Try without tools if tool calling fails
+      console.log('[Chat API] Retrying without tools due to error')
+      try {
+        aiResponse = await aiService.complete(apiMessages, {
+          currentMessage: message,
+          tools: undefined,
+          tool_choice: undefined,
+          temperature: 0.1,
+          max_tokens: 4096,
+          forceModel: selectedModel,
+          forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('llama') ? 'groq' : undefined,
+        })
+      } catch (retryError: any) {
+        console.error('[Chat API] Retry failed:', retryError)
+        return NextResponse.json({ error: retryError.message || 'AI service failed' }, { status: 500 })
+      }
     }
 
     const messageObj = {

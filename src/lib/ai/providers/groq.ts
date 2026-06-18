@@ -18,11 +18,16 @@ export class GroqProvider extends BaseProvider {
       tools: request.tools,
       tool_choice: request.tool_choice,
       temperature: request.temperature || 0.1,
-      max_tokens: request.max_tokens,
+      max_tokens: request.max_tokens || 4096,
       stream: false,
     });
 
     const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(`Groq API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+    
     const message = data.choices[0].message;
 
     return {
