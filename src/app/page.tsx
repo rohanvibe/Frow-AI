@@ -3187,7 +3187,7 @@ function EmptyState({ onCreateNew, onSelectPrompt }: { onCreateNew: () => void, 
       <motion.div 
         animate={{ y: [0, -10, 0] }}
         transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-        className="relative group hidden md:block w-48 h-48 mb-4"
+        className="relative group hidden md:block w-64 h-64 mb-4"
       >
         <div className="absolute inset-0 bg-blue-500/10 blur-[50px] rounded-full group-hover:bg-purple-500/20 transition-colors duration-700" />
         <img src="/threadly.svg" alt="Threadly Mascot" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_30px_rgba(0,240,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
