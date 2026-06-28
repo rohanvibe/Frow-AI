@@ -729,7 +729,6 @@ export default function ChatPage() {
   const cleanDisplayContent = (content: string) => {
     return content
       .replace(/\[METADATA\][\s\S]*?\[\/METADATA\]/g, '') // Clean visual metadata
-      .replace(/<expression>(.*?)<\/expression>/gi, '\n```calculator\n$1\n```\n') // Fail-safe for literal tags
       .replace(/\[MEMORY_(ADD|LEARNED|EDIT|DELETE):.*?\]/gi, '')
       .replace(/\n[a-z]+\|.*$/i, '')
       .trim()
@@ -1382,7 +1381,7 @@ export default function ChatPage() {
 
     // Add user message immediately
     const tempUserMsg: Message = {
-      id: Math.random().toString(),
+      id: crypto.randomUUID(),
       chat_id: currentChatId || '',
       role: 'user',
       content: displayContent,
@@ -1459,7 +1458,7 @@ export default function ChatPage() {
     const userMsgInsert = !isGuest ? supabase.from('messages').insert([{ chat_id: chatId, role: 'user', content: displayContent }]).then(res => res) : Promise.resolve({ error: null })
 
     // Create placeholder for assistant message
-    const assistantMsgId = Math.random().toString()
+    const assistantMsgId = crypto.randomUUID()
     const tempAssistantMsg: Message = {
       id: assistantMsgId,
       chat_id: chatId!,
@@ -3104,57 +3103,75 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
         className="absolute border-2 border-blue-500 rounded-[24px] shadow-[0_0_40px_rgba(59,130,246,0.4)] z-101 will-change-transform"
       />
 
-      {/* The Tooltip */}
+      {/* The Mascot & Thought Bubble */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{
           opacity: 1, scale: 1,
-          top: Math.min(window.innerHeight - 250, rect.top + rect.height + 32),
-          left: Math.min(window.innerWidth - 360, Math.max(20, rect.left + rect.width / 2 - 160)),
+          top: Math.min(window.innerHeight - 300, rect.top + rect.height + 32),
+          left: Math.min(window.innerWidth - 450, Math.max(20, rect.left + rect.width / 2 - 200)),
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 180 }}
-        className="absolute w-[320px] bg-[#1c1c1e] border border-white/10 rounded-[28px] p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] z-102 pointer-events-auto overflow-hidden"
+        className="absolute z-102 pointer-events-auto flex items-end gap-3"
       >
-        <div className="absolute top-0 left-0 w-1 h-full bg-blue-600" />
-        
-        <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-xl bg-blue-600/20 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-blue-500" />
+        {/* Mascot */}
+        <motion.div 
+           animate={{ y: [0, -8, 0] }}
+           transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+           className="w-28 h-28 relative shrink-0 z-10"
+        >
+            <div className="absolute inset-0 bg-blue-500/20 blur-[20px] rounded-full" />
+            <img src="/threadly.svg" alt="Threadly Mascot" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(0,240,255,0.2)]" />
+        </motion.div>
+
+        {/* Thought Cloud */}
+        <div className="relative w-[340px] mb-8">
+          {/* Cloud Bubbles connecting to mascot */}
+          <div className="absolute -left-4 bottom-2 w-5 h-5 rounded-full bg-white shadow-lg z-0"></div>
+          <div className="absolute -left-8 -bottom-2 w-3 h-3 rounded-full bg-white shadow-md z-0"></div>
+          
+          {/* Main Bubble container */}
+          <div className="relative bg-white rounded-[32px] p-6 shadow-2xl z-10 border border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-blue-500" />
+                </div>
+                <h4 className="text-[13px] font-black uppercase tracking-widest text-gray-800">{current.title}</h4>
             </div>
-            <h4 className="text-[13px] font-black uppercase tracking-widest text-white">{current.title}</h4>
-        </div>
-        
-        <p className="text-[14px] text-gray-300 leading-relaxed font-medium mb-6">
-          {hasInteracted && current.successText ? current.successText : current.text}
-        </p>
-        
-        <div className="flex flex-col gap-3">
-            {!isActionStep ? (
-              <button 
-                  onClick={isLast ? onComplete : onNext}
-                  className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white text-[12px] font-black uppercase tracking-widest rounded-2xl shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                  {current.actionHint}
-                  <ArrowRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <div className={`w-full py-4 ${hasInteracted ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-white/5 border-white/10 text-gray-400'} border text-[10px] font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 transition-all duration-500`}>
-                 {hasInteracted ? (
-                    <>
-                       <CheckCircle2 className="w-3 h-3" />
-                       Action Recorded!
-                    </>
-                 ) : (
-                    <>
-                       <MousePointer2 className="w-3 h-3 animate-pulse" />
-                       Waiting for Sidebar Click...
-                    </>
-                 )}
-              </div>
-            )}
-            {step > 0 && !isActionStep && (
-               <button onClick={onComplete} className="text-[10px] font-bold text-gray-600 hover:text-white uppercase tracking-widest transition-colors">Skip Workspace Tour</button>
-            )}
+            
+            <p className="text-[14px] text-gray-600 leading-relaxed font-medium mb-6">
+              {hasInteracted && current.successText ? current.successText : current.text}
+            </p>
+            
+            <div className="flex flex-col gap-3">
+                {!isActionStep ? (
+                  <button 
+                      onClick={isLast ? onComplete : onNext}
+                      className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-black uppercase tracking-widest rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                      {current.actionHint}
+                      <ArrowRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <div className={`w-full py-4 ${hasInteracted ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-500'} border text-[10px] font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 transition-all duration-500`}>
+                     {hasInteracted ? (
+                        <>
+                           <CheckCircle2 className="w-4 h-4" />
+                           Action Recorded!
+                        </>
+                     ) : (
+                        <>
+                           <MousePointer2 className="w-4 h-4 animate-pulse" />
+                           Waiting for Sidebar Click...
+                        </>
+                     )}
+                  </div>
+                )}
+                {step > 0 && !isActionStep && (
+                   <button onClick={onComplete} className="text-[10px] font-bold text-gray-400 hover:text-gray-600 uppercase tracking-widest transition-colors">Skip Workspace Tour</button>
+                )}
+            </div>
+          </div>
         </div>
       </motion.div>
     </div>
