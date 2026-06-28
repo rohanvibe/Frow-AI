@@ -112,17 +112,7 @@ b, strong {
   animation: blink 1s step-end infinite;
 }
 
-.typing-cursor > *:last-child::after {
-  content: '';
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: currentColor;
-  margin-left: 4px;
-  vertical-align: middle;
-  animation: blink 1s step-end infinite;
-}
+
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;

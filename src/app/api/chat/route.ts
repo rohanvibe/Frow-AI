@@ -306,7 +306,7 @@ Use these tags ONLY for long-term facts.
     return handleStreaming(stream, detectedImages)
   } catch (error: any) {
     console.error('Chat API Error:', error)
-    return NextResponse.json({ error: 'fetch failed', details: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Server error', details: error.stack }, { status: 500 })
   }
 }
 
