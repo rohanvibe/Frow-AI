@@ -209,6 +209,7 @@ Use these tags ONLY for long-term facts.
     }
 
     const messageObj = {
+      role: 'assistant',
       content: aiResponse.content,
       tool_calls: aiResponse.tool_calls,
     }
