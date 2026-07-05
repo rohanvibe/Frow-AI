@@ -48,7 +48,7 @@
 ### Core Features
 - Full authentication lifecycle (signup, login, logout, account deletion) via Supabase Auth
 - Persistent multi-chat history with auto-generated AI titles
-- Real-time streaming AI responses via groq's LLaMA 3.3 70B
+- Real-time streaming AI responses via groq's Qwen 3.6 27B
 - Smart thread sidebar — every user message is an instant-jump anchor
 - Bring Your Own Key (BYOK) — OpenAI key stored locally, never transmitted
 - Prompt Library — save and reuse complex prompt templates

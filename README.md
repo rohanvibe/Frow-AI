@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="public/icon.png" alt="Frow AI" width="80" />
 
@@ -68,7 +68,7 @@ AI is usually bad at math and logic. Frow uses a real calculator and runs real c
 Get today's news and live web data instead of old, outdated information. The AI automatically searches the web when you need current facts.
 
 ### ⚙️ Always the right AI for the job
-The app automatically picks the smartest AI (like Gemini Pro) for hard questions and the fastest AI (like Llama 70B) for simple ones, so you never have to guess.
+The app automatically picks the smartest AI (like Gemini Pro) for hard questions and the fastest AI (like Qwen 27B) for simple ones, so you never have to guess.
 
 ### 🔒 Total privacy
 Your data and API keys stay on your own device. We never save your keys on our servers. You are in total control.
@@ -79,7 +79,7 @@ Your data and API keys stay on your own device. We never save your keys on our s
 
 - **Website Code:** Next.js 16
 - **Database:** Supabase
-- **AI Brains:** Llama 3.3 and Gemini
+- **AI Brains:** Qwen 3.6 and Gemini
 - **Looks:** Tailwind CSS and Framer Motion
 
 ---
@@ -113,7 +113,7 @@ npm run dev
 
 ## 🛣️ What's Next
 
-- [x] Fast Llama 3.3 support
+- [x] Fast Qwen 3.6 support
 - [x] Smart long-term memory
 - [x] Auto-picking the best AI model
 - [ ] Talk to type (Voice support)

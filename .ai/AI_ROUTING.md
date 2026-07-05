@@ -1,4 +1,4 @@
-﻿# AI Model Routing System
+# AI Model Routing System
 
 ## Overview
 
@@ -15,7 +15,7 @@ Frow now uses an intelligent model routing system that automatically selects the
 
 2. **Provider Classes** (`src/lib/ai/providers/`)
    - `base.ts` - Abstract base provider class
-   - `groq.ts` - Groq provider (Llama models)
+   - `groq.ts` - Groq provider (Qwen models)
    - `gemini.ts` - Gemini provider (Flash and Pro models)
 
 3. **Router** (`src/lib/ai/router.ts`)
@@ -32,7 +32,7 @@ Frow now uses an intelligent model routing system that automatically selects the
 
 ## Models
 
-### Llama 3.3 70B (Groq)
+### Qwen 3.6 27B (Groq)
 - **Use Case**: Simple requests, greetings, low-complexity tasks
 - **Provider**: Groq
 - **Environment Variable**: `GROQ_API_KEY`
@@ -76,7 +76,7 @@ The router analyzes messages using multiple factors:
 ```
 HIGH complexity → Gemini 2.5 Pro
 MEDIUM complexity → Gemini 2.5 Flash
-SIMPLE complexity → Llama 3.3 70B
+SIMPLE complexity → Qwen 3.6 27B
 ```
 
 ## Fallback Mechanism
@@ -85,7 +85,7 @@ The system implements automatic fallback in this order:
 
 1. **Primary Model** (based on routing decision)
 2. **Gemini 2.5 Flash** (if primary fails)
-3. **Llama 3.3 70B** (if all else fails)
+3. **Qwen 3.6 27B** (if all else fails)
 
 This ensures reliability even when providers experience outages or rate limits.
 
@@ -134,7 +134,7 @@ const stream = await aiService.stream(messages, {
 
 // Force specific model
 const response = await aiService.complete(messages, {
-  forceModel: 'llama-3.3-70b-versatile',
+  forceModel: 'qwen-3.6-27b',
   forceProvider: 'groq',
 })
 ```
@@ -231,7 +231,7 @@ When forcing a specific model, ensure:
 
 ### Manual Testing
 
-1. Test simple greetings (should use Llama)
+1. Test simple greetings (should use Qwen)
 2. Test coding questions (should use Gemini Flash)
 3. Test complex architecture questions (should use Gemini Pro)
 4. Test fallback by disabling API keys

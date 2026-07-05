@@ -13,7 +13,7 @@ export class AIService {
   private fallbackChain: string[] = [
     'gemini-2.0-pro-exp',
     'gemini-2.0-flash-exp',
-    'llama-3.3-70b-versatile',
+    'qwen-3.6-27b',
   ];
 
   constructor() {
@@ -24,10 +24,10 @@ export class AIService {
    * Initialize all AI providers with API keys from environment
    */
   private initializeProviders() {
-    // Initialize Groq (Llama)
+    // Initialize Groq (Qwen)
     const groqApiKey = process.env.GROQ_API_KEY;
     if (groqApiKey) {
-      this.providers.set('llama-3.3-70b-versatile', new GroqProvider(groqApiKey, 'llama-3.3-70b-versatile'));
+      this.providers.set('qwen-3.6-27b', new GroqProvider(groqApiKey, 'qwen-3.6-27b'));
       console.log('[AIService] Groq provider initialized');
     } else {
       console.warn('[AIService] GROQ_API_KEY not found');

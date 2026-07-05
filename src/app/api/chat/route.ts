@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 import { aiService } from '@/lib/ai'
 import { AIRouter } from '@/lib/ai/router'
@@ -186,7 +186,7 @@ Use these tags ONLY for long-term facts.
         temperature: 0.1,
         max_tokens: 4096,
         forceModel: selectedModel,
-        forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('llama') ? 'groq' : undefined,
+        forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('Qwen') ? 'groq' : undefined,
       })
     } catch (error: any) {
       console.error('[Chat API] AI Service Error:', error)
@@ -200,7 +200,7 @@ Use these tags ONLY for long-term facts.
           temperature: 0.1,
           max_tokens: 4096,
           forceModel: selectedModel,
-          forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('llama') ? 'groq' : undefined,
+          forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('Qwen') ? 'groq' : undefined,
         })
       } catch (retryError: any) {
         console.error('[Chat API] Retry failed:', retryError)
@@ -248,7 +248,7 @@ Use these tags ONLY for long-term facts.
       // Final call after all tools are executed using AI service
       const finalStream = await aiService.stream(apiMessages, {
         temperature: 0.1,
-        forceModel: 'llama-3.3-70b-versatile',
+        forceModel: 'qwen-3.6-27b',
         forceProvider: 'groq',
       })
       return handleStreaming(finalStream, detectedImages)
@@ -286,7 +286,7 @@ Use these tags ONLY for long-term facts.
           
           const finalStream = await aiService.stream(apiMessages, {
             temperature: 0.1,
-            forceModel: 'llama-3.3-70b-versatile',
+            forceModel: 'qwen-3.6-27b',
             forceProvider: 'groq',
           })
           return handleStreaming(finalStream, detectedImages)
@@ -302,7 +302,7 @@ Use these tags ONLY for long-term facts.
     const stream = await aiService.stream(apiMessages, {
       temperature: 0.1,
       forceModel: selectedModel,
-      forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('llama') ? 'groq' : undefined,
+      forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('Qwen') ? 'groq' : undefined,
     })
     return handleStreaming(stream, detectedImages)
   } catch (error: any) {

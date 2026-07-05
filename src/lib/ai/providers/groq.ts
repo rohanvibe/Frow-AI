@@ -1,4 +1,4 @@
-// Groq Provider (Llama Models)
+// Groq Provider (Qwen Models)
 import { BaseProvider } from './base';
 import { ChatCompletionRequest, ChatCompletionResponse } from '../types';
 

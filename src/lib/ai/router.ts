@@ -210,7 +210,7 @@ export class AIRouter {
       default:
         return {
           provider: 'groq',
-          model: 'llama-3.3-70b-versatile',
+          model: 'qwen-3.6-27b',
         };
     }
   }

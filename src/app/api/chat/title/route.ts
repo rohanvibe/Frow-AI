@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       ...messages.slice(0, 5).map((m: any) => ({ role: m.role, content: m.content }))
     ], {
       max_tokens: 20,
-      forceModel: 'llama-3.3-70b-versatile',
+      forceModel: 'qwen-3.6-27b',
       forceProvider: 'groq',
     })
 
