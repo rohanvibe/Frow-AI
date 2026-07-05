@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const response = await aiService.complete([
       { 
         role: 'system', 
-        content: 'You are a session labeler. Create a short (2-4 words) title for this chat. Example: "Product Research", "Code Review", "App Design". DO NOT use "I can\'t help", "As an AI", or any other refusal. If the chat is empty, return "New Workspace". Output ONLY the short title.' 
+        content: 'You are a session labeler. Create a short (3-4 words max) title for this chat. Example: "Product Research", "Code Review". DO NOT use markdown like ** or _. Output ONLY the short title in plain text without any formatting.' 
       },
       ...messages.slice(0, 5).map((m: any) => ({ role: m.role, content: m.content }))
     ], {

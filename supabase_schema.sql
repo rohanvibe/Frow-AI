@@ -1,4 +1,4 @@
--- Create tables for Threadly
+﻿-- Create tables for Frow
 
 -- Chats table
 CREATE TABLE IF NOT EXISTS chats (
@@ -94,3 +94,4 @@ CREATE POLICY "Users can update their own profile" ON profiles
 
 CREATE POLICY "Users can insert their own profile" ON profiles 
   FOR INSERT WITH CHECK (auth.uid() = id);
+

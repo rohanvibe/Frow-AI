@@ -1,19 +1,19 @@
-<div align="center">
+﻿<div align="center">
 
-<img src="public/icon.png" alt="Threadly AI" width="80" />
+<img src="public/icon.png" alt="Frow AI" width="80" />
 
-# Threadly AI
+# Frow AI
 
 ### A Better Way to Talk with AI
 
 **Stop scrolling forever. Stop repeating yourself. Start getting work done.**
 
-[![Live App](https://img.shields.io/badge/Live%20App-threadly--ai--zeta.vercel.app-blue?style=flat-square&logo=vercel)](https://threadly-ai-zeta.vercel.app)
+[![Live App](https://img.shields.io/badge/Live%20App-Frow--ai--zeta.vercel.app-blue?style=flat-square&logo=vercel)](https://frowai.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 <br />
 
-> **Tired of AI forgetting your chat?** Threadly is built to remember what matters and make long chats easy to read.
+> **Tired of AI forgetting your chat?** Frow is built to remember what matters and make long chats easy to read.
 
 </div>
 
@@ -28,13 +28,13 @@ Most AI chat apps share the same problems when you use them for real work:
 - **Starting over:** When you close the app, the AI forgets everything about you.
 - **No privacy control:** Your data is kept on someone else's server.
 
-**Threadly was built to fix all of this.**
+**Frow was built to fix all of this.**
 
 ---
 
 ## ⚡ Why is it better than ChatGPT?
 
-| What it does | Normal AI Apps | Threadly AI |
+| What it does | Normal AI Apps | Frow AI |
 |---|---|---|
 | **Finding old messages** | Scroll forever | **Clickable sidebar links** |
 | **Remembering things** | Small "Custom Instructions" | **Smart, long-term memory** |
@@ -46,9 +46,9 @@ Most AI chat apps share the same problems when you use them for real work:
 ## 📽️ See it in action
 
 > [!TIP]
-> **Try it out.** Threadly is fast and built for getting real work done.
+> **Try it out.** Frow is fast and built for getting real work done.
 
-![Chat Interface](public/Screenshot%202026-04-17%20at%2021-35-58%20Threadly%20AI.png)
+![Chat Interface](public/Screenshot%202026-04-17%20at%2021-35-58%20Frow%20AI.png)
 *Fast, instant answers using the best AI models.*
 
 ---
@@ -62,7 +62,7 @@ Jump to any old message instantly without scrolling forever. Every question you 
 The AI remembers your past work and preferences across all your chats. It only brings up old facts when they actually help, keeping your chat clean.
 
 ### ⚡ No more guessing or bad math
-AI is usually bad at math and logic. Threadly uses a real calculator and runs real code in the background to make sure you get the exact, correct answer every time.
+AI is usually bad at math and logic. Frow uses a real calculator and runs real code in the background to make sure you get the exact, correct answer every time.
 
 ### 🌍 Real-time answers
 Get today's news and live web data instead of old, outdated information. The AI automatically searches the web when you need current facts.
@@ -90,8 +90,8 @@ Get your private app running in under 3 minutes.
 
 ### 1. Download it
 ```bash
-git clone https://github.com/rohanvibe/threadly-AI.git
-cd threadly-AI
+git clone https://github.com/rohanvibe/Frow-AI.git
+cd Frow-AI
 npm install
 ```
 
@@ -123,7 +123,7 @@ npm run dev
 
 ## 📄 License
 
-Threadly is free and open-source (MIT License). We'd love for you to use it and help make it better!
+Frow is free and open-source (MIT License). We'd love for you to use it and help make it better!
 
 ---
 
@@ -131,6 +131,6 @@ Threadly is free and open-source (MIT License). We'd love for you to use it and 
 
 Built to make working with AI easier and faster.
 
-**[⭐ Star this project](https://github.com/rohanvibe/threadly-AI) · [Report a Bug](https://github.com/rohanvibe/threadly-AI/issues/new)**
+**[⭐ Star this project](https://github.com/rohanvibe/Frow-AI) · [Report a Bug](https://github.com/rohanvibe/Frow-AI/issues/new)**
 
 </div>

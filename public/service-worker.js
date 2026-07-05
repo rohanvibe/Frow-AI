@@ -1,4 +1,4 @@
-const CACHE_NAME = 'threadly-v3';
+﻿const CACHE_NAME = 'Frow-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json?v=3',
@@ -53,3 +53,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+

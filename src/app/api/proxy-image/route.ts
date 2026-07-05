@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   try {
     const response = await fetch(imageUrl, {
       headers: {
-        'User-Agent': 'ThreadlyAI/1.0 (Mozilla/5.0)',
+        'User-Agent': 'FrowAI/1.0 (Mozilla/5.0)',
       },
     });
 
@@ -38,3 +38,4 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
+

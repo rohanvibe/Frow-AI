@@ -27,7 +27,7 @@ export default async function PromptSharePage(props: { params: Promise<{ id: str
 
         <div className="text-center space-y-4 mb-12">
            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-widest">{prompt.title}</h1>
-           <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Prompt Template Shared via Threadly</p>
+           <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Prompt Template Shared via Frow</p>
         </div>
 
         <div className="w-full rounded-3xl border border-white/10 bg-white/5 p-8 md:p-10 mb-10 group relative">
@@ -55,7 +55,7 @@ export default async function PromptSharePage(props: { params: Promise<{ id: str
         </div>
 
         <div className="mt-20">
-           <span className="text-[10px] font-bold text-gray-700 uppercase tracking-[0.6em]">threadly.app</span>
+           <span className="text-[10px] font-bold text-gray-700 uppercase tracking-[0.6em]">frowai.vercel.app</span>
         </div>
       </main>
     </div>

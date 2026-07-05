@@ -1,6 +1,6 @@
-# Contributing to Threadly AI
+﻿# Contributing to Frow AI
 
-Thank you for your interest in contributing. Threadly is built in the open, and every contribution — large or small — makes a real difference.
+Thank you for your interest in contributing. Frow is built in the open, and every contribution — large or small — makes a real difference.
 
 ---
 
@@ -19,7 +19,7 @@ You don't need to write code to contribute:
 
 ## Before You Start
 
-1. Check [Issues](https://github.com/rohanvibe/threadly-AI/issues) to see if your bug or feature is already tracked.
+1. Check [Issues](https://github.com/rohanvibe/Frow-AI/issues) to see if your bug or feature is already tracked.
 2. For large changes, open an Issue first and describe your plan. This avoids duplicate work and ensures it aligns with the project direction.
 3. Read this guide fully before submitting a PR.
 
@@ -29,8 +29,8 @@ You don't need to write code to contribute:
 
 ```bash
 # Fork and clone
-git clone https://github.com/YOUR_USERNAME/threadly-AI.git
-cd threadly-AI
+git clone https://github.com/YOUR_USERNAME/Frow-AI.git
+cd Frow-AI
 
 # Install dependencies
 npm install
@@ -103,7 +103,7 @@ Before submitting a PR, confirm:
 
 ## Beginner-Friendly Issues
 
-Look for issues tagged [`good first issue`](https://github.com/rohanvibe/threadly-AI/labels/good%20first%20issue). These are:
+Look for issues tagged [`good first issue`](https://github.com/rohanvibe/Frow-AI/labels/good%20first%20issue). These are:
 
 - Well-scoped and clearly described
 - Don't require deep codebase knowledge
@@ -123,4 +123,5 @@ See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for full community standards.
 
 ## Questions?
 
-Open a [GitHub Discussion](https://github.com/rohanvibe/threadly-AI/discussions) or email [maheshkumar79759@gmail.com](mailto:maheshkumar79759@gmail.com).
+Open a [GitHub Discussion](https://github.com/rohanvibe/Frow-AI/discussions) or email [maheshkumar79759@gmail.com](mailto:maheshkumar79759@gmail.com).
+

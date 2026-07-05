@@ -1,4 +1,4 @@
-// Threadly Python Web Worker
+﻿// Frow Python Web Worker
 // This offloads heavy WASM initialization and execution from the main thread
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js");
 
@@ -36,3 +36,4 @@ self.onmessage = async (e) => {
     });
   }
 };
+

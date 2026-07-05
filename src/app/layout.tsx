@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react"
@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Threadly AI",
+  title: "Frow AI",
   description: "Next-gen AI chatbot workspace with high-performance streaming.",
   manifest: "/manifest.json?v=3",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Threadly AI",
+    title: "Frow AI",
     startupImage: "/icon-v3.png"
   },
   icons: {
@@ -84,7 +84,7 @@ export default function RootLayout({
                 const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
                 
                 const applyTheme = () => {
-                  const savedTheme = localStorage.getItem('threadly_theme');
+                  const savedTheme = localStorage.getItem('Frow_theme');
                   const prefersDark = mediaQuery.matches;
                   root.classList.remove('light', 'dark');
                   if (savedTheme === 'dark' || (savedTheme === 'system' && prefersDark) || (!savedTheme && prefersDark)) {
@@ -105,7 +105,7 @@ export default function RootLayout({
                 
                 // Listen to cross-tab changes
                 window.addEventListener('storage', (e) => {
-                  if (e.key === 'threadly_theme') applyTheme();
+                  if (e.key === 'Frow_theme') applyTheme();
                 });
               } catch (e) {}
 
@@ -124,3 +124,4 @@ export default function RootLayout({
     </html>
   );
 }
+

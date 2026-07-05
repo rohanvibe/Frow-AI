@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
@@ -77,8 +77,8 @@ export default function AuthPage() {
           >
             <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full group-hover:bg-purple-500/30 transition-colors duration-700" />
             <img 
-              src="/threadly.svg" 
-              alt="Threadly Mascot" 
+              src="/Frow.svg" 
+              alt="Frow Mascot" 
               className="w-full h-full object-contain drop-shadow-[0_0_40px_rgba(0,240,255,0.2)] group-hover:scale-105 group-hover:-rotate-2 transition-all duration-500 relative z-10"
             />
           </motion.div>
@@ -87,7 +87,7 @@ export default function AuthPage() {
               Your Intelligent <br/> <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Co-Pilot.</span>
             </h1>
             <p className="text-gray-400 font-medium text-lg leading-relaxed max-w-sm mx-auto">
-              Join Threadly to unlock a memory-augmented workspace that adapts to how you think and build.
+              Join Frow to unlock a memory-augmented workspace that adapts to how you think and build.
             </p>
           </div>
         </motion.div>
@@ -102,9 +102,9 @@ export default function AuthPage() {
           {/* Mobile Branding (Only visible on smaller screens) */}
           <div className="flex lg:hidden flex-col items-center gap-3 mb-10">
             <div className="w-12 h-12 rounded-xl bg-(--apple-blue) flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <img src="/threadly.svg" alt="Threadly" className="w-8 h-8 object-contain" />
+              <img src="/Frow.svg" alt="Frow" className="w-8 h-8 object-contain" />
             </div>
-            <span className="text-xl font-black tracking-tight text-white uppercase">Threadly</span>
+            <span className="text-xl font-black tracking-tight text-white uppercase">Frow</span>
           </div>
 
         <div className="bg-(--surface) rounded-(--radius-lg) p-8 md:p-10 space-y-8 border border-white/5 shadow-xl">
@@ -187,7 +187,7 @@ export default function AuthPage() {
                   onClick={() => setIsSignUp(!isSignUp)}
                   className="w-full text-center text-[12px] font-medium tracking-tight text-(--apple-gray) hover:text-white transition-colors py-2"
                 >
-                  {isSignUp ? 'Already have an account? Sign In' : "New to Threadly? Create Account"}
+                  {isSignUp ? 'Already have an account? Sign In' : "New to Frow? Create Account"}
                 </button>
               </div>
             </form>
@@ -211,4 +211,5 @@ export default function AuthPage() {
     </div>
   )
 }
+
 

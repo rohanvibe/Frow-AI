@@ -1,8 +1,8 @@
-# Code of Conduct
+﻿# Code of Conduct
 
 ## Our Commitment
 
-Threadly is a project for everyone. We are committed to making participation in this project a welcoming and harassment-free experience, regardless of experience level, gender, gender identity and expression, sexual orientation, disability, personal appearance, race, ethnicity, age, religion, or nationality.
+Frow is a project for everyone. We are committed to making participation in this project a welcoming and harassment-free experience, regardless of experience level, gender, gender identity and expression, sexual orientation, disability, personal appearance, race, ethnicity, age, religion, or nationality.
 
 ---
 
@@ -54,10 +54,11 @@ Severity and response are determined by the nature and pattern of the behavior.
 
 ## Scope
 
-This Code of Conduct applies to all project spaces: GitHub Issues, Discussions, Pull Requests, and any other official communication channels associated with Threadly.
+This Code of Conduct applies to all project spaces: GitHub Issues, Discussions, Pull Requests, and any other official communication channels associated with Frow.
 
 ---
 
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1.
+

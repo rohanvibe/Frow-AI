@@ -1,4 +1,4 @@
-import { searchWeb } from './search';
+﻿import { searchWeb } from './search';
 
 export interface ImageResult {
   url: string;
@@ -104,7 +104,7 @@ async function validateImage(url: string, timeout = 2500): Promise<{ valid: bool
     const response = await fetch(url, {
       method: 'HEAD',
       signal: controller.signal,
-      headers: { 'User-Agent': 'ThreadlyAI/1.0' }
+      headers: { 'User-Agent': 'FrowAI/1.0' }
     });
     
     clearTimeout(id);
@@ -184,3 +184,4 @@ export async function fetchVerifiedImages(query: string, limit = 5): Promise<Ima
     return [];
   }
 }
+

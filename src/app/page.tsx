@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useShortcuts, ShortcutContextMenu, SHORTCUT_LABELS, DEFAULT_SHORTCUTS, captureShortcutString } from '@/hooks/useShortcuts'
@@ -209,7 +209,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
            <div className="p-1 rounded-md bg-white/10">
               <Activity className="w-3 h-3 text-white" />
            </div>
-           <span className="text-[10px] font-bold uppercase tracking-widest text-white">Threadly Instruments</span>
+           <span className="text-[10px] font-bold uppercase tracking-widest text-white">Frow Instruments</span>
         </div>
         
         <div className="flex flex-col items-end min-h-[100px] justify-center px-2">
@@ -378,7 +378,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
         className="fixed top-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-fit"
       >
         <nav className="flex items-center gap-1 px-2 py-1.5 rounded-full border border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl">
-          <Button variant="ghost" size="sm" onClick={onEnter} className="rounded-full px-6 text-[13px] text-white hover:bg-white/10 border-none">Log In</Button>
+          <Button variant="ghost" size="sm" onClick={() => window.location.href = '/auth'} className="rounded-full px-6 text-[13px] text-white hover:bg-white/10 border-none">Log In</Button>
           <Button size="sm" onClick={onEnter} className="rounded-full px-8 bg-white text-black text-[13px] font-bold border-none shadow-xl">Get Started</Button>
         </nav>
       </motion.header>
@@ -422,7 +422,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
               transition={{ delay: 0.6, duration: 1 }}
               className="bg-gradient-to-r from-purple-400 via-magenta-400 to-pink-400 bg-clip-text text-transparent"
             >
-              with Threadly AI
+              with Frow AI
             </motion.span>
           </h1>
           <motion.p 
@@ -825,13 +825,13 @@ export default function ChatPage() {
 
   // Initial load
   useEffect(() => {
-    const savedTheme = localStorage.getItem('threadly_theme') as any
+    const savedTheme = localStorage.getItem('Frow_theme') as any
     if (savedTheme) setTheme(savedTheme)
   }, [])
 
   // Apply and Persist
   useEffect(() => {
-    localStorage.setItem('threadly_theme', theme)
+    localStorage.setItem('Frow_theme', theme)
     window.dispatchEvent(new Event('theme-changed'))
   }, [theme])
   const [isPublic, setIsPublic] = useState(false)
@@ -1023,11 +1023,11 @@ export default function ChatPage() {
         fetchProfile(user.id)
         
         // Restore last chat
-        const lastChat = localStorage.getItem(`threadly_last_chat_${user.id}`)
+        const lastChat = localStorage.getItem(`Frow_last_chat_${user.id}`)
         if (lastChat) setCurrentChatId(lastChat)
 
         // Track return visit or google login completion
-        const sessionKey = `threadly_session_${new Date().toISOString().split('T')[0]}`
+        const sessionKey = `Frow_session_${new Date().toISOString().split('T')[0]}`
         const sessionTracked = sessionStorage.getItem(sessionKey)
         
         if (!sessionTracked) {
@@ -1041,13 +1041,13 @@ export default function ChatPage() {
         }
       }
       if (typeof window !== 'undefined') {
-        setHasDiscoveredSidebar(!!localStorage.getItem('threadly_sidebar_discovered'))
+        setHasDiscoveredSidebar(!!localStorage.getItem('Frow_sidebar_discovered'))
       }
     }
     checkUser()
 
     // Trigger onboarding for new guests
-    const hasSeenOnboarding = localStorage.getItem('threadly_onboarding_shown')
+    const hasSeenOnboarding = localStorage.getItem('Frow_onboarding_shown')
     if (!user && !hasSeenOnboarding) {
         setTimeout(() => {
           setOnboardingStep(0)
@@ -1081,14 +1081,14 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (currentChatId && user) {
-      localStorage.setItem(`threadly_last_chat_${user.id}`, currentChatId)
+      localStorage.setItem(`Frow_last_chat_${user.id}`, currentChatId)
       if (!skipFetchRef.current) {
         fetchMessages(currentChatId)
       }
       skipFetchRef.current = false // Reset for next selection
       
       // Load bookmarks
-      const savedBookmarks = localStorage.getItem(`threadly_bookmarks_${currentChatId}`)
+      const savedBookmarks = localStorage.getItem(`Frow_bookmarks_${currentChatId}`)
       if (savedBookmarks) {
          try {
            setBookmarkedMessages(new Set(JSON.parse(savedBookmarks)))
@@ -1109,7 +1109,7 @@ export default function ChatPage() {
       if (next.has(msgId)) next.delete(msgId)
       else next.add(msgId)
       if (currentChatId) {
-        localStorage.setItem(`threadly_bookmarks_${currentChatId}`, JSON.stringify(Array.from(next)))
+        localStorage.setItem(`Frow_bookmarks_${currentChatId}`, JSON.stringify(Array.from(next)))
       }
       return next
     })
@@ -1119,9 +1119,9 @@ export default function ChatPage() {
     scrollToBottom()
     
     // Viral Feature 4: Sidebar Wow Moment
-    if (messages.length >= 7 && !localStorage.getItem('threadly_wow_shown')) {
+    if (messages.length >= 7 && !localStorage.getItem('Frow_wow_shown')) {
        setWowPhase(true)
-       localStorage.setItem('threadly_wow_shown', 'true')
+       localStorage.setItem('Frow_wow_shown', 'true')
     }
 
     // Feature: Auto-focus Input
@@ -1241,7 +1241,7 @@ export default function ChatPage() {
       setChats(chats.filter(c => c.id !== id))
       if (currentChatId === id) {
           setCurrentChatId(null)
-          localStorage.removeItem(`threadly_last_chat_${user?.id}`)
+          localStorage.removeItem(`Frow_last_chat_${user?.id}`)
       }
       toast("Chat deleted", "success")
     }
@@ -1322,7 +1322,7 @@ export default function ChatPage() {
      
      if (navigator.share) {
         try {
-           await navigator.share({ title: 'Threadly Chat Session', url })
+           await navigator.share({ title: 'Frow Chat Session', url })
         } catch (e) {
            copyToClipboard(url)
         }
@@ -1357,7 +1357,7 @@ export default function ChatPage() {
       })
       
       const link = document.createElement('a')
-      link.download = `threadly-${messageId ? 'message' : 'session'}-${Date.now()}.png`
+      link.download = `Frow-${messageId ? 'message' : 'session'}-${Date.now()}.png`
       link.href = dataUrl
       document.body.appendChild(link)
       link.click()
@@ -1746,7 +1746,7 @@ export default function ChatPage() {
                 <div className="w-8 h-8 squircle bg-(--apple-blue) flex items-center justify-center shadow-lg shadow-blue-500/20">
                    <Globe className="w-4 h-4 text-(--background)" />
                 </div>
-                Threadly
+                Frow
               </h1>
               <AppleTooltip text="Dismiss">
                 <Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5" onClick={() => { setIsNavOpen(false); }}>
@@ -1915,7 +1915,7 @@ export default function ChatPage() {
           trackEvent('tutorial_completed')
           setOnboardingStep(-1)
           setShowBigSignup(true)
-          localStorage.setItem('threadly_onboarding_shown', 'true')
+          localStorage.setItem('Frow_onboarding_shown', 'true')
         }}
       />
 
@@ -1946,7 +1946,7 @@ export default function ChatPage() {
         {isMobile && (
           <div className="absolute top-0 left-0 right-0 h-14 border-b border-(--border-color) bg-(--surface-secondary)/40 backdrop-blur-xl flex items-center justify-between px-4 z-40">
             <button onClick={() => { setIsNavOpen(true); }} className="p-2 hover:bg-(--surface-tertiary) rounded-xl"><Menu className="w-5 h-5 text-(--apple-gray)" /></button>
-            <h1 className="font-bold text-[13px] tracking-tight text-(--foreground)">Threadly</h1>
+            <h1 className="font-bold text-[13px] tracking-tight text-(--foreground)">Frow</h1>
             <div className="flex items-center gap-1">
                {currentChatId && (
                   <button onClick={() => { shareChat(); }} className="p-2 hover:bg-white/5 rounded-xl text-(--apple-blue) transition-all active:scale-95">
@@ -1978,7 +1978,7 @@ export default function ChatPage() {
               )}
               <button 
                onContextMenu={e => openContextMenu(e, 'toggleSidebar')} 
-               onClick={() => { setIsSidebarOpen(!isSidebarOpen); setHasDiscoveredSidebar(true); localStorage.setItem('threadly_sidebar_discovered', 'true'); }} 
+               onClick={() => { setIsSidebarOpen(!isSidebarOpen); setHasDiscoveredSidebar(true); localStorage.setItem('Frow_sidebar_discovered', 'true'); }} 
                className={`relative p-3 rounded-(--radius-pill) transition-all shadow-xl ${isSidebarOpen ? 'bg-(--apple-blue) text-white' : 'bg-(--surface) text-(--apple-gray) hover:text-(--foreground)'}`}
               >
                 {!hasDiscoveredSidebar && messages.length > 2 && (
@@ -1993,18 +1993,20 @@ export default function ChatPage() {
         )}
 
         {/* Conversation Minimap */}
-        {!isMobile && messages.filter(m => m.role === 'user').length > 3 && (
-           <div className="absolute right-6 top-32 bottom-40 w-4 z-40 opacity-30 hover:opacity-100 transition-opacity hidden md:block">
+        {messages.filter(m => m.role === 'user').length > 0 && (
+           <div className="absolute right-2 md:right-6 top-32 bottom-40 w-4 z-40 opacity-50 hover:opacity-100 transition-opacity">
               <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-white/10 rounded-full" />
-              {messages.filter(m => m.role === 'user').map((m, i, arr) => (
-                <AppleTooltip key={m.id} text={m.content.slice(0, 40) + '...'}>
+              {messages.filter(m => m.role === 'user').map((m, i, arr) => {
+                const isActive = activeSidebarMsgId === m.id
+                return (
                   <button
-                    onClick={() => scrollToMessage(m.id)}
-                    className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-(--apple-gray) hover:bg-(--apple-blue) hover:scale-150 hover:shadow-[0_0_10px_rgba(37,99,235,0.5)] transition-all z-10"
-                    style={{ top: `${(i / Math.max(1, arr.length - 1)) * 100}%` }}
+                    key={m.id}
+                    onClick={() => { setIsSidebarOpen(true); scrollToMessage(m.id); }}
+                    className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full transition-all z-10 ${isActive ? 'bg-purple-500 scale-125 shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'bg-gray-600 hover:bg-purple-400'}`}
+                    style={{ top: `${arr.length === 1 ? 50 : (i / (arr.length - 1)) * 100}%` }}
                   />
-                </AppleTooltip>
-              ))}
+                )
+              })}
            </div>
         )}
 
@@ -2082,7 +2084,7 @@ export default function ChatPage() {
                 >
                   {msg.role === 'assistant' ? (
                     <div className="w-10 h-10 rounded-xl shrink-0 overflow-hidden relative border border-white/10 shadow-lg">
-                      <img src="/threadly.svg" alt="Threadly" className="w-full h-full object-contain" />
+                      <img src="/Frow.svg" alt="Frow" className="w-full h-full object-contain" />
                     </div>
                   ) : (
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 shadow-lg bg-(--surface) text-(--apple-gray)">
@@ -2148,7 +2150,7 @@ export default function ChatPage() {
                                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
                                  className="w-10 h-10 shrink-0"
                                >
-                                 <img src="/threadly.svg" alt="Thinking..." className="w-full h-full object-contain" />
+                                 <img src="/Frow.svg" alt="Thinking..." className="w-full h-full object-contain" />
                                </motion.div>
                                <div className="flex flex-col gap-1">
                                  <div className="flex items-center gap-1.5">
@@ -2156,7 +2158,7 @@ export default function ChatPage() {
                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '150ms' }} />
                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
                                  </div>
-                                 <span className="text-[11px] font-bold text-(--apple-gray) tracking-wide">Threadly is thinking...</span>
+                                 <span className="text-[11px] font-bold text-(--apple-gray) tracking-wide">Frow is thinking...</span>
                                </div>
                              </div>
                           ) : (
@@ -2437,7 +2439,7 @@ export default function ChatPage() {
             className="fixed bottom-36 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-(--surface) border border-white/10 rounded-full px-5 py-3 shadow-2xl shadow-black/40 backdrop-blur-xl"
           >
             <div className="w-8 h-8 shrink-0">
-              <img src="/threadly.svg" alt="Threadly" className="w-full h-full object-contain" />
+              <img src="/Frow.svg" alt="Frow" className="w-full h-full object-contain" />
             </div>
             <span className="text-[13px] font-semibold text-(--foreground) tracking-tight">{mascotMessage}</span>
           </motion.div>
@@ -2467,11 +2469,11 @@ export default function ChatPage() {
               {isGuest && (
                 <div className="m-4 p-4 rounded-2xl bg-(--surface) border border-blue-500/30 shadow-lg shadow-blue-500/10 relative overflow-hidden group">
                   <div className="absolute -right-6 -bottom-6 w-28 h-28 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <img src="/threadly.svg" alt="Threadly" className="w-full h-full object-contain" />
+                    <img src="/Frow.svg" alt="Frow" className="w-full h-full object-contain" />
                   </div>
                   <div className="flex items-start gap-3 relative z-10">
                     <div className="w-10 h-10 rounded-2xl bg-(--apple-blue) flex items-center justify-center shrink-0 shadow-xl overflow-hidden border border-white/10">
-                      <img src="/threadly.svg" alt="Threadly" className="w-8 h-8 object-contain" />
+                      <img src="/Frow.svg" alt="Frow" className="w-8 h-8 object-contain" />
                     </div>
                     <div className="flex flex-col">
                       <h3 className="text-[13px] font-bold tracking-tight text-(--foreground)">Unlock Infinite Flow</h3>
@@ -2690,7 +2692,7 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
 
   useEffect(() => {
     // Load local keys
-    const saved = localStorage.getItem('threadly_keys')
+    const saved = localStorage.getItem('Frow_keys')
     if (saved) setKeys(JSON.parse(saved))
 
     // Load server profile
@@ -2717,7 +2719,7 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
   const saveAll = async () => {
     setSaving(true)
     try {
-      localStorage.setItem('threadly_keys', JSON.stringify(keys))
+      localStorage.setItem('Frow_keys', JSON.stringify(keys))
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { error } = await supabase.from('profiles').upsert({
@@ -3039,7 +3041,7 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
     { 
       targetId: 'tutorial-input', 
       title: 'Active Intelligence', 
-      text: 'Threadly isn\'t just a chat. It\'s a workspace. Explore the Lunar Base conversation already indexed for you.',
+      text: 'Frow isn\'t just a chat. It\'s a workspace. Explore the Lunar Base conversation already indexed for you.',
       actionHint: 'Enter Workspace',
       requireAction: false
     },
@@ -3121,7 +3123,7 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
            className="w-28 h-28 relative shrink-0 z-10"
         >
             <div className="absolute inset-0 bg-blue-500/20 blur-[20px] rounded-full" />
-            <img src="/threadly.svg" alt="Threadly Mascot" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(0,240,255,0.2)]" />
+            <img src="/Frow.svg" alt="Frow Mascot" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(0,240,255,0.2)]" />
         </motion.div>
 
         {/* Thought Cloud */}
@@ -3263,7 +3265,7 @@ function EmptyState({ onCreateNew, onSelectPrompt }: { onCreateNew: () => void, 
         className="relative group hidden md:block w-64 h-64 mb-4"
       >
         <div className="absolute inset-0 bg-blue-500/10 blur-[50px] rounded-full group-hover:bg-purple-500/20 transition-colors duration-700" />
-        <img src="/threadly.svg" alt="Threadly Mascot" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_30px_rgba(0,240,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
+        <img src="/Frow.svg" alt="Frow Mascot" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_30px_rgba(0,240,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
       </motion.div>
 
       <div className="space-y-2 md:space-y-4 relative z-20">
@@ -3307,5 +3309,6 @@ function EmptyState({ onCreateNew, onSelectPrompt }: { onCreateNew: () => void, 
     </motion.div>
   )
 }
+
 
 

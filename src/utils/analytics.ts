@@ -1,5 +1,5 @@
-/**
- * Threadly Analytics Utility
+﻿/**
+ * Frow Analytics Utility
  * 
  * Connected to Vercel Analytics.
  */
@@ -38,3 +38,4 @@ export const trackEvent = (event: AnalyticsEvent, metadata: Record<string, any> 
     console.error('Analytics tracking failed', e)
   }
 }
+

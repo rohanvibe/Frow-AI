@@ -1,6 +1,6 @@
-# 🧪 Threadly Feature Test Suite
+﻿# 🧪 Frow Feature Test Suite
 
-Copy and paste these prompts into your Threadly chat to verify the latest high-performance features.
+Copy and paste these prompts into your Frow chat to verify the latest high-performance features.
 
 ---
 
@@ -57,3 +57,4 @@ Copy and paste these prompts into your Threadly chat to verify the latest high-p
 **Goal**: Verify premium table styling.
 
 *   **Prompt**: `Create a comparison table between the Bugatti Chiron, Veyron, and Bolide, including Top Speed, Horsepower, and Production Numbers.`
+

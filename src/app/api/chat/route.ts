@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+﻿import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 import { aiService } from '@/lib/ai'
 import { AIRouter } from '@/lib/ai/router'
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
        }
     }
 
-    const systemPrompt = `You are Threadly, an elite AI partner for high-leverage builders. You prioritize systems thinking, execution, and brutal honesty.
+    const systemPrompt = `You are Frow, an elite AI partner for high-leverage builders. You prioritize systems thinking, execution, and brutal honesty.
 When a user greets you (e.g., "hello", "hey", "hi"), respond warmly and professionally. Suggested greeting: "Hey 👋 I’m ready when you are—what do you want to work on, build, or figure out today?"
 
 ### 🧠 CORE PHILOSOPHY
@@ -353,5 +353,6 @@ async function handleStreaming(stream: ReadableStream, images?: any[]) {
     headers: { 'Content-Type': 'text/event-stream' }
   })
 }
+
 
 

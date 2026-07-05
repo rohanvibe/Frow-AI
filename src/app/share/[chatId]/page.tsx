@@ -28,7 +28,7 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
           <p><span className="text-(--apple-gray)">Next.js Route:</span> /share/[chatId]</p>
           <p><span className="text-(--apple-gray)">Troubleshooting:</span> Ensure you have run the SQL to add 'is_public' and the GUEST RLS policies.</p>
         </div>
-        <Link href="/" className="mt-8 text-(--apple-blue) hover:underline">Return to Threadly</Link>
+        <Link href="/" className="mt-8 text-(--apple-blue) hover:underline">Return to Frow</Link>
       </div>
     )
   }
@@ -50,7 +50,7 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
              <div className="w-10 h-10 squircle bg-(--apple-blue) flex items-center justify-center shadow-2xl shadow-(--apple-blue)/20">
                 <Zap className="w-5 h-5 text-white" />
              </div>
-             <span className="font-bold text-2xl tracking-tight text-(--foreground)">Threadly</span>
+             <span className="font-bold text-2xl tracking-tight text-(--foreground)">Frow</span>
           </div>
           <Link href="/" className="px-6 py-3 rounded-2xl bg-(--foreground) text-(--background) font-bold text-[13px] hover:opacity-90 transition-all flex items-center gap-2 group shadow-2xl">
              Enter Workspace <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -61,7 +61,7 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
       <main className="max-w-4xl mx-auto px-6 py-12 md:py-24">
         <div className="mb-20 space-y-4">
            <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight text-(--foreground)">{chat.title}</h1>
-           <p className="text-(--apple-gray) text-[12px] font-medium tracking-tight uppercase">Shared Flow • Refined with Threadly AI</p>
+           <p className="text-(--apple-gray) text-[12px] font-medium tracking-tight uppercase">Shared Flow • Refined with Frow AI</p>
         </div>
 
         <div className="space-y-24">
@@ -75,7 +75,7 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
                <div className="flex-1 space-y-6 min-w-0 overflow-hidden pt-1">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-[13px] tracking-tight text-(--apple-gray)">
-                      {msg.role === 'assistant' ? 'Threadly Assistant' : 'Shared Thought'}
+                      {msg.role === 'assistant' ? 'Frow Assistant' : 'Shared Thought'}
                     </span>
                   </div>
                   <div className="text-(--foreground) leading-relaxed text-[17px] prose prose-lg dark:prose-invert max-w-none prose-p:leading-[1.8] prose-pre:rounded-3xl prose-code:text-(--apple-blue) break-words whitespace-pre-wrap">
@@ -93,12 +93,12 @@ export default async function SharePage(props: { params: Promise<{ chatId: strin
            <div className="absolute inset-0 bg-linear-to-b from-(--apple-blue)/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
            <div className="relative z-10 space-y-8">
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-(--foreground)">Experience high-speed <br/> intelligence.</h2>
-              <p className="text-(--apple-gray) text-lg font-medium max-w-md mx-auto leading-relaxed">Threadly is a high-performance workspace designed for elite thinkers and builders.</p>
+              <p className="text-(--apple-gray) text-lg font-medium max-w-md mx-auto leading-relaxed">Frow is a high-performance workspace designed for elite thinkers and builders.</p>
               <Link href="/" className="inline-flex h-16 items-center justify-center px-12 rounded-[1.25rem] bg-(--foreground) font-bold text-(--background) hover:opacity-90 shadow-2xl transition-all active:scale-95 text-[15px]">
                  Claim Your Workspace
               </Link>
               <div className="pt-6">
-                 <span className="text-[11px] font-bold text-(--apple-gray) uppercase tracking-[0.4em]">threadly.app</span>
+                 <span className="text-[11px] font-bold text-(--apple-gray) uppercase tracking-[0.4em]">frowai.vercel.app</span>
               </div>
            </div>
         </div>

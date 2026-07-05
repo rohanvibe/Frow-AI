@@ -1,4 +1,4 @@
-# Threadly AI — Security Policy
+﻿# Frow AI — Security Policy
 
 ## Supported Versions
 
@@ -29,3 +29,4 @@ You will receive a response within 72 hours. We take all reports seriously and w
 - The groq AI API key is stored server-side only and never exposed to the client.
 - BYOK (user's own OpenAI key) is stored only in the user's browser localStorage and is never sent to any backend server.
 - Auth sessions are managed entirely by Supabase Auth.
+

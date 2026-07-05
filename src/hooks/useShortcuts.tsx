@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 
@@ -56,7 +56,7 @@ export const SHORTCUT_LABELS: Record<ShortcutId, string> = {
   attachFile:    'Attach File',
 }
 
-const STORAGE_KEY = 'threadly_shortcuts_v1'
+const STORAGE_KEY = 'Frow_shortcuts_v1'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hook
@@ -274,3 +274,4 @@ export function ShortcutContextMenu({
     </div>
   )
 }
+

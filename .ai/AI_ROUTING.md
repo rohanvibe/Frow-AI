@@ -1,8 +1,8 @@
-# AI Model Routing System
+﻿# AI Model Routing System
 
 ## Overview
 
-Threadly now uses an intelligent model routing system that automatically selects the most appropriate AI model based on request complexity. This system provides optimal performance, cost efficiency, and reliability through automatic fallbacks.
+Frow now uses an intelligent model routing system that automatically selects the most appropriate AI model based on request complexity. This system provides optimal performance, cost efficiency, and reliability through automatic fallbacks.
 
 ## Architecture
 
@@ -264,3 +264,4 @@ Potential improvements:
 4. **Custom routing rules**: Allow users to configure preferences
 5. **A/B testing**: Compare model performance for different tasks
 6. **Cache layer**: Cache responses for repeated queries
+

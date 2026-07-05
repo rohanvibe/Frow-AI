@@ -1,6 +1,6 @@
-{
-  "name": "Threadly AI",
-  "short_name": "Threadly",
+﻿{
+  "name": "Frow AI",
+  "short_name": "Frow",
   "description": "High-performance AI chatbot workspace.",
   "start_url": "/",
   "display": "standalone",
@@ -27,7 +27,8 @@
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Threadly AI Workspace"
+      "label": "Frow AI Workspace"
     }
   ]
 }
+
