@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       ...messages.slice(0, 5).map((m: any) => ({ role: m.role, content: m.content }))
     ], {
       max_tokens: 20,
-      forceModel: 'qwen-2.5-32b',
+      forceModel: 'openai/gpt-oss-120b',
       forceProvider: 'groq',
     })
 

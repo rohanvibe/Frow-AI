@@ -210,7 +210,7 @@ export class AIRouter {
       default:
         return {
           provider: 'groq',
-          model: 'qwen-2.5-32b',
+          model: 'openai/gpt-oss-120b',
         };
     }
   }

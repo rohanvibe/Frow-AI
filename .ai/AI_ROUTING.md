@@ -134,7 +134,7 @@ const stream = await aiService.stream(messages, {
 
 // Force specific model
 const response = await aiService.complete(messages, {
-  forceModel: 'qwen-2.5-32b',
+  forceModel: 'openai/gpt-oss-120b',
   forceProvider: 'groq',
 })
 ```

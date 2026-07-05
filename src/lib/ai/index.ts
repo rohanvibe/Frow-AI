@@ -13,7 +13,7 @@ export class AIService {
   private fallbackChain: string[] = [
     'gemini-2.0-pro-exp',
     'gemini-2.0-flash-exp',
-    'qwen-2.5-32b',
+    'openai/gpt-oss-120b',
   ];
 
   constructor() {
@@ -27,7 +27,7 @@ export class AIService {
     // Initialize Groq (Qwen)
     const groqApiKey = process.env.GROQ_API_KEY;
     if (groqApiKey) {
-      this.providers.set('qwen-2.5-32b', new GroqProvider(groqApiKey, 'qwen-2.5-32b'));
+      this.providers.set('openai/gpt-oss-120b', new GroqProvider(groqApiKey, 'openai/gpt-oss-120b'));
       console.log('[AIService] Groq provider initialized');
     } else {
       console.warn('[AIService] GROQ_API_KEY not found');

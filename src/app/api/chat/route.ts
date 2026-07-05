@@ -248,7 +248,7 @@ Use these tags ONLY for long-term facts.
       // Final call after all tools are executed using AI service
       const finalStream = await aiService.stream(apiMessages, {
         temperature: 0.1,
-        forceModel: 'qwen-2.5-32b',
+        forceModel: 'openai/gpt-oss-120b',
         forceProvider: 'groq',
       })
       return handleStreaming(finalStream, detectedImages)
@@ -286,7 +286,7 @@ Use these tags ONLY for long-term facts.
           
           const finalStream = await aiService.stream(apiMessages, {
             temperature: 0.1,
-            forceModel: 'qwen-2.5-32b',
+            forceModel: 'openai/gpt-oss-120b',
             forceProvider: 'groq',
           })
           return handleStreaming(finalStream, detectedImages)
@@ -302,7 +302,7 @@ Use these tags ONLY for long-term facts.
     const stream = await aiService.stream(apiMessages, {
       temperature: 0.1,
       forceModel: selectedModel,
-      forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('Qwen') ? 'groq' : undefined,
+      forceProvider: selectedModel?.includes('gemini') ? 'gemini' : 'groq',
     })
     return handleStreaming(stream, detectedImages)
   } catch (error: any) {
