@@ -48,7 +48,7 @@ Most AI chat apps share the same problems when you use them for real work:
 > [!TIP]
 > **Try it out.** Frow is fast and built for getting real work done.
 
-![Chat Interface](public/Screenshot%202026-04-17%20at%2021-35-58%20Frow%20AI.png)
+![Chat Interface](public/Frow%20screenshot.png)
 *Fast, instant answers using the best AI models.*
 
 ---
