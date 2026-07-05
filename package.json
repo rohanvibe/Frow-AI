@@ -1,5 +1,5 @@
-﻿{
-  "name": "Frow",
+{
+  "name": "frow",
   "version": "1.2.0",
   "description": "High-performance AI chatbot workspace optimized for long conversations with persistent memory and thread navigation.",
   "keywords": [
