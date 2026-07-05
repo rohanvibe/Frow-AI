@@ -1859,45 +1859,65 @@ export default function ChatPage() {
                   </AppleTooltip>
                 </div>
               </div>
-              <Button id="tutorial-prompts" variant="ghost" className="w-full justify-start gap-4 rounded-xl py-6 hover:bg-(--surface-tertiary) text-(--foreground)" onClick={() => { setShowPrompts(true); }} onContextMenu={e => openContextMenu(e, 'openPrompts')}>
-                <Command className="w-4 h-4 text-(--apple-blue)" />
-                <span className="text-[13px] font-semibold tracking-tight">Saved Prompts</span>
-                <span className="ml-auto text-[8px] font-mono text-(--apple-gray)">{getShortcutLabel('openPrompts')}</span>
-              </Button>
-              <Button id="tutorial-settings" variant="ghost" className="w-full justify-start gap-4 rounded-xl py-6 hover:bg-(--surface-tertiary) text-(--foreground)" onClick={() => { 
-                trackEvent('byok_opened')
-                setShowSettings(true); 
-              }} onContextMenu={e => openContextMenu(e, 'openSettings')}>
-                <Settings className="w-4 h-4 text-(--apple-blue)" />
-                <span className="text-[13px] font-semibold tracking-tight">Settings</span>
-                <span className="ml-auto text-[8px] font-mono text-(--apple-gray)">{getShortcutLabel('openSettings')}</span>
-              </Button>
-
-              <div className="pt-4 mt-2 border-t border-white/5">
-                <div className="flex bg-(--surface-tertiary) p-1 rounded-xl items-center border border-white/5">
-                  <button 
-                    onClick={() => setTheme('light')} 
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${theme === 'light' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}
-                  >
-                    <Sun className="w-3.5 h-3.5" />
-                    Light
-                  </button>
-                  <button 
-                    onClick={() => setTheme('dark')} 
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${theme === 'dark' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}
-                  >
-                    <Moon className="w-3.5 h-3.5" />
-                    Dark
-                  </button>
-                  <button 
-                    onClick={() => setTheme('system')} 
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${theme === 'system' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}
-                  >
-                    <Monitor className="w-3.5 h-3.5" />
-                    Auto
-                  </button>
+              {/* Mobile: compact icon row */}
+              {isMobile ? (
+                <div className="flex items-center gap-2 pt-1">
+                  <AppleTooltip text="Saved Prompts">
+                    <button
+                      id="tutorial-prompts"
+                      onClick={() => setShowPrompts(true)}
+                      onContextMenu={e => openContextMenu(e, 'openPrompts')}
+                      className="flex-1 flex items-center justify-center p-3 rounded-xl hover:bg-(--surface-tertiary) transition-all border border-(--border-color)"
+                    >
+                      <Command className="w-5 h-5 text-(--apple-blue)" />
+                    </button>
+                  </AppleTooltip>
+                  <AppleTooltip text="Settings">
+                    <button
+                      id="tutorial-settings"
+                      onClick={() => { trackEvent('byok_opened'); setShowSettings(true); }}
+                      onContextMenu={e => openContextMenu(e, 'openSettings')}
+                      className="flex-1 flex items-center justify-center p-3 rounded-xl hover:bg-(--surface-tertiary) transition-all border border-(--border-color)"
+                    >
+                      <Settings className="w-5 h-5 text-(--apple-blue)" />
+                    </button>
+                  </AppleTooltip>
+                  <AppleTooltip text={`Theme: ${theme}`}>
+                    <button
+                      onClick={() => setTheme(theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light')}
+                      className="flex-1 flex items-center justify-center p-3 rounded-xl hover:bg-(--surface-tertiary) transition-all border border-(--border-color)"
+                    >
+                      {theme === 'light' ? <Sun className="w-5 h-5 text-(--apple-blue)" /> : theme === 'dark' ? <Moon className="w-5 h-5 text-(--apple-blue)" /> : <Monitor className="w-5 h-5 text-(--apple-blue)" />}
+                    </button>
+                  </AppleTooltip>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <Button id="tutorial-prompts" variant="ghost" className="w-full justify-start gap-4 rounded-xl py-6 hover:bg-(--surface-tertiary) text-(--foreground)" onClick={() => { setShowPrompts(true); }} onContextMenu={e => openContextMenu(e, 'openPrompts')}>
+                    <Command className="w-4 h-4 text-(--apple-blue)" />
+                    <span className="text-[13px] font-semibold tracking-tight">Saved Prompts</span>
+                    <span className="ml-auto text-[8px] font-mono text-(--apple-gray)">{getShortcutLabel('openPrompts')}</span>
+                  </Button>
+                  <Button id="tutorial-settings" variant="ghost" className="w-full justify-start gap-4 rounded-xl py-6 hover:bg-(--surface-tertiary) text-(--foreground)" onClick={() => { trackEvent('byok_opened'); setShowSettings(true); }} onContextMenu={e => openContextMenu(e, 'openSettings')}>
+                    <Settings className="w-4 h-4 text-(--apple-blue)" />
+                    <span className="text-[13px] font-semibold tracking-tight">Settings</span>
+                    <span className="ml-auto text-[8px] font-mono text-(--apple-gray)">{getShortcutLabel('openSettings')}</span>
+                  </Button>
+                  <div className="pt-4 mt-2 border-t border-white/5">
+                    <div className="flex bg-(--surface-tertiary) p-1 rounded-xl items-center border border-white/5">
+                      <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${theme === 'light' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}>
+                        <Sun className="w-3.5 h-3.5" />Light
+                      </button>
+                      <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${theme === 'dark' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}>
+                        <Moon className="w-3.5 h-3.5" />Dark
+                      </button>
+                      <button onClick={() => setTheme('system')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${theme === 'system' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}>
+                        <Monitor className="w-3.5 h-3.5" />Auto
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </motion.div>
         )}
@@ -1994,24 +2014,24 @@ export default function ChatPage() {
 
         {/* Conversation Minimap */}
         {messages.filter(m => m.role === 'user').length > 0 && (
-           <div className="absolute right-2 md:right-6 top-32 bottom-40 w-4 z-40 opacity-50 hover:opacity-100 transition-opacity">
-              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-white/10 rounded-full" />
-              {messages.filter(m => m.role === 'user').map((m, i, arr) => {
-                const isActive = activeSidebarMsgId === m.id
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => { setIsSidebarOpen(true); scrollToMessage(m.id); }}
-                    className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full transition-all z-10 ${isActive ? 'bg-purple-500 scale-125 shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'bg-gray-600 hover:bg-purple-400'}`}
-                    style={{ top: `${arr.length === 1 ? 50 : (i / (arr.length - 1)) * 100}%` }}
-                  />
-                )
-              })}
+           <div className="absolute right-2 md:right-6 top-32 bottom-40 w-4 z-40 opacity-50 hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
+              <div className="flex flex-col items-center gap-2.5">
+                {messages.filter(m => m.role === 'user').map((m) => {
+                  const isActive = activeSidebarMsgId === m.id
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => { setIsSidebarOpen(true); scrollToMessage(m.id); }}
+                      className={`w-2.5 h-2.5 rounded-full transition-all z-10 ${isActive ? 'bg-purple-500 scale-125 shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'bg-gray-600 hover:bg-purple-400'}`}
+                    />
+                  )
+                })}
+              </div>
            </div>
         )}
 
         <div 
-           className={`flex-1 ${messages.length === 0 ? 'overflow-hidden' : 'overflow-y-auto'} custom-scrollbar scroll-smooth relative z-10`} 
+           className={`flex-1 min-w-0 overflow-x-hidden ${messages.length === 0 ? 'overflow-y-hidden' : 'overflow-y-auto'} custom-scrollbar scroll-smooth relative z-10`} 
            id="chat-messages-container"
            onScroll={(e) => {
               const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
@@ -2142,7 +2162,7 @@ export default function ChatPage() {
                            </div>
                         </div>
                       ) : (
-                        <div className={`text-(--foreground) leading-relaxed text-lg prose prose-lg max-w-none prose-pre:rounded-(--radius-md) prose-code:text-(--apple-blue) break-words selection:bg-blue-500/40 dark:prose-invert ${msg.role === 'assistant' && loading && i === messages.length - 1 ? 'typing-cursor' : ''}`}>
+                        <div className={`text-(--foreground) leading-relaxed text-lg prose prose-lg max-w-none prose-pre:rounded-(--radius-md) prose-code:text-(--apple-blue) break-words overflow-x-hidden min-w-0 selection:bg-blue-500/40 dark:prose-invert ${msg.role === 'assistant' && loading && i === messages.length - 1 ? 'typing-cursor' : ''}`}>
                           {msg.content === '' && loading ? (
                              <div className="flex items-center gap-4 py-3">
                                <motion.div
