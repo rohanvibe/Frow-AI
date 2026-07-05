@@ -666,7 +666,7 @@ function ModelSelector({ selectedModel, onSelectModel }: { selectedModel: string
 
   const models = [
     { id: 'auto', name: 'Auto (Smart Routing)', icon: Sparkles, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { id: 'qwen-3.6-27b', name: 'Qwen 27B (Fast)', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+    { id: 'qwen-2.5-32b', name: 'Qwen 27B (Fast)', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
     { id: 'gemini-2.0-flash-exp', name: 'Gemini Flash (Balanced)', icon: Zap, color: 'text-blue-400', bg: 'bg-blue-500/10' },
     { id: 'gemini-2.0-pro-exp', name: 'Gemini Pro (Advanced)', icon: Star, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
   ]
@@ -748,7 +748,7 @@ export default function ChatPage() {
   const [showPrompts, setShowPrompts] = useState(false)
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [modelType, setModelType] = useState<'default' | 'byok'>('default')
-  const [selectedModel, setSelectedModel] = useState<'auto' | 'qwen-3.6-27b' | 'gemini-2.0-flash-exp' | 'gemini-2.0-pro-exp'>('auto')
+  const [selectedModel, setSelectedModel] = useState<'auto' | 'qwen-2.5-32b' | 'gemini-2.0-flash-exp' | 'gemini-2.0-pro-exp'>('auto')
 
   // Load user's model preference from profile
   useEffect(() => {
@@ -769,7 +769,7 @@ export default function ChatPage() {
   }, [user])
 
   // Save model preference when changed
-  const handleModelChange = async (model: 'auto' | 'qwen-3.6-27b' | 'gemini-2.0-flash-exp' | 'gemini-2.0-pro-exp') => {
+  const handleModelChange = async (model: 'auto' | 'qwen-2.5-32b' | 'gemini-2.0-flash-exp' | 'gemini-2.0-pro-exp') => {
     setSelectedModel(model)
     if (user) {
       await supabase

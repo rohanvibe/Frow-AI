@@ -134,7 +134,7 @@ const stream = await aiService.stream(messages, {
 
 // Force specific model
 const response = await aiService.complete(messages, {
-  forceModel: 'qwen-3.6-27b',
+  forceModel: 'qwen-2.5-32b',
   forceProvider: 'groq',
 })
 ```

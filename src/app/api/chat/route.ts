@@ -248,7 +248,7 @@ Use these tags ONLY for long-term facts.
       // Final call after all tools are executed using AI service
       const finalStream = await aiService.stream(apiMessages, {
         temperature: 0.1,
-        forceModel: 'qwen-3.6-27b',
+        forceModel: 'qwen-2.5-32b',
         forceProvider: 'groq',
       })
       return handleStreaming(finalStream, detectedImages)
@@ -286,7 +286,7 @@ Use these tags ONLY for long-term facts.
           
           const finalStream = await aiService.stream(apiMessages, {
             temperature: 0.1,
-            forceModel: 'qwen-3.6-27b',
+            forceModel: 'qwen-2.5-32b',
             forceProvider: 'groq',
           })
           return handleStreaming(finalStream, detectedImages)
