@@ -1729,7 +1729,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-dvh text-(--foreground) overflow-hidden relative font-sans selection:bg-blue-500/30">
+    <div className="flex h-dvh w-screen max-w-[100vw] text-(--foreground) overflow-hidden relative font-sans selection:bg-blue-500/30">
 
       <AnimatePresence>
         {isNavOpen && (
@@ -1950,7 +1950,7 @@ export default function ChatPage() {
 
       <FeedbackWidget />
 
-      <motion.div layout transition={{ type: 'spring', damping: 32, stiffness: 180 }} className={`flex-1 flex flex-col relative bg-(--background) ${isMobile ? 'pt-14' : ''}`}>
+      <motion.div layout transition={{ type: 'spring', damping: 32, stiffness: 180 }} className={`flex-1 min-w-0 overflow-hidden flex flex-col relative bg-(--background) ${isMobile ? 'pt-14' : ''}`}>
         <AnimatePresence>
           {isMobile && (isNavOpen || isSidebarOpen) && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setIsNavOpen(false); setIsSidebarOpen(false); }} className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40" />

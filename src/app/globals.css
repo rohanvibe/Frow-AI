@@ -143,6 +143,16 @@ body:hover #spotlight {
   opacity: 1;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
+.prose {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .prose pre {
   background: #0d0d0f !important;
   border-radius: 12px;
@@ -154,8 +164,10 @@ body:hover #spotlight {
 .prose table {
   display: block;
   overflow-x: auto;
+  width: 100%;
   max-width: 100%;
   white-space: nowrap;
+  min-width: max-content;
 }
 
 .prose img {
