@@ -165,7 +165,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
   useEffect(() => {
     if (expression) {
       try {
-        const clean = expression.replace(/×/g, '*').replace(/÷/g, '/')
+        const clean = expression.replace(/Ã—/g, '*').replace(/Ã·/g, '/')
         // eslint-disable-next-line no-eval
         const res = eval(clean)
         setResult(String(res))
@@ -177,8 +177,8 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
 
   const buttons = [
     ['f', '(', ')', 'C'],
-    ['7', '8', '9', '÷'],
-    ['4', '5', '6', '×'],
+    ['7', '8', '9', 'Ã·'],
+    ['4', '5', '6', 'Ã—'],
     ['1', '2', '3', '-'],
     ['0', '.', '=', '+']
   ]
@@ -190,7 +190,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
     } else if (val === '=') {
       try {
         // Clean and compute
-        const clean = expression.replace(/×/g, '*').replace(/÷/g, '/')
+        const clean = expression.replace(/Ã—/g, '*').replace(/Ã·/g, '/')
         // eslint-disable-next-line no-eval
         const res = eval(clean)
         setResult(String(res))
@@ -227,7 +227,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
              onClick={() => handleAction(btn)}
              className={`h-14 rounded-2xl flex items-center justify-center text-lg font-medium transition-all active:scale-90 ${
                btn === '=' ? 'bg-[#34c759] text-white shadow-[0_8px_16px_rgba(52,199,89,0.3)]' :
-               ['÷', '×', '-', '+'].includes(btn) ? 'bg-white/10 text-[#34c759] hover:bg-white/20' :
+               ['Ã·', 'Ã—', '-', '+'].includes(btn) ? 'bg-white/10 text-[#34c759] hover:bg-white/20' :
                ['f', '(', ')', 'C'].includes(btn) ? 'bg-white/5 text-white/60 hover:bg-white/10' :
                'bg-white/5 text-white hover:bg-white/10'
              }`}
@@ -790,8 +790,8 @@ export default function ChatPage() {
       const lastMsg = messages[messages.length - 1]
       if (lastMsg?.role === 'assistant' && lastMsg.content.length > 400) {
         const celebrations = [
-          "Done! Hope that helps 🎯",
-          "All yours — let me know what you think!",
+          "Done! Hope that helps ðŸŽ¯",
+          "All yours â€” let me know what you think!",
           "Finished! That was a meaty one.",
           "Ready! Anything else you need?",
         ]
@@ -893,7 +893,7 @@ export default function ChatPage() {
   const router = useRouter()
   const { toast } = useToast()
 
-  // ── Shortcuts ──────────────────────────────────────────────────
+  // â”€â”€ Shortcuts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const { shortcuts, updateShortcut, resetShortcuts, getShortcutLabel } = useShortcuts({
     newChat:       () => createNewChat(),
     sendMessage:   () => sendMessage(),
@@ -962,7 +962,7 @@ export default function ChatPage() {
             .replace(/\n{4,}/g, '\n\n')
             .replace(/[^ -~\n\r]{2,}/g, ' ')
             .slice(0, 50000) // Cap at ~50k chars
-          setAttachedFile({ name: file.name, content: `[Extracted from PDF — layout may differ]\n${cleaned}` })
+          setAttachedFile({ name: file.name, content: `[Extracted from PDF â€” layout may differ]\n${cleaned}` })
           toast(`"${file.name}" attached (PDF text extracted)`, "success")
         } catch (err) {
           toast("Could not read PDF. Try a text file instead.", "error")
@@ -2441,7 +2441,7 @@ export default function ChatPage() {
                       <div className="w-1 h-1 rounded-full bg-(--apple-gray)" />
                       <span className="text-[9px] font-black text-(--apple-gray) uppercase tracking-[0.4em]">Optimized Inference</span>
                    </div>
-                   <p className="text-[9px] font-bold text-(--apple-gray) uppercase tracking-widest opacity-50">⌘ + Enter to dispatch</p>
+                   <p className="text-[9px] font-bold text-(--apple-gray) uppercase tracking-widest opacity-50">âŒ˜ + Enter to dispatch</p>
                 </div>
               )}
            </div>
@@ -2577,7 +2577,7 @@ export default function ChatPage() {
                     className="mt-2 p-3 bg-blue-600 rounded-xl shadow-lg relative"
                   >
                     <p className="text-[10px] font-black text-white uppercase tracking-widest leading-relaxed">
-                      💡 Click any item below to jump instantly to that part of the conversation.
+                      ðŸ’¡ Click any item below to jump instantly to that part of the conversation.
                     </p>
                     <div className="absolute -top-1 left-4 w-2 h-2 bg-blue-600 rotate-45" />
                   </motion.div>
@@ -2786,7 +2786,7 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
         <div className="glass rounded-[2.5rem] overflow-hidden apple-shadow border border-(--border-color) flex flex-col max-h-[85vh]">
           <div className="p-8 border-b border-(--border-color) flex items-center justify-between">
              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 squircle bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <div className="w-10 h-10 squircle bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
                    <Settings className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -2808,7 +2808,7 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
                 >
                   {tab}
                   {activeTab === tab && (
-                     <motion.div layoutId="settings-tab" className="absolute bottom-0 inset-x-0 h-0.5 bg-blue-500 rounded-full" />
+                     <motion.div layoutId="settings-tab" className="absolute bottom-0 inset-x-0 h-0.5 bg-purple-500 rounded-full" />
                   )}
                 </button>
              ))}
@@ -2824,7 +2824,7 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
               >
                 <div className="space-y-3">
                   <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 ml-2">AI API Key</label>
-                  <Input type="password" value={keys.openai} onChange={(e) => setKeys({...keys, openai: e.target.value})} placeholder="sk-••••••••••••••••••••••••" className="bg-white/5 py-8 rounded-2xl border-white/5 focus:ring-1 focus:ring-blue-500/30" />
+                  <Input type="password" value={keys.openai} onChange={(e) => setKeys({...keys, openai: e.target.value})} placeholder="sk-â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="bg-white/5 py-8 rounded-2xl border-white/5 focus:ring-1 focus:ring-purple-500/30" />
                 </div>
               </motion.div>
             )}
@@ -2841,7 +2841,7 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
                   <textarea 
                     value={profile.custom_instructions}
                     onChange={(e) => setProfile({...profile, custom_instructions: e.target.value})}
-                    className="w-full bg-white/5 border border-white/5 rounded-3xl p-6 text-sm font-bold outline-none focus:border-blue-500/50 min-h-[160px] resize-none custom-scrollbar transition-all"
+                    className="w-full bg-white/5 border border-white/5 rounded-3xl p-6 text-sm font-bold outline-none focus:border-purple-500/50 min-h-[160px] resize-none custom-scrollbar transition-all"
                     placeholder="Define how the AI should behave..."
                   />
                 </div>
@@ -2860,7 +2860,7 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
                   </div>
                   <div className="space-y-3">
                     {profile.ai_memory.map((mem, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-5 rounded-2xl bg-white/2 border border-white/5 group hover:border-blue-500/20 transition-all">
+                      <div key={idx} className="flex items-center justify-between p-5 rounded-2xl bg-white/2 border border-white/5 group hover:border-purple-500/20 transition-all">
                         <span className="text-xs font-bold text-gray-400">{typeof mem === 'string' ? mem : JSON.stringify(mem)}</span>
                         <button onClick={() => removeMemory(idx)} className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500/50 hover:text-red-500 p-2"><Trash2 className="w-4 h-4" /></button>
                       </div>
@@ -2885,7 +2885,7 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
             <Button 
               onClick={saveAll} 
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-500 text-white rounded-2xl px-12 font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-blue-500/20 active:scale-95 transition-all h-14 no-border"
+              className="bg-purple-600 hover:bg-purple-500 text-white rounded-2xl px-12 font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-purple-500/20 active:scale-95 transition-all h-14 no-border"
             >
               {saving ? <RefreshCw className="w-4 h-4 animate-spin mr-3" /> : <Zap className="w-4 h-4 mr-3" />}
               Save Changes
@@ -2931,15 +2931,15 @@ function PromptManager({ userId, onClose, onSelect }: { userId: string, onClose:
             <Card className="w-full max-w-3xl border-white/5 flex flex-col max-h-[85vh] shadow-2xl">
                 <CardHeader className="shrink-0 border-b border-white/5">
                     <CardTitle className="uppercase tracking-widest text-sm flex items-center gap-2">
-                       <Command className="w-4 h-4 text-blue-500" />
+                       <Command className="w-4 h-4 text-purple-500" />
                        Prompt Library
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 overflow-y-auto space-y-8 p-6 custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {prompts.map(p => (
-                            <div key={p.id} className="p-5 rounded-2xl border border-white/5 bg-white/2 hover:bg-blue-600/5 hover:border-blue-500/20 text-left transition-all active:scale-[0.98] group relative">
-                                <h4 className="font-black text-[10px] uppercase tracking-widest text-blue-500 mb-2">{p.title}</h4>
+                            <div key={p.id} className="p-5 rounded-2xl border border-white/5 bg-white/2 hover:bg-purple-600/5 hover:border-purple-500/20 text-left transition-all active:scale-[0.98] group relative">
+                                <h4 className="font-black text-[10px] uppercase tracking-widest text-purple-500 mb-2">{p.title}</h4>
                                 <p className="text-xs text-gray-500 font-bold line-clamp-2 leading-relaxed mb-4">{p.template}</p>
                                 <div className="flex items-center gap-2">
                                    <Button size="sm" onClick={() => { onSelect(p.template); onClose(); }} className="h-8 rounded-lg bg-white text-black text-[9px] font-black uppercase px-4 hover:bg-gray-200">Use</Button>
@@ -2954,8 +2954,8 @@ function PromptManager({ userId, onClose, onSelect }: { userId: string, onClose:
                     <div className="p-6 rounded-2xl border border-white/10 bg-white/1 space-y-4">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Inject New Preset</h4>
                         <Input placeholder="Architecture Pattern / Function Name" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="bg-black py-6" />
-                        <textarea className="w-full h-32 rounded-2xl border border-white/5 bg-black px-4 py-3 text-sm font-bold custom-scrollbar outline-none focus:border-blue-500/50 transition-all" placeholder="Enter full template logic..." value={newTemplate} onChange={e => setNewTemplate(e.target.value)} />
-                        <Button className="w-full py-6 rounded-2xl bg-blue-600 hover:bg-blue-700" onClick={savePrompt}>Commit to Store</Button>
+                        <textarea className="w-full h-32 rounded-2xl border border-white/5 bg-black px-4 py-3 text-sm font-bold custom-scrollbar outline-none focus:border-purple-500/50 transition-all" placeholder="Enter full template logic..." value={newTemplate} onChange={e => setNewTemplate(e.target.value)} />
+                        <Button className="w-full py-6 rounded-2xl bg-purple-600 hover:bg-purple-700" onClick={savePrompt}>Commit to Store</Button>
                     </div>
                 </CardContent>
                 <CardFooter className="shrink-0 justify-end border-t border-white/5 pt-6">
@@ -2966,9 +2966,9 @@ function PromptManager({ userId, onClose, onSelect }: { userId: string, onClose:
     )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Shortcuts Tab (used inside SettingsModal)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ShortcutsTab({
   shortcuts,
   updateShortcut,
@@ -3016,7 +3016,7 @@ function ShortcutsTab({
         <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Keyboard Shortcuts</p>
         <button
           onClick={resetShortcuts}
-          className="text-[9px] font-bold text-blue-500 hover:text-blue-400 uppercase tracking-widest transition-colors"
+          className="text-[9px] font-bold text-purple-500 hover:text-purple-400 uppercase tracking-widest transition-colors"
         >
           Reset to Defaults
         </button>
@@ -3031,20 +3031,20 @@ function ShortcutsTab({
                 tabIndex={0}
                 autoFocus
                 onKeyDown={(e) => handleKeyDown(e as any, id)}
-                className="px-2 py-1 rounded-lg border-2 border-blue-500/60 bg-blue-500/5 text-xs font-mono text-white outline-none min-w-[80px] text-center"
+                className="px-2 py-1 rounded-lg border-2 border-purple-500/60 bg-purple-500/5 text-xs font-mono text-white outline-none min-w-[80px] text-center"
               >
                 {captured ?? <span className="text-gray-500 animate-pulse text-[9px]">Press keys...</span>}
               </div>
-              <button onClick={() => confirm(id)} className="text-[9px] font-black text-blue-500 hover:text-blue-400 uppercase">Save</button>
-              <button onClick={cancel} className="text-[9px] font-black text-gray-600 hover:text-white uppercase">✕</button>
+              <button onClick={() => confirm(id)} className="text-[9px] font-black text-purple-500 hover:text-purple-400 uppercase">Save</button>
+              <button onClick={cancel} className="text-[9px] font-black text-gray-600 hover:text-white uppercase">âœ•</button>
             </div>
           ) : (
             <button
               onClick={() => { setEditingId(id); setCaptured(null) }}
               className="flex items-center gap-2 group/btn"
             >
-              <kbd className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono text-gray-300 group-hover/btn:border-blue-500/40 transition-all">{key as string}</kbd>
-              <span className="text-[8px] text-gray-600 group-hover/btn:text-blue-400 transition-colors uppercase tracking-widest opacity-0 group-hover/btn:opacity-100">Edit</span>
+              <kbd className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono text-gray-300 group-hover/btn:border-purple-500/40 transition-all">{key as string}</kbd>
+              <span className="text-[8px] text-gray-600 group-hover/btn:text-purple-400 transition-colors uppercase tracking-widest opacity-0 group-hover/btn:opacity-100">Edit</span>
             </button>
           )}
         </div>
@@ -3053,9 +3053,9 @@ function ShortcutsTab({
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Onboarding Tutorial Components
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }: { step: number, onNext: () => void, onComplete: () => void, isDemo?: boolean, hasInteracted?: boolean }) {
   const steps = [
     { 
@@ -3122,7 +3122,7 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
           height: rect.height + 24,
         }}
         transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-        className="absolute border-2 border-blue-500 rounded-[24px] shadow-[0_0_40px_rgba(59,130,246,0.4)] z-101 will-change-transform"
+        className="absolute border-2 border-purple-500 rounded-[24px] shadow-[0_0_40px_rgba(59,130,246,0.4)] z-101 will-change-transform"
       />
 
       {/* The Mascot & Thought Bubble */}
@@ -3142,7 +3142,7 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
            transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
            className="w-28 h-28 relative shrink-0 z-10"
         >
-            <div className="absolute inset-0 bg-blue-500/20 blur-[20px] rounded-full" />
+            <div className="absolute inset-0 bg-purple-500/20 blur-[20px] rounded-full" />
             <img src="/Frow.svg" alt="Frow Mascot" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(0,240,255,0.2)]" />
         </motion.div>
 
@@ -3156,7 +3156,7 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
           <div className="relative bg-white rounded-[32px] p-6 shadow-2xl z-10 border border-gray-100">
             <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-blue-500" />
+                  <Sparkles className="w-4 h-4 text-purple-500" />
                 </div>
                 <h4 className="text-[13px] font-black uppercase tracking-widest text-gray-800">{current.title}</h4>
             </div>
@@ -3169,7 +3169,7 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
                 {!isActionStep ? (
                   <button 
                       onClick={isLast ? onComplete : onNext}
-                      className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-black uppercase tracking-widest rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                      className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white text-[12px] font-black uppercase tracking-widest rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
                   >
                       {current.actionHint}
                       <ArrowRight className="w-4 h-4" />
@@ -3215,10 +3215,10 @@ function BigSignupModal({ onClose, onAction }: { onClose: () => void, onAction: 
                 transition={{ type: 'spring', damping: 28, stiffness: 220 }}
                 className="relative w-full max-w-lg bg-(--surface) border border-white/5 rounded-(--radius-lg) overflow-hidden shadow-2xl"
             >
-                <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600" />
+                <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-purple-600 via-indigo-600 to-purple-600" />
                 
                 <div className="p-10 text-center">
-                    <div className="w-16 h-16 bg-(--apple-blue) rounded-xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-600/20">
+                    <div className="w-16 h-16 bg-(--apple-blue) rounded-xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-purple-600/20">
                         <Sparkles className="w-8 h-8 text-white" />
                     </div>
                     
@@ -3284,7 +3284,7 @@ function EmptyState({ onCreateNew, onSelectPrompt }: { onCreateNew: () => void, 
         transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
         className="relative group hidden md:block w-64 h-64 mb-4"
       >
-        <div className="absolute inset-0 bg-blue-500/10 blur-[50px] rounded-full group-hover:bg-purple-500/20 transition-colors duration-700" />
+        <div className="absolute inset-0 bg-purple-500/10 blur-[50px] rounded-full group-hover:bg-purple-500/20 transition-colors duration-700" />
         <img src="/Frow.svg" alt="Frow Mascot" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_30px_rgba(0,240,255,0.15)] group-hover:scale-105 transition-transform duration-500" />
       </motion.div>
 
@@ -3295,7 +3295,7 @@ function EmptyState({ onCreateNew, onSelectPrompt }: { onCreateNew: () => void, 
           transition={{ delay: 0.2 }}
           className="text-4xl md:text-6xl font-black tracking-tighter text-(--foreground) leading-tight"
         >
-          Clear mind. <br/> <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Simple work.</span>
+          Clear mind. <br/> <span className="bg-gradient-to-r from-purple-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Simple work.</span>
         </motion.h2>
         <motion.p 
           initial={{ opacity: 0 }}
