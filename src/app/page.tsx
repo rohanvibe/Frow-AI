@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react'
 import { useShortcuts, ShortcutContextMenu, SHORTCUT_LABELS, DEFAULT_SHORTCUTS, captureShortcutString } from '@/hooks/useShortcuts'
 import type { ShortcutId, ContextMenuState } from '@/hooks/useShortcuts'
 import { createClient } from '@/utils/supabase/client'
@@ -15,7 +15,8 @@ import {
   CardContent, 
   CardFooter,
   Skeleton,
-  useToast
+  useToast,
+  Logo
 } from '@/components/ui'
 import { 
   Plus, 
@@ -377,7 +378,12 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
         animate={{ y: 0, opacity: 1 }}
         className="fixed top-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-fit"
       >
-        <nav className="flex items-center gap-1 px-2 py-1.5 rounded-full border border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl">
+        <nav className="flex items-center gap-3 px-2 py-1.5 rounded-full border border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl">
+          <div className="flex items-center gap-2 pl-3 pr-2">
+            <Logo className="w-5 h-5 text-white" />
+            <span className="text-[13px] font-black tracking-tight text-white">Frow</span>
+          </div>
+          <div className="h-4 w-[1px] bg-white/20 mx-1"></div>
           <Button variant="ghost" size="sm" onClick={() => window.location.href = '/auth'} className="rounded-full px-6 text-[13px] text-white hover:bg-white/10 border-none">Log In</Button>
           <Button size="sm" onClick={onEnter} className="rounded-full px-8 bg-white text-black text-[13px] font-bold border-none shadow-xl">Get Started</Button>
         </nav>
@@ -398,13 +404,13 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
             className="flex items-center gap-2.5 px-6 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md shadow-xl"
           >
             <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/80">Intelligent Research Infrastructure</span>
+            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/80">Your Personal Thinking Companion</span>
           </motion.div>
         </div>
         
         <div className="space-y-8">
           <h1 className="text-7xl md:text-[110px] font-black tracking-tighter leading-[0.85] text-white selection:bg-purple-500/30">
-            {["Elevate", "Your Thought"].map((word, i) => (
+            {["Think", "Faster"].map((word, i) => (
               <motion.span 
                 key={i}
                 initial={{ opacity: 0, y: 40 }}
@@ -422,7 +428,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
               transition={{ delay: 0.6, duration: 1 }}
               className="bg-gradient-to-r from-purple-400 via-magenta-400 to-pink-400 bg-clip-text text-transparent"
             >
-              with Frow AI
+              with Frow
             </motion.span>
           </h1>
           <motion.p 
@@ -431,8 +437,8 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
             transition={{ delay: 0.8 }}
             className="text-xl md:text-2xl text-gray-400 font-medium max-w-3xl mx-auto leading-relaxed"
           >
-            A high-leverage workspace for builders. <br className="hidden md:block" /> 
-            Connect ideas, run simulations, and execute with precision.
+            Unlock your brain's full potential. <br className="hidden md:block" /> 
+            Organize ideas, solve complex problems, and get work done instantly.
           </motion.p>
         </div>
 
@@ -562,14 +568,14 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
               onClick={onEnter} 
               className="w-full md:w-auto px-14 py-8 rounded-full bg-white text-black font-black tracking-tight text-[18px] hover:bg-gray-100 transition-all active:scale-[0.98] shadow-[0_0_50px_rgba(255,255,255,0.2)] border-none"
             >
-              Start Chatting Free
+              Start Thinking Free
             </Button>
             <Button 
               variant="ghost"
               onClick={onTryDemo} 
               className="w-full md:w-auto px-14 py-8 rounded-full bg-white/5 border border-white/10 text-white font-black tracking-tight text-[18px] hover:bg-white/10 transition-all active:scale-[0.98] backdrop-blur-xl"
             >
-              Explore Demo
+              See It In Action
             </Button>
           </motion.div>
         </motion.div>
@@ -578,9 +584,9 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full py-40 relative z-10">
         {/* Feature Cards with Scroll Animations */}
         {[
-          { icon: Map, title: "Thread Navigation", desc: "Instantly jump between prompts with a structured sidebar.", color: "text-purple-400" },
-          { icon: Activity, title: "Real-time Instruments", desc: "Integrated calculators, diagrams, and background Python execution.", color: "text-magenta-400" },
-          { icon: ShieldCheck, title: "Absolute Privacy", desc: "Local-first mindset. Your thoughts remain your own.", color: "text-pink-400" }
+          { icon: Map, title: "Never Lose Your Context", desc: "Instantly jump between ideas without losing track. Your thoughts stay perfectly organized.", color: "text-purple-400" },
+          { icon: Activity, title: "Solve Problems Instantly", desc: "Built-in interactive tools and execution help you compute answers immediately.", color: "text-magenta-400" },
+          { icon: ShieldCheck, title: "Your Data Is Truly Yours", desc: "Everything runs securely. Focus on your work without worrying about privacy.", color: "text-pink-400" }
         ].map((f, i) => (
           <motion.div 
             key={i}
@@ -607,6 +613,95 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
     </div>
   )
 }
+
+const ChatInput = memo(({ 
+  input, setInput, sendMessage, loading, startVoiceInput, isListening, fileInputRef, currentChatId, setChatDrafts, isMobile, stopResponding 
+}: any) => {
+  const [local, setLocal] = useState(input)
+
+  useEffect(() => {
+    setLocal(input)
+  }, [input])
+
+  return (
+    <div className="relative bg-(--surface) rounded-(--radius-lg) p-2 shadow-xl group-focus-within:ring-1 ring-blue-500/20 transition-all border border-(--border-color)">
+       <Button 
+         type="button" 
+         variant="ghost" 
+         size="icon" 
+         className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full text-(--apple-gray) hover:text-(--foreground) hover:bg-(--surface-tertiary) transition-colors z-10" 
+         onClick={() => fileInputRef.current?.click()}
+       >
+         <Plus className="w-5 h-5 md:w-6 md:h-6" />
+       </Button>
+       <textarea 
+         id="chat-input"
+         value={local}
+         onChange={(e) => {
+           setLocal(e.target.value)
+           if (currentChatId) {
+              setChatDrafts((prev: any) => ({ ...prev, [currentChatId]: e.target.value }))
+           }
+         }}
+         onKeyDown={(e) => {
+           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
+             if (!e.shiftKey || (e.metaKey || e.ctrlKey)) {
+                e.preventDefault()
+                if (isMobile) e.currentTarget.blur()
+                const toSend = local
+                setLocal('')
+                setInput('')
+                sendMessage(undefined, toSend)
+             }
+           }
+         }}
+         rows={1}
+         placeholder={loading ? "Generating..." : "Ask anything"}
+         className="w-full pr-28 md:pr-40 py-4 md:py-5 pl-14 md:pl-20 bg-transparent text-base md:text-[17px] outline-none resize-none custom-scrollbar placeholder:text-(--apple-gray) font-medium tracking-tight text-(--foreground) block"
+       />
+       <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+         {loading ? (
+           <Button onClick={stopResponding} variant="ghost" size="icon" className="w-10 h-10 md:w-12 md:h-12 rounded-(--radius-pill) bg-(--surface-tertiary) hover:bg-red-500/10 hover:text-red-500 transition-all">
+             <Square className="w-4 h-4 md:w-5 md:h-5 fill-current" />
+           </Button>
+         ) : (
+           <>
+             {!local.trim() ? (
+               <Button
+                 type="button"
+                 onClick={startVoiceInput}
+                 size="icon"
+                 className={`w-10 h-10 md:w-12 md:h-12 rounded-(--radius-pill) transition-all border-none ${
+                   isListening
+                     ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
+                     : 'bg-(--apple-blue) text-white shadow-md hover:opacity-80'
+                 }`}
+               >
+                 <Mic className="w-5 h-5 md:w-6 md:h-6" />
+               </Button>
+             ) : (
+               <Button 
+                 type="button" 
+                 onClick={(e) => {
+                   e.preventDefault();
+                   const toSend = local;
+                   setLocal('');
+                   setInput('');
+                   sendMessage(undefined, toSend);
+                 }} 
+                 disabled={!local.trim()} 
+                 size="icon" 
+                 className="w-10 h-10 md:w-12 md:h-12 rounded-(--radius-pill) bg-(--apple-blue) text-white shadow-lg active:scale-90 disabled:opacity-20 transition-all border-none" 
+               >
+                 <ArrowRight className="w-5 h-5 md:w-6 md:h-6" />
+               </Button>
+             )}
+           </>
+         )}
+       </div>
+    </div>
+  )
+})
 
 function ShieldCheck(props: any) {
   return (
@@ -1724,6 +1819,81 @@ export default function ChatPage() {
     }, 500)
   }
 
+  const memoizedMarkdownComponents = useMemo(() => ({
+    table: ({ children }: any) => (
+      <div className="w-full overflow-x-auto my-8 rounded-2xl border border-white/10 bg-white/2 shadow-2xl custom-scrollbar">
+        <table className="min-w-full divide-y divide-white/5 border-collapse">{children}</table>
+      </div>
+    ),
+    th: ({ children }: any) => <th className="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 bg-white/5 whitespace-nowrap">{children}</th>,
+    td: ({ children }: any) => <td className="px-6 py-4 text-sm border-t border-white/5 text-gray-300 whitespace-nowrap min-w-[120px]">{children}</td>,
+    ul: ({ children }: any) => <ul className="list-disc pl-5 space-y-2 mb-4 break-words">{children}</ul>,
+    ol: ({ children }: any) => <ol className="list-decimal pl-5 space-y-2 mb-4 break-words">{children}</ol>,
+    li: ({ children }: any) => <li className="leading-relaxed break-words">{children}</li>,
+    img: ({ src, alt }: any) => (
+      <a href={typeof src === 'string' ? src : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
+        <img src={typeof src === 'string' ? src : undefined} alt={typeof alt === 'string' ? alt : "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
+        <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
+      </a>
+    ),
+    a: ({ href, children, ...props }: any) => {
+      if (href && /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(href)) {
+        return (
+          <a href={typeof href === 'string' ? href : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
+            <img src={typeof href === 'string' ? href : undefined} alt={String(children) || "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
+            <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
+          </a>
+        )
+      }
+      return <a href={typeof href === 'string' ? href : undefined} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-4" {...props}>{children}</a>
+    },
+    code: ({ node, className, children, ...props }: any) => {
+      const match = /language-(\w+)/.exec(className || '');
+      if (match?.[1] === 'calculator') {
+        return <Calculator initialExpression={String(children).replace(/\n$/, '')} />
+      }
+      if (match?.[1] === 'mermaid') {
+        return <Mermaid chart={String(children).replace(/\n$/, '')} />
+      }
+      if (match?.[1] === 'python' || match?.[1] === 'py') {
+        return (
+          <div className="space-y-4">
+            <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
+              <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Python Source</span>
+                <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
+                  <Copy className="w-3 h-3" />
+                  <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
+                </button>
+              </div>
+              <div className="p-4 overflow-x-auto text-[13px] leading-relaxed custom-scrollbar text-gray-300">
+                <code className={className} {...props}>{children}</code>
+              </div>
+            </div>
+            <PythonSandbox code={String(children).replace(/\n$/, '')} />
+          </div>
+        )
+      }
+      if (!className) {
+        return <code className="bg-white/10 px-1.5 py-0.5 rounded-md text-[13px]" {...props}>{children}</code>
+      }
+      return (
+        <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
+          <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{match?.[1] || 'Code'}</span>
+            <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
+              <Copy className="w-3 h-3" />
+              <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
+            </button>
+          </div>
+          <div className="p-4 overflow-x-auto text-[13px] leading-relaxed custom-scrollbar text-gray-300">
+            <code className={className} {...props}>{children}</code>
+          </div>
+        </div>
+      )
+    }
+  }), [copyToClipboard])
+
   if (showLanding) {
     return <LandingPage onEnter={() => { setShowLanding(false); trackEvent('chat_started'); }} onTryDemo={enterDemo} mouseX={mouseX} mouseY={mouseY} />
   }
@@ -2034,46 +2204,55 @@ export default function ChatPage() {
            className={`flex-1 min-w-0 overflow-x-hidden ${messages.length === 0 ? 'overflow-y-hidden' : 'overflow-y-auto'} custom-scrollbar scroll-smooth relative z-10`} 
            id="chat-messages-container"
            onScroll={(e) => {
-              const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
-              if (currentChatId) {
-                 setChatScrolls(prev => ({ ...prev, [currentChatId]: scrollTop }))
-              }
-              const isScrolledUp = scrollHeight - scrollTop - clientHeight > 300
-              setShowJumpToBottom(isScrolledUp)
-              userScrolledUpRef.current = isScrolledUp
+              const target = e.currentTarget
               
-              // Feature 2: Sidebar Auto-Reveals Current Position
-              const messageElements = Array.from(document.querySelectorAll('[id^="msg-"]'))
-              let currentActive = null
-              const middleY = window.innerHeight / 2
-              
-              for (const el of messageElements) {
-                 const rect = el.getBoundingClientRect()
-                 if (rect.top <= middleY) {
-                    currentActive = el.id.replace('msg-', '')
-                 } else {
-                    break
-                 }
-              }
-              
-              if (!currentActive && messageElements.length > 0) {
-                 currentActive = messageElements[0].id.replace('msg-', '')
-              }
-              if (currentActive) {
-                 const msgIndex = messages.findIndex(m => m.id === currentActive)
-                 if (msgIndex !== -1) {
-                    const activeMsg = messages[msgIndex]
-                    if (activeMsg.role === 'user') {
-                       setActiveSidebarMsgId(activeMsg.id)
-                    } else {
-                       for (let i = msgIndex - 1; i >= 0; i--) {
-                          if (messages[i].role === 'user') {
-                             setActiveSidebarMsgId(messages[i].id)
-                             break
+              // Throttle via requestAnimationFrame to avoid synchronous layout trashing
+              if (!target.dataset.scrollQueued) {
+                 target.dataset.scrollQueued = 'true'
+                 requestAnimationFrame(() => {
+                    const { scrollTop, scrollHeight, clientHeight } = target
+                    if (currentChatId) {
+                       setChatScrolls(prev => ({ ...prev, [currentChatId]: scrollTop }))
+                    }
+                    const isScrolledUp = scrollHeight - scrollTop - clientHeight > 300
+                    setShowJumpToBottom(isScrolledUp)
+                    userScrolledUpRef.current = isScrolledUp
+                    
+                    // Feature 2: Sidebar Auto-Reveals Current Position
+                    const messageElements = Array.from(document.querySelectorAll('[id^="msg-"]'))
+                    let currentActive = null
+                    const middleY = window.innerHeight / 2
+                    
+                    for (const el of messageElements) {
+                       const rect = el.getBoundingClientRect()
+                       if (rect.top <= middleY) {
+                          currentActive = el.id.replace('msg-', '')
+                       } else {
+                          break
+                       }
+                    }
+                    
+                    if (!currentActive && messageElements.length > 0) {
+                       currentActive = messageElements[0].id.replace('msg-', '')
+                    }
+                    if (currentActive) {
+                       const msgIndex = messages.findIndex(m => m.id === currentActive)
+                       if (msgIndex !== -1) {
+                          const activeMsg = messages[msgIndex]
+                          if (activeMsg.role === 'user') {
+                             setActiveSidebarMsgId(activeMsg.id)
+                          } else {
+                             for (let i = msgIndex - 1; i >= 0; i--) {
+                                if (messages[i].role === 'user') {
+                                   setActiveSidebarMsgId(messages[i].id)
+                                   break
+                                }
+                             }
                           }
                        }
                     }
-                 }
+                    delete target.dataset.scrollQueued
+                 })
               }
            }}
         >
@@ -2185,80 +2364,7 @@ export default function ChatPage() {
                             <ReactMarkdown 
                               remarkPlugins={[remarkGfm, remarkMath]}
                               rehypePlugins={[rehypeKatex]}
-                              components={{
-                                table: ({ children }) => (
-                                  <div className="w-full overflow-x-auto my-8 rounded-2xl border border-white/10 bg-white/2 shadow-2xl custom-scrollbar">
-                                    <table className="min-w-full divide-y divide-white/5 border-collapse">{children}</table>
-                                  </div>
-                                ),
-                                th: ({ children }) => <th className="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 bg-white/5 whitespace-nowrap">{children}</th>,
-                                 td: ({ children }) => <td className="px-6 py-4 text-sm border-t border-white/5 text-gray-300 whitespace-nowrap min-w-[120px]">{children}</td>,
-                                 ul: ({ children }) => <ul className="list-disc pl-5 space-y-2 mb-4 break-words">{children}</ul>,
-                                 ol: ({ children }) => <ol className="list-decimal pl-5 space-y-2 mb-4 break-words">{children}</ol>,
-                                 li: ({ children }) => <li className="leading-relaxed break-words">{children}</li>,
-                                 img: ({ src, alt }) => (
-                                   <a href={typeof src === 'string' ? src : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
-                                      <img src={typeof src === 'string' ? src : undefined} alt={typeof alt === 'string' ? alt : "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
-                                      <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
-                                   </a>
-                                 ),
-                                 a: ({ href, children, ...props }) => {
-                                   if (href && /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(href)) {
-                                     return (
-                                       <a href={typeof href === 'string' ? href : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
-                                          <img src={typeof href === 'string' ? href : undefined} alt={String(children) || "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
-                                          <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
-                                       </a>
-                                     )
-                                   }
-                                   return <a href={typeof href === 'string' ? href : undefined} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-4" {...props}>{children}</a>
-                                 },
-                                 code: ({ node, className, children, ...props }: any) => {
-                                   const match = /language-(\w+)/.exec(className || '');
-                                  if (match?.[1] === 'calculator') {
-                                    return <Calculator initialExpression={String(children).replace(/\n$/, '')} />
-                                  }
-                                  if (match?.[1] === 'mermaid') {
-                                    return <Mermaid chart={String(children).replace(/\n$/, '')} />
-                                  }
-                                  if (match?.[1] === 'python' || match?.[1] === 'py') {
-                                    return (
-                                      <div className="space-y-4">
-                                        <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
-                                          <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Python Source</span>
-                                            <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
-                                              <Copy className="w-3 h-3" />
-                                              <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
-                                            </button>
-                                          </div>
-                                          <div className="p-4 overflow-x-auto text-[13px] leading-relaxed custom-scrollbar text-gray-300">
-                                            <code className={className} {...props}>{children}</code>
-                                          </div>
-                                        </div>
-                                        <PythonSandbox code={String(children).replace(/\n$/, '')} />
-                                      </div>
-                                    )
-                                  }
-                                  if (!className) {
-                                    return <code className="bg-white/10 px-1.5 py-0.5 rounded-md text-[13px]" {...props}>{children}</code>
-                                  }
-                                  return (
-                                    <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
-                                      <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{match?.[1] || 'Code'}</span>
-                                        <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
-                                          <Copy className="w-3 h-3" />
-                                          <span className="text-[9px] font-black uppercase tracking-widest">Copy</span>
-                                        </button>
-                                      </div>
-                                      <div className="p-4 overflow-x-auto text-[13px] leading-relaxed custom-scrollbar text-gray-300">
-                                        <code className={className} {...props}>{children}</code>
-                                      </div>
-                                    </div>
-                                  )
-                                }
-                              }}
+                              components={memoizedMarkdownComponents}
                             >
                               {cleanDisplayContent(msg.content)}
                             </ReactMarkdown>
@@ -2345,67 +2451,19 @@ export default function ChatPage() {
                 )}
               </AnimatePresence>
               <form onSubmit={sendMessage}>
-                <div className="relative bg-(--surface) rounded-(--radius-lg) p-2 shadow-xl group-focus-within:ring-1 ring-blue-500/20 transition-all border border-(--border-color)">
-                   <Button 
-                     type="button" 
-                     variant="ghost" 
-                     size="icon" 
-                     className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full text-(--apple-gray) hover:text-(--foreground) hover:bg-(--surface-tertiary) transition-colors z-10" 
-                     onClick={() => fileInputRef.current?.click()}
-                   >
-                     <Plus className="w-5 h-5 md:w-6 md:h-6" />
-                   </Button>
-                   <textarea 
-                     id="chat-input"
-                     value={input}
-                     onChange={(e) => {
-                       setInput(e.target.value)
-                       if (currentChatId) {
-                          setChatDrafts(prev => ({ ...prev, [currentChatId]: e.target.value }))
-                       }
-                     }}
-                     onKeyDown={(e) => {
-                       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
-                         if (!e.shiftKey || (e.metaKey || e.ctrlKey)) {
-                            e.preventDefault()
-                            if (isMobile) e.currentTarget.blur()
-                            sendMessage()
-                         }
-                       }
-                     }}
-                     rows={1}
-                     placeholder={loading ? "Generating..." : "Ask anything"}
-                     className="w-full pr-28 md:pr-40 py-4 md:py-5 pl-14 md:pl-20 bg-transparent text-base md:text-[17px] outline-none resize-none custom-scrollbar placeholder:text-(--apple-gray) font-medium tracking-tight text-(--foreground) block"
-                   />
-                   <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                     {loading ? (
-                       <Button onClick={stopResponding} variant="ghost" size="icon" className="w-10 h-10 md:w-12 md:h-12 rounded-(--radius-pill) bg-(--surface-tertiary) hover:bg-red-500/10 hover:text-red-500 transition-all">
-                         <Square className="w-4 h-4 md:w-5 md:h-5 fill-current" />
-                       </Button>
-                     ) : (
-                       <>
-                         {!input.trim() ? (
-                           <Button
-                             type="button"
-                             onClick={startVoiceInput}
-                             size="icon"
-                             className={`w-10 h-10 md:w-12 md:h-12 rounded-(--radius-pill) transition-all border-none ${
-                               isListening
-                                 ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
-                                 : 'bg-(--apple-blue) text-white shadow-md hover:opacity-80'
-                             }`}
-                           >
-                             <Mic className="w-5 h-5 md:w-6 md:h-6" />
-                           </Button>
-                         ) : (
-                           <Button type="submit" disabled={!input.trim()} size="icon" className="w-10 h-10 md:w-12 md:h-12 rounded-(--radius-pill) bg-(--apple-blue) text-white shadow-lg active:scale-90 disabled:opacity-20 transition-all border-none" >
-                             <ArrowRight className="w-5 h-5 md:w-6 md:h-6" />
-                           </Button>
-                         )}
-                       </>
-                     )}
-                   </div>
-                </div>
+                <ChatInput 
+                  input={input} 
+                  setInput={setInput} 
+                  sendMessage={sendMessage} 
+                  loading={loading} 
+                  startVoiceInput={startVoiceInput} 
+                  isListening={isListening} 
+                  fileInputRef={fileInputRef} 
+                  currentChatId={currentChatId} 
+                  setChatDrafts={setChatDrafts} 
+                  isMobile={isMobile} 
+                  stopResponding={stopResponding} 
+                />
                 
                 {/* Model Selection Dropdown */}
                 <ModelSelector selectedModel={selectedModel} onSelectModel={handleModelChange} />
@@ -3060,23 +3118,23 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
   const steps = [
     { 
       targetId: 'tutorial-input', 
-      title: 'Active Intelligence', 
-      text: 'Frow isn\'t just a chat. It\'s a workspace. Explore the Lunar Base conversation already indexed for you.',
-      actionHint: 'Enter Workspace',
+      title: 'Solve Complex Problems', 
+      text: 'Instead of losing track of your ideas in a single chat box, Frow organizes your thoughts into a structured workspace so you can always see the big picture.',
+      actionHint: 'See How It Works',
       requireAction: false
     },
     { 
       targetId: 'tutorial-history', 
-      title: 'Navigation Magic', 
-      text: 'Stop scrolling. Click any item in the sidebar to jump instantly to that part of the thread.',
-      successText: 'Did you see that? You just jumped through time.',
+      title: 'Never Lose Context', 
+      text: 'Click any point in the sidebar to instantly jump back. You never have to scroll endlessly to find that one important idea again.',
+      successText: 'Perfect! You just saved yourself minutes of searching.',
       actionHint: 'Waiting for interaction...',
       requireAction: true
     },
     { 
       targetId: 'tutorial-memory', 
-      title: 'Long-term Memory', 
-      text: 'I remember your preferences, past work, and style across all sessions.',
+      title: 'A Memory That Adapts to You', 
+      text: 'Frow automatically remembers your preferences and past decisions. You never have to repeat yourself or start from scratch.',
       actionHint: 'I understand',
       requireAction: false
     },
@@ -3149,19 +3207,19 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
         {/* Thought Cloud */}
         <div className="relative w-[340px] mb-8">
           {/* Cloud Bubbles connecting to mascot */}
-          <div className="absolute -left-4 bottom-2 w-5 h-5 rounded-full bg-white shadow-lg z-0"></div>
-          <div className="absolute -left-8 -bottom-2 w-3 h-3 rounded-full bg-white shadow-md z-0"></div>
+          <div className="absolute -left-4 bottom-2 w-5 h-5 rounded-full bg-[#1c1c1e] shadow-lg z-0 border border-white/10"></div>
+          <div className="absolute -left-8 -bottom-2 w-3 h-3 rounded-full bg-[#1c1c1e] shadow-md z-0 border border-white/10"></div>
           
           {/* Main Bubble container */}
-          <div className="relative bg-white rounded-[32px] p-6 shadow-2xl z-10 border border-gray-100">
+          <div className="relative bg-[#1c1c1e] rounded-[32px] p-6 shadow-2xl z-10 border border-white/10">
             <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-purple-500" />
+                <div className="w-8 h-8 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
                 </div>
-                <h4 className="text-[13px] font-black uppercase tracking-widest text-gray-800">{current.title}</h4>
+                <h4 className="text-[13px] font-black uppercase tracking-widest text-white/90">{current.title}</h4>
             </div>
             
-            <p className="text-[14px] text-gray-600 leading-relaxed font-medium mb-6">
+            <p className="text-[14px] text-gray-300 leading-relaxed font-medium mb-6">
               {hasInteracted && current.successText ? current.successText : current.text}
             </p>
             
@@ -3175,7 +3233,7 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
                       <ArrowRight className="w-4 h-4" />
                   </button>
                 ) : (
-                  <div className={`w-full py-4 ${hasInteracted ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-500'} border text-[10px] font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 transition-all duration-500`}>
+                  <div className={`w-full py-4 ${hasInteracted ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-white/5 border-white/10 text-gray-400'} border text-[10px] font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 transition-all duration-500`}>
                      {hasInteracted ? (
                         <>
                            <CheckCircle2 className="w-4 h-4" />

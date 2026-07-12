@@ -1,9 +1,10 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button, Input } from '@/components/ui'
+import { Logo } from '@/components/ui'
 import { trackEvent } from '@/utils/analytics'
 import { Globe, ArrowRight, Zap, Sparkles, Command } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -75,19 +76,15 @@ export default function AuthPage() {
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
             className="w-full aspect-square relative cursor-pointer group"
           >
-            <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full group-hover:bg-purple-500/30 transition-colors duration-700" />
-            <img 
-              src="/Frow.svg" 
-              alt="Frow Mascot" 
-              className="w-full h-full object-contain drop-shadow-[0_0_40px_rgba(0,240,255,0.2)] group-hover:scale-105 group-hover:-rotate-2 transition-all duration-500 relative z-10"
-            />
+            <div className="absolute inset-0 bg-purple-500/20 blur-[100px] rounded-full group-hover:bg-pink-500/30 transition-colors duration-700" />
+            <Logo className="w-full h-full text-white drop-shadow-[0_0_40px_rgba(168,85,247,0.4)] group-hover:scale-105 group-hover:-rotate-2 transition-all duration-500 relative z-10" />
           </motion.div>
           <div className="space-y-4 mt-8 relative z-20">
             <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tighter leading-tight">
-              Your Intelligent <br/> <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Co-Pilot.</span>
+              Save Your <br/> <span className="bg-gradient-to-r from-purple-400 via-magenta-400 to-pink-400 bg-clip-text text-transparent">Progress.</span>
             </h1>
             <p className="text-gray-400 font-medium text-lg leading-relaxed max-w-sm mx-auto">
-              Join Frow to unlock a memory-augmented workspace that adapts to how you think and build.
+              Create a free account to save your chat history, custom tools, and securely access your work from anywhere.
             </p>
           </div>
         </motion.div>
@@ -101,8 +98,8 @@ export default function AuthPage() {
       >
           {/* Mobile Branding (Only visible on smaller screens) */}
           <div className="flex lg:hidden flex-col items-center gap-3 mb-10">
-            <div className="w-12 h-12 rounded-xl bg-(--apple-blue) flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <img src="/Frow.svg" alt="Frow" className="w-8 h-8 object-contain" />
+            <div className="w-12 h-12 rounded-xl bg-(--apple-blue) flex items-center justify-center shadow-lg shadow-purple-500/20">
+              <Logo className="w-8 h-8 text-white" />
             </div>
             <span className="text-xl font-black tracking-tight text-white uppercase">Frow</span>
           </div>
@@ -110,10 +107,10 @@ export default function AuthPage() {
         <div className="bg-(--surface) rounded-(--radius-lg) p-8 md:p-10 space-y-8 border border-white/5 shadow-xl">
           <div className="space-y-2 text-center">
             <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-white">
-              {isSignUp ? 'Create Account' : 'Sign In'}
+              {isSignUp ? 'Save Your Workspace' : 'Sign In'}
             </h2>
             <p className="text-(--apple-gray) font-medium text-[15px] leading-relaxed">
-              {isSignUp ? 'Join the next generation of intelligent workspace.' : 'Welcome back to your refined workspace.'}
+              {isSignUp ? 'Create an account to protect your work and access it anywhere.' : 'Welcome back to your workspace.'}
             </p>
           </div>
 
@@ -179,7 +176,7 @@ export default function AuthPage() {
                   disabled={loading}
                   className="w-full py-6 rounded-(--radius-pill) bg-(--apple-blue) text-white font-semibold tracking-tight text-[15px] hover:bg-blue-600 transition-all active:scale-[0.98] border-none"
                 >
-                  {loading ? 'Processing...' : isSignUp ? 'Create Workspace' : 'Enter Workspace'}
+                  {loading ? 'Processing...' : isSignUp ? 'Save Workspace' : 'Enter Workspace'}
                 </Button>
 
                 <button
