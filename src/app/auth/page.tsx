@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button, Input } from '@/components/ui'
-import { Logo } from '@/components/ui'
 import { trackEvent } from '@/utils/analytics'
 import { Globe, ArrowRight, Zap, Sparkles, Command } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -77,7 +76,7 @@ export default function AuthPage() {
             className="w-full aspect-square relative cursor-pointer group"
           >
             <div className="absolute inset-0 bg-purple-500/20 blur-[100px] rounded-full group-hover:bg-pink-500/30 transition-colors duration-700" />
-            <Logo className="w-full h-full text-white drop-shadow-[0_0_40px_rgba(168,85,247,0.4)] group-hover:scale-105 group-hover:-rotate-2 transition-all duration-500 relative z-10" />
+            <img src="/Frow.svg" alt="Frow Mascot" className="w-full h-full object-contain drop-shadow-[0_0_40px_rgba(0,240,255,0.4)] group-hover:scale-105 group-hover:-rotate-2 transition-all duration-500 relative z-10" />
           </motion.div>
           <div className="space-y-4 mt-8 relative z-20">
             <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tighter leading-tight">
@@ -99,7 +98,7 @@ export default function AuthPage() {
           {/* Mobile Branding (Only visible on smaller screens) */}
           <div className="flex lg:hidden flex-col items-center gap-3 mb-10">
             <div className="w-12 h-12 rounded-xl bg-(--apple-blue) flex items-center justify-center shadow-lg shadow-purple-500/20">
-              <Logo className="w-8 h-8 text-white" />
+              <img src="/Frow.svg" alt="Frow" className="w-8 h-8 object-contain" />
             </div>
             <span className="text-xl font-black tracking-tight text-white uppercase">Frow</span>
           </div>
