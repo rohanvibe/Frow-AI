@@ -703,6 +703,178 @@ const ChatInput = memo(({
   )
 })
 
+// ─── MessageBubble ─────────────────────────────────────────────────────────
+// Defined at MODULE level (outside ChatPage) so its identity is stable.
+// Memoized so it only re-renders when its own props change, not on every
+// parent scroll/state update. This eliminates the "table blinking" flicker.
+const MessageBubble = memo(function MessageBubble({
+  msg,
+  isLast,
+  loading,
+  isEditing,
+  editValue,
+  setEditValue,
+  cancelEdit,
+  submitEdit,
+  handleEditMessage,
+  copyToClipboard,
+  exportAsImage,
+  onRegenerate,
+  isMobile,
+  highlightedAnchor,
+  savedMemoryMsgId,
+  markdownComponents,
+  cleanContent,
+}: any) {
+  const isHighlighted = highlightedAnchor === msg.id
+
+  return (
+    <div
+      id={`msg-${msg.id}`}
+      className={`group relative ${
+        isHighlighted ? 'p-4 -m-4 rounded-2xl bg-blue-500/5 ring-1 ring-blue-500/20' : ''
+      } transition-colors duration-700`}
+    >
+      {msg.role === 'assistant' ? (
+        <div className="w-10 h-10 rounded-xl shrink-0 overflow-hidden relative border border-white/10 shadow-lg">
+          <img src="/Frow.svg" alt="Frow" className="w-full h-full object-contain" />
+        </div>
+      ) : (
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 shadow-lg bg-(--surface) text-(--apple-gray)">
+          <Plus className="w-5 h-5 rotate-45" />
+        </div>
+      )}
+      <div className="flex-1 space-y-4 min-w-0 overflow-hidden">
+        <div
+          className={`p-6 md:p-8 rounded-(--radius-lg) bg-(--surface) shadow-xl relative overflow-hidden border border-white/5 ${
+            msg.role === 'assistant' ? 'ring-1 ring-blue-500/10' : ''
+          }`}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-[13px] tracking-tight text-(--apple-gray) pt-1">
+                {msg.role === 'assistant' ? 'Assistant' : 'You'}
+              </span>
+              <AnimatePresence>
+                {savedMemoryMsgId === msg.id && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8, x: -10 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20"
+                  >
+                    <Check className="w-3 h-3 text-blue-500" />
+                    <span className="text-[8px] font-black uppercase tracking-widest text-blue-500 pt-px">Saved</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <div className={`flex items-center gap-1 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+              {msg.role === 'user' && (
+                <Button variant="ghost" size="icon" title="Edit" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => handleEditMessage(msg)}><Edit2 className="w-3.5 h-3.5" /></Button>
+              )}
+              <Button variant="ghost" size="icon" title="Copy" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => copyToClipboard(msg.content)}><Copy className="w-3.5 h-3.5" /></Button>
+              <Button variant="ghost" size="icon" title="Export Image" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => exportAsImage(msg.id)}><Camera className="w-3.5 h-3.5" /></Button>
+              {msg.role === 'assistant' && (
+                <Button variant="ghost" size="icon" title="Regenerate" className="w-8 h-8 text-gray-500 hover:text-white" onClick={onRegenerate}><RefreshCw className="w-3.5 h-3.5" /></Button>
+              )}
+            </div>
+          </div>
+
+          {isEditing ? (
+            <div className="space-y-4">
+              <textarea
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-sm font-medium outline-none focus:border-blue-500/50 min-h-[100px] resize-none"
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={cancelEdit} className="text-[10px] font-bold uppercase tracking-widest px-4">Cancel</Button>
+                <Button size="sm" onClick={() => submitEdit(msg.id)} className="bg-blue-600 hover:bg-blue-500 text-[10px] font-bold uppercase tracking-widest px-6 shadow-lg shadow-blue-500/20">Save &amp; Resend</Button>
+              </div>
+            </div>
+          ) : (
+            <div className={`text-(--foreground) leading-relaxed text-lg prose prose-lg max-w-none prose-pre:rounded-(--radius-md) prose-code:text-(--apple-blue) break-words overflow-x-hidden min-w-0 selection:bg-blue-500/40 dark:prose-invert ${
+              msg.role === 'assistant' && loading && isLast ? 'typing-cursor' : ''
+            }`}>
+              {msg.content === '' && loading ? (
+                <div className="flex items-center gap-4 py-3">
+                  <motion.div
+                    animate={{ rotate: [-8, 8, -8], y: [-3, 3, -3] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                    className="w-10 h-10 shrink-0"
+                  >
+                    <img src="/Frow.svg" alt="Thinking..." className="w-full h-full object-contain" />
+                  </motion.div>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <span className="text-[11px] font-bold text-(--apple-gray) tracking-wide">Frow is thinking...</span>
+                  </div>
+                </div>
+              ) : (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
+                  components={markdownComponents}
+                >
+                  {cleanContent}
+                </ReactMarkdown>
+              )}
+
+              {/* Images */}
+              {msg.role === 'assistant' && msg.images && msg.images.length > 0 && (
+                <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                  <div className="flex items-center gap-3 mb-2 px-1">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400">Verified Visual Assets</span>
+                  </div>
+                  <div className="flex flex-col gap-12">
+                    {msg.images.map((img: any, idx: number) => {
+                      const aspectRatio = img.width && img.height ? img.width / img.height : 16/10;
+                      const maxWidth = img.width ? `${Math.min(img.width, 1200)}px` : '100%';
+                      return (
+                        <div
+                          key={idx}
+                          style={{ maxWidth }}
+                          className="group/img relative rounded-3xl overflow-hidden border border-(--border-color) bg-(--surface) shadow-2xl transition-all duration-500 hover:border-blue-500/40 hover:shadow-blue-500/20 mx-auto w-full"
+                        >
+                          <div className="relative overflow-hidden bg-(--surface-secondary)" style={{ aspectRatio: aspectRatio.toString() }}>
+                            <img
+                              src={`/api/proxy-image?url=${encodeURIComponent(img.url)}`}
+                              alt={img.alt}
+                              className="w-full h-full object-cover transition-all duration-1000 group-hover/img:scale-105"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover/img:opacity-60 transition-opacity" />
+                            <div className="absolute bottom-0 inset-x-0 p-8 flex flex-col gap-2 translate-y-2 group-hover/img:translate-y-0 transition-transform">
+                              <p className="text-[14px] font-black uppercase tracking-[0.2em] text-white drop-shadow-2xl line-clamp-2">{img.alt}</p>
+                              <div className="flex items-center justify-between mt-2 border-t border-white/10 pt-4">
+                                <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">{img.attribution || 'Visual Resource'}</span>
+                                <a href={img.source} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-sm">
+                                  Source <ExternalLink className="w-3 h-3" />
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+})
+
 function ShieldCheck(props: any) {
   return (
     <svg
@@ -1360,10 +1532,10 @@ export default function ChatPage() {
     }
   }
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = useCallback((text: string) => {
     navigator.clipboard.writeText(text)
     toast("Copied to clipboard", "success")
-  }
+  }, [toast])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -1739,16 +1911,16 @@ export default function ChatPage() {
     }
   }
   
-  const handleEditMessage = (msg: Message) => {
+  const handleEditMessage = useCallback((msg: Message) => {
     setEditingMessageId(msg.id)
     setEditValue(msg.content)
     trackEvent('sidebar_click', { action: 'edit_message' })
-  }
+  }, [])
 
-  const cancelEdit = () => {
+  const cancelEdit = useCallback(() => {
     setEditingMessageId(null)
     setEditValue('')
-  }
+  }, [])
 
   const submitEdit = async (msgId: string) => {
     if (!editValue.trim() || !currentChatId) return
@@ -2270,166 +2442,37 @@ export default function ChatPage() {
           ) : (
             <div className="max-w-3xl mx-auto px-4 py-8 md:p-10 space-y-12 pb-32">
               <div className="space-y-12">
-                <AnimatePresence>
-                  {messages.map((msg, i) => (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }} 
-                      animate={{ opacity: 1, y: 0 }} 
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-                      key={msg.id} 
-                      id={`msg-${msg.id}`}
-                  className={`group relative ${highlightedAnchor === msg.id ? 'highlight-bg p-4 -m-4 rounded-2xl bg-blue-500/5 ring-1 ring-blue-500/20' : ''} transition-all duration-700`}
-                >
-                  {msg.role === 'assistant' ? (
-                    <div className="w-10 h-10 rounded-xl shrink-0 overflow-hidden relative border border-white/10 shadow-lg">
-                      <img src="/Frow.svg" alt="Frow" className="w-full h-full object-contain" />
-                    </div>
-                  ) : (
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 shadow-lg bg-(--surface) text-(--apple-gray)">
-                      <Plus className="w-5 h-5 rotate-45" />
-                    </div>
-                  )}
-                  <div className="flex-1 space-y-4 min-w-0 overflow-hidden">
-                    <motion.div 
-                      className={`p-6 md:p-8 rounded-(--radius-lg) bg-(--surface) shadow-xl relative overflow-hidden border border-white/5 ${
-                        msg.role === 'assistant' ? 'ring-1 ring-blue-500/10' : ''
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                          <span className="font-semibold text-[13px] tracking-tight text-(--apple-gray) pt-1">
-                            {msg.role === 'assistant' ? 'Assistant' : 'You'}
-                          </span>
-                          <AnimatePresence>
-                            {savedMemoryMsgId === msg.id && (
-                               <motion.div
-                                 initial={{ opacity: 0, scale: 0.8, x: -10 }}
-                                 animate={{ opacity: 1, scale: 1, x: 0 }}
-                                 exit={{ opacity: 0, scale: 0.8 }}
-                                 className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20"
-                               >
-                                  <Check className="w-3 h-3 text-blue-500" />
-                                  <span className="text-[8px] font-black uppercase tracking-widest text-blue-500 pt-px">Saved</span>
-                               </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                        <div className={`flex items-center gap-1 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                           {msg.role === 'user' && (
-                              <Button variant="ghost" size="icon" title="Edit" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => handleEditMessage(msg)}><Edit2 className="w-3.5 h-3.5" /></Button>
-                           )}
-                           <Button variant="ghost" size="icon" title="Copy" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => copyToClipboard(msg.content)}><Copy className="w-3.5 h-3.5" /></Button>
-                           <Button variant="ghost" size="icon" title="Export Image" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => exportAsImage(msg.id)}><Camera className="w-3.5 h-3.5" /></Button>
-                           {msg.role === 'assistant' && (
-                              <Button variant="ghost" size="icon" title="Regenerate" className="w-8 h-8 text-gray-500 hover:text-white" onClick={() => sendMessage(undefined, messages[i-1]?.content)}><RefreshCw className="w-3.5 h-3.5" /></Button>
-                           )}
-                        </div>
-                      </div>
-                      
-                      {editingMessageId === msg.id ? (
-                        <div className="space-y-4">
-                           <textarea
-                             value={editValue}
-                             onChange={(e) => setEditValue(e.target.value)}
-                             className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-sm font-medium outline-none focus:border-blue-500/50 min-h-[100px] resize-none"
-                             autoFocus
-                           />
-                           <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="sm" onClick={cancelEdit} className="text-[10px] font-bold uppercase tracking-widest px-4">Cancel</Button>
-                              <Button size="sm" onClick={() => submitEdit(msg.id)} className="bg-blue-600 hover:bg-blue-500 text-[10px] font-bold uppercase tracking-widest px-6 shadow-lg shadow-blue-500/20">Save & Resend</Button>
-                           </div>
-                        </div>
-                      ) : (
-                        <div className={`text-(--foreground) leading-relaxed text-lg prose prose-lg max-w-none prose-pre:rounded-(--radius-md) prose-code:text-(--apple-blue) break-words overflow-x-hidden min-w-0 selection:bg-blue-500/40 dark:prose-invert ${msg.role === 'assistant' && loading && i === messages.length - 1 ? 'typing-cursor' : ''}`}>
-                          {msg.content === '' && loading ? (
-                             <div className="flex items-center gap-4 py-3">
-                               <motion.div
-                                 animate={{ rotate: [-8, 8, -8], y: [-3, 3, -3] }}
-                                 transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-                                 className="w-10 h-10 shrink-0"
-                               >
-                                 <img src="/Frow.svg" alt="Thinking..." className="w-full h-full object-contain" />
-                               </motion.div>
-                               <div className="flex flex-col gap-1">
-                                 <div className="flex items-center gap-1.5">
-                                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                                 </div>
-                                 <span className="text-[11px] font-bold text-(--apple-gray) tracking-wide">Frow is thinking...</span>
-                               </div>
-                             </div>
-                          ) : (
-                            <ReactMarkdown 
-                              remarkPlugins={[remarkGfm, remarkMath]}
-                              rehypePlugins={[rehypeKatex]}
-                              components={memoizedMarkdownComponents}
-                            >
-                              {cleanDisplayContent(msg.content)}
-                            </ReactMarkdown>
-                          )}
-
-                          {/* PHASE 7: Deterministic Visual Rendering */}
-                          {msg.role === 'assistant' && msg.images && msg.images.length > 0 && (
-                            <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                               <div className="flex items-center gap-3 mb-2 px-1">
-                                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400">Verified Visual Assets</span>
-                               </div>
-                               <div className="flex flex-col gap-12">
-                                  {msg.images.map((img: any, idx: number) => {
-                                    const aspectRatio = img.width && img.height ? img.width / img.height : 16/10;
-                                    const maxWidth = img.width ? `${Math.min(img.width, 1200)}px` : '100%';
-                                    
-                                    return (
-                                      <div 
-                                        key={idx} 
-                                        style={{ maxWidth }}
-                                        className="group/img relative rounded-3xl overflow-hidden border border-(--border-color) bg-(--surface) shadow-2xl transition-all duration-500 hover:border-blue-500/40 hover:shadow-blue-500/20 mx-auto w-full"
-                                      >
-                                        <div 
-                                          className="relative overflow-hidden bg-(--surface-secondary)"
-                                          style={{ aspectRatio: aspectRatio.toString() }}
-                                        >
-                                          <img 
-                                            src={`/api/proxy-image?url=${encodeURIComponent(img.url)}`}
-                                            alt={img.alt}
-                                            className="w-full h-full object-cover transition-all duration-1000 group-hover/img:scale-105"
-                                            loading="lazy"
-                                          />
-                                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover/img:opacity-60 transition-opacity" />
-                                          
-                                          <div className="absolute bottom-0 inset-x-0 p-8 flex flex-col gap-2 translate-y-2 group-hover/img:translate-y-0 transition-transform">
-                                            <p className="text-[14px] font-black uppercase tracking-[0.2em] text-white drop-shadow-2xl line-clamp-2">{img.alt}</p>
-                                            <div className="flex items-center justify-between mt-2 border-t border-white/10 pt-4">
-                                               <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">{img.attribution || 'Visual Resource'}</span>
-                                               <a 
-                                                 href={img.source} 
-                                                 target="_blank" 
-                                                 rel="noopener noreferrer"
-                                                 className="text-[10px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-sm"
-                                               >
-                                                 Source <ExternalLink className="w-3 h-3" />
-                                               </a>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                               </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </motion.div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </div>
+                {messages.map((msg, i) => (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: 'spring', damping: 32, stiffness: 380, delay: 0 }}
+                    layout={false}
+                  >
+                    <MessageBubble
+                      msg={msg}
+                      isLast={i === messages.length - 1}
+                      loading={loading}
+                      isEditing={editingMessageId === msg.id}
+                      editValue={editValue}
+                      setEditValue={setEditValue}
+                      cancelEdit={cancelEdit}
+                      submitEdit={submitEdit}
+                      handleEditMessage={handleEditMessage}
+                      copyToClipboard={copyToClipboard}
+                      exportAsImage={exportAsImage}
+                      onRegenerate={() => sendMessage(undefined, messages[i - 1]?.content)}
+                      isMobile={isMobile}
+                      highlightedAnchor={highlightedAnchor}
+                      savedMemoryMsgId={savedMemoryMsgId}
+                      markdownComponents={memoizedMarkdownComponents}
+                      cleanContent={cleanDisplayContent(msg.content)}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           )}
           <div ref={messagesEndRef} className="h-20" />
         </div>

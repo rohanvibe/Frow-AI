@@ -98,9 +98,10 @@ b, strong {
   letter-spacing: 0.01em;
 }
 
-/* Smooth Transitions */
-* {
-  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+/* Targeted transitions - do NOT use wildcard (*) transitions, they cause layout
+   trashing and force the GPU to track every element on every render. */
+.transition-colors {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
 }
 
 @keyframes blink {
@@ -186,4 +187,20 @@ body {
 .prose img {
   max-width: 100%;
   height: auto;
+}
+
+/* ─── Chat performance ──────────────────────────────────────────────────── */
+/* Promote the scroll container to its own GPU compositor layer so scrolling
+   never blocks the main thread. */
+#chat-messages-container {
+  will-change: scroll-position;
+  transform: translateZ(0);
+  -webkit-overflow-scrolling: touch; /* smooth momentum scroll on iOS */
+}
+
+/* Each message row: tell the browser it can skip paint for rows far off-screen.
+   content-visibility:auto is the single biggest win for long chat lists. */
+#chat-messages-container [id^='msg-'] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 200px; /* estimated height for layout reservation */
 }
