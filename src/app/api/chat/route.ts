@@ -293,18 +293,31 @@ Use these tags ONLY for long-term facts.
        }
     }
 
-    // Step 3: No tool used, just return content or stream
+    // Step 3: No tool used — stream the already-computed content directly
+    // instead of making a second LLM call. This halves latency for simple messages.
     if (!requestedStream) {
       return NextResponse.json({ content: messageObj.content, images: detectedImages })
     }
 
-    // Use AI service for streaming
-    const stream = await aiService.stream(apiMessages, {
-      temperature: 0.1,
-      forceModel: selectedModel,
-      forceProvider: selectedModel?.includes('gemini') ? 'gemini' : 'groq',
+    const encoder = new TextEncoder()
+    const directStream = new ReadableStream({
+      start(controller) {
+        if (detectedImages && detectedImages.length > 0) {
+          const imageResult = { type: "image_result", images: detectedImages }
+          controller.enqueue(encoder.encode(`[METADATA]:${JSON.stringify(imageResult)}\n`))
+        }
+        controller.enqueue(encoder.encode(messageObj.content || ''))
+        controller.close()
+      }
     })
-    return handleStreaming(stream, detectedImages)
+
+    return new Response(directStream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'X-Accel-Buffering': 'no', // Disable nginx buffering
+      }
+    })
   } catch (error: any) {
     console.error('Chat API Error:', error)
     return NextResponse.json({ error: error.message || 'Server error', details: error.stack }, { status: 500 })
@@ -350,7 +363,11 @@ async function handleStreaming(stream: ReadableStream, images?: any[]) {
   })
 
   return new Response(wrappedStream, {
-    headers: { 'Content-Type': 'text/event-stream' }
+    headers: { 
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
+    }
   })
 }
 

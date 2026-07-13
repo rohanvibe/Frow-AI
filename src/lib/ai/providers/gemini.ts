@@ -15,7 +15,6 @@ export class GeminiProvider extends BaseProvider {
     const geminiMessages = this.convertToGeminiFormat(request.messages);
     
     console.log(`[GeminiProvider] Requesting model: ${this.model}`);
-    console.log(`[GeminiProvider] Messages:`, JSON.stringify(geminiMessages, null, 2));
     
     const response = await fetch(
       `${this.baseURL}/models/${this.model}:generateContent?key=${this.apiKey}`,
@@ -40,7 +39,6 @@ export class GeminiProvider extends BaseProvider {
     }
 
     const data = await response.json();
-    console.log(`[GeminiProvider] Response:`, JSON.stringify(data, null, 2));
     
     // Handle different response formats from Gemini
     let content = '';
@@ -51,8 +49,6 @@ export class GeminiProvider extends BaseProvider {
       }
     }
     
-    console.log(`[GeminiProvider] Extracted content: "${content}"`);
-
     return {
       content,
       model: this.model,

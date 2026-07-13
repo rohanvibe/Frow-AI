@@ -992,14 +992,16 @@ function ModelSelector({ selectedModel, onSelectModel }: { selectedModel: string
   )
 }
 
+// Stable helper — defined at module level so its identity never changes
+const cleanDisplayContent = (content: string) => {
+  return content
+    .replace(/\[METADATA\][\s\S]*?\[\/METADATA\]/g, '') // Clean visual metadata
+    .replace(/\[MEMORY_(ADD|LEARNED|EDIT|DELETE):.*?\]/gi, '')
+    .replace(/\n[a-z]+\|.*$/i, '')
+    .trim()
+}
+
 export default function ChatPage() {
-  const cleanDisplayContent = (content: string) => {
-    return content
-      .replace(/\[METADATA\][\s\S]*?\[\/METADATA\]/g, '') // Clean visual metadata
-      .replace(/\[MEMORY_(ADD|LEARNED|EDIT|DELETE):.*?\]/gi, '')
-      .replace(/\n[a-z]+\|.*$/i, '')
-      .trim()
-  }
 
   const [chats, setChats] = useState<Chat[]>([])
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
@@ -1713,10 +1715,6 @@ export default function ChatPage() {
     setInput('')
     setAttachedFile(null)
     setLoading(true)
-    if (messages.length === 0) {
-      trackEvent('first_message_sent', { isGuest, model: modelType })
-    }
-    trackEvent('chat_sent', { isGuest, model: modelType })
     abortControllerRef.current = new AbortController()
 
     setMessages(prev => [...prev, tempUserMsg])
@@ -1735,11 +1733,6 @@ export default function ChatPage() {
       created_at: new Date().toISOString()
     }
     setMessages(prev => [...prev, tempAssistantMsg])
-
-    if (messages.length === 0) {
-      trackEvent('first_message_sent', { chatId, isGuest })
-    }
-    trackEvent('chat_sent', { chatId, isGuest })
 
     let finalContent = ''
     try {
@@ -1767,9 +1760,25 @@ export default function ChatPage() {
         let accumulatedContent = ''
         let detectedImages: any[] = []
 
+        // RAF-batched stream updates: accumulate chunks locally, push to React
+        // only once per animation frame (~16ms) instead of once per chunk.
+        // This prevents the entire message list from re-rendering on every token.
+        let rafId: number | null = null
+        const flushToReact = () => {
+          const snap = accumulatedContent
+          const imgs = detectedImages
+          setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, content: snap, images: imgs } : m))
+          rafId = null
+        }
+
         while (true) {
           const { done, value } = await reader.read()
-          if (done) break
+          if (done) {
+            // Cancel any pending RAF and do a final synchronous flush
+            if (rafId !== null) cancelAnimationFrame(rafId)
+            flushToReact()
+            break
+          }
           const chunk = decoder.decode(value)
           
           // PHASE 6: Parse structured metadata from the start of the stream
@@ -1793,7 +1802,10 @@ export default function ChatPage() {
             accumulatedContent += chunk
           }
 
-          setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, content: accumulatedContent, images: detectedImages } : m))
+          // Schedule a batched UI update if one isn't already pending
+          if (rafId === null) {
+            rafId = requestAnimationFrame(flushToReact)
+          }
         }
         
         finalContent = accumulatedContent
@@ -2390,38 +2402,13 @@ export default function ChatPage() {
                     setShowJumpToBottom(isScrolledUp)
                     userScrolledUpRef.current = isScrolledUp
                     
-                    // Feature 2: Sidebar Auto-Reveals Current Position
-                    const messageElements = Array.from(document.querySelectorAll('[id^="msg-"]'))
-                    let currentActive = null
-                    const middleY = window.innerHeight / 2
-                    
-                    for (const el of messageElements) {
-                       const rect = el.getBoundingClientRect()
-                       if (rect.top <= middleY) {
-                          currentActive = el.id.replace('msg-', '')
-                       } else {
-                          break
-                       }
-                    }
-                    
-                    if (!currentActive && messageElements.length > 0) {
-                       currentActive = messageElements[0].id.replace('msg-', '')
-                    }
-                    if (currentActive) {
-                       const msgIndex = messages.findIndex(m => m.id === currentActive)
-                       if (msgIndex !== -1) {
-                          const activeMsg = messages[msgIndex]
-                          if (activeMsg.role === 'user') {
-                             setActiveSidebarMsgId(activeMsg.id)
-                          } else {
-                             for (let i = msgIndex - 1; i >= 0; i--) {
-                                if (messages[i].role === 'user') {
-                                   setActiveSidebarMsgId(messages[i].id)
-                                   break
-                                }
-                             }
-                          }
-                       }
+                    // Feature 2: Sidebar minimap active position — use scroll ratio
+                    // instead of querySelectorAll+getBoundingClientRect to avoid reflow.
+                    const userMsgs = messages.filter(m => m.role === 'user')
+                    if (userMsgs.length > 0 && scrollHeight > clientHeight) {
+                       const ratio = Math.min(1, scrollTop / (scrollHeight - clientHeight))
+                       const idx = Math.min(userMsgs.length - 1, Math.floor(ratio * userMsgs.length))
+                       setActiveSidebarMsgId(userMsgs[idx].id)
                     }
                     delete target.dataset.scrollQueued
                  })
@@ -2443,12 +2430,9 @@ export default function ChatPage() {
             <div className="max-w-3xl mx-auto px-4 py-8 md:p-10 space-y-12 pb-32">
               <div className="space-y-12">
                 {messages.map((msg, i) => (
-                  <motion.div
+                  <div
                     key={msg.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: 'spring', damping: 32, stiffness: 380, delay: 0 }}
-                    layout={false}
+                    className="msg-entry"
                   >
                     <MessageBubble
                       msg={msg}
@@ -2469,7 +2453,7 @@ export default function ChatPage() {
                       markdownComponents={memoizedMarkdownComponents}
                       cleanContent={cleanDisplayContent(msg.content)}
                     />
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
