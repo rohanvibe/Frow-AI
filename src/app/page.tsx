@@ -1932,9 +1932,9 @@ export default function ChatPage() {
         const issueUrl = `https://github.com/rohanvibe/Frow-AI/issues/new?title=Chat%20Error&body=I%20encountered%20the%20following%20error:%0A%0A\`\`\`%0A${encodeURIComponent(err.message)}%0A\`\`\``;
         let errorText = `Something went wrong pls try again later.\n\n**What happened:** ${simpleReason}\n\n[Report Issue](${issueUrl})`;
         if (errLower.includes('rate limit') || errLower.includes('429') || errLower.includes('too many requests')) {
-            const waitTimeMatch = err.message.match(/(?:wait|try again in)\s*(.*?)(?:\.|,|$)/i)
-            const waitTime = waitTimeMatch ? waitTimeMatch[1].trim() : "a moment"
-            errorText = `Rate limit reached wait for ${waitTime} or bring your own key.`
+            const timeMatch = err.message.match(/(\d+\s*(?:s|sec|seconds?|m|min|minutes?|h|hours?|ms))/i);
+            const waitTime = timeMatch ? timeMatch[1].trim() : "a few moments";
+            errorText = `Rate limit reached. Please wait for ${waitTime} or bring your own key in Settings.`;
         }
         
         setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, content: errorText } : m))
