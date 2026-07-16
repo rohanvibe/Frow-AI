@@ -656,7 +656,7 @@ const ChatInput = memo(({
            }
          }}
          rows={1}
-         placeholder={loading ? "Generating..." : "Ask anything"}
+         placeholder={loading ? "Generating..." : "Ask anything, run Python, or draw a diagram..."}
          className="w-full pr-28 md:pr-40 py-4 md:py-5 pl-14 md:pl-20 bg-transparent text-base md:text-[17px] outline-none resize-none custom-scrollbar placeholder:text-(--apple-gray) font-medium tracking-tight text-(--foreground) block"
        />
        <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -1913,9 +1913,17 @@ export default function ChatPage() {
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         process.env.NODE_ENV === 'development' && console.error("Fetch error:", err)
-        toast(`Failed: ${err.message}`, "error")
-        // Remove the empty ghost message since the request failed
-        setMessages(prev => prev.filter(m => m.id !== assistantMsgId))
+        
+        let errorText = "Something went wrong pls try again later.\n\n[Report Issue](https://github.com/rohanvibe/Frow-AI/issues/new)"
+        
+        const errLower = err.message.toLowerCase()
+        if (errLower.includes('rate limit') || errLower.includes('429') || errLower.includes('too many requests')) {
+            const waitTimeMatch = err.message.match(/(?:wait|try again in)\s*(.*?)(?:\.|,|$)/i)
+            const waitTime = waitTimeMatch ? waitTimeMatch[1].trim() : "a moment"
+            errorText = `Rate limit reached wait for ${waitTime} or bring your own key.`
+        }
+        
+        setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, content: errorText } : m))
       }
     } finally {
       setLoading(false)
