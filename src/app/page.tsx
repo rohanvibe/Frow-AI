@@ -1914,9 +1914,23 @@ export default function ChatPage() {
       if (err.name !== 'AbortError') {
         process.env.NODE_ENV === 'development' && console.error("Fetch error:", err)
         
-        let errorText = "Something went wrong pls try again later.\n\n[Report Issue](https://github.com/rohanvibe/Frow-AI/issues/new)"
+        let simpleReason = err.message;
+        const errLower = err.message.toLowerCase();
         
-        const errLower = err.message.toLowerCase()
+        if (errLower.includes('fetch') || errLower.includes('network') || errLower.includes('failed to fetch')) {
+            simpleReason = "We couldn't connect to the server. Please check your internet connection.";
+        } else if (errLower.includes('500') || errLower.includes('server')) {
+            simpleReason = "The AI server is currently experiencing temporary issues.";
+        } else if (errLower.includes('401') || errLower.includes('unauthorized') || errLower.includes('key')) {
+            simpleReason = "There is an issue with your API key or your session has expired.";
+        } else if (errLower.includes('timeout')) {
+            simpleReason = "The request took too long and timed out.";
+        } else {
+            simpleReason = `The system reported: "${err.message}"`;
+        }
+
+        const issueUrl = `https://github.com/rohanvibe/Frow-AI/issues/new?title=Chat%20Error&body=I%20encountered%20the%20following%20error:%0A%0A\`\`\`%0A${encodeURIComponent(err.message)}%0A\`\`\``;
+        let errorText = `Something went wrong pls try again later.\n\n**What happened:** ${simpleReason}\n\n[Report Issue](${issueUrl})`;
         if (errLower.includes('rate limit') || errLower.includes('429') || errLower.includes('too many requests')) {
             const waitTimeMatch = err.message.match(/(?:wait|try again in)\s*(.*?)(?:\.|,|$)/i)
             const waitTime = waitTimeMatch ? waitTimeMatch[1].trim() : "a moment"
