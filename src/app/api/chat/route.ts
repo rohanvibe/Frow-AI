@@ -128,6 +128,7 @@ Use these tags ONLY for long-term facts.
 ### 🚫 PROHIBITIONS
 - NEVER include "Verification" or "ID" numbers in your response unless editing/deleting a memory.
 - NEVER explain that you are using a tool; just use it.
+- CRITICAL: NEVER use function-calling or JSON tool format for Python or Calculator. You MUST output raw markdown code blocks (e.g. \`\`\`python\n<code>\n\`\`\`). The only valid JSON tool you can call is search_web.
 - Keep responses elite, concise, and focused on execution.
 `
 
@@ -204,6 +205,35 @@ Use these tags ONLY for long-term facts.
         })
       } catch (retryError: any) {
         console.error('[Chat API] Retry failed:', retryError)
+        
+        // Handle Groq strict tool failure by extracting the hallucinated code
+        const errMsg = retryError.message || ''
+        if (errMsg.includes('failed_generation')) {
+          try {
+            const match = errMsg.match(/"failed_generation"\s*:\s*"([\s\S]*?)"\s*}/) || errMsg.match(/"failed_generation"\s*:\s*'(.*?)'\s*}/);
+            let unescaped = '';
+            if (match) {
+              unescaped = match[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+            } else if (errMsg.includes('failed_generation')) {
+               // naive extraction
+               unescaped = errMsg.substring(errMsg.indexOf('"failed_generation"'));
+               unescaped = unescaped.replace(/\\"/g, '"').replace(/\\n/g, '\n');
+            }
+            
+            if (unescaped.includes('"name": "python"')) {
+              let code = unescaped.split('"arguments":')[1]?.replace(/}$/, '').trim();
+              if (code) {
+                 return NextResponse.json({ content: `\`\`\`python\n${code}\n\`\`\``, images: detectedImages })
+              }
+            } else if (unescaped.includes('"name": "calculator"')) {
+              let code = unescaped.split('"arguments":')[1]?.replace(/}$/, '').trim();
+              if (code) {
+                 return NextResponse.json({ content: `\`\`\`calculator\n${code}\n\`\`\``, images: detectedImages })
+              }
+            }
+          } catch(e) {}
+        }
+        
         return NextResponse.json({ error: retryError.message || 'AI service failed' }, { status: 500 })
       }
     }
