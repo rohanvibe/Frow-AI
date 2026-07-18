@@ -165,7 +165,7 @@ Use these tags ONLY for long-term facts.
 
     // Use AI service for intelligent routing and fallback
     let routingDecision
-    if (selectedModel) {
+    if (selectedModel && selectedModel !== 'auto') {
       // User manually selected a model
       const provider = selectedModel.includes('gemini') ? 'gemini' : 'groq'
       routingDecision = AIRouter.forceModel(provider, selectedModel)
@@ -185,8 +185,8 @@ Use these tags ONLY for long-term facts.
         tool_choice: isSimpleGreeting ? undefined : 'auto',
         temperature: 0.1,
         max_tokens: 4096,
-        forceModel: selectedModel,
-        forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('Qwen') ? 'groq' : undefined,
+        forceModel: (selectedModel && selectedModel !== 'auto') ? selectedModel : undefined,
+        forceProvider: (selectedModel && selectedModel !== 'auto') ? (selectedModel.includes('gemini') ? 'gemini' : 'groq') : undefined,
       })
     } catch (error: any) {
       console.error('[Chat API] AI Service Error:', error)
@@ -199,8 +199,8 @@ Use these tags ONLY for long-term facts.
           tool_choice: undefined,
           temperature: 0.1,
           max_tokens: 4096,
-          forceModel: selectedModel,
-          forceProvider: selectedModel?.includes('gemini') ? 'gemini' : selectedModel?.includes('Qwen') ? 'groq' : undefined,
+          forceModel: (selectedModel && selectedModel !== 'auto') ? selectedModel : undefined,
+          forceProvider: (selectedModel && selectedModel !== 'auto') ? (selectedModel.includes('gemini') ? 'gemini' : 'groq') : undefined,
         })
       } catch (retryError: any) {
         console.error('[Chat API] Retry failed:', retryError)
@@ -248,8 +248,8 @@ Use these tags ONLY for long-term facts.
       // Final call after all tools are executed using AI service
       const finalStream = await aiService.stream(apiMessages, {
         temperature: 0.1,
-        forceModel: 'openai/gpt-oss-120b',
-        forceProvider: 'groq',
+        forceModel: (selectedModel && selectedModel !== 'auto') ? selectedModel : undefined,
+        forceProvider: (selectedModel && selectedModel !== 'auto') ? (selectedModel.includes('gemini') ? 'gemini' : 'groq') : undefined,
       })
       return handleStreaming(finalStream, detectedImages)
     }
@@ -286,8 +286,8 @@ Use these tags ONLY for long-term facts.
           
           const finalStream = await aiService.stream(apiMessages, {
             temperature: 0.1,
-            forceModel: 'openai/gpt-oss-120b',
-            forceProvider: 'groq',
+            forceModel: (selectedModel && selectedModel !== 'auto') ? selectedModel : undefined,
+            forceProvider: (selectedModel && selectedModel !== 'auto') ? (selectedModel.includes('gemini') ? 'gemini' : 'groq') : undefined,
           })
           return handleStreaming(finalStream, detectedImages)
        }

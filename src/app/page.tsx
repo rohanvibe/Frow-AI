@@ -933,7 +933,7 @@ function ModelSelector({ selectedModel, onSelectModel }: { selectedModel: string
 
   const models = [
     { id: 'auto', name: 'Auto (Smart Routing)', icon: Sparkles, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { id: 'openai/gpt-oss-120b', name: 'Qwen 27B (Fast)', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+    { id: 'openai/gpt-oss-120b', name: 'GPT (Fast)', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
     { id: 'gemini-2.0-flash-exp', name: 'Gemini Flash (Balanced)', icon: Zap, color: 'text-blue-400', bg: 'bg-blue-500/10' },
     { id: 'gemini-2.0-pro-exp', name: 'Gemini Pro (Advanced)', icon: Star, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
   ]
@@ -2544,7 +2544,7 @@ export default function ChatPage() {
               {messages.length > 0 && (
                 <div className="hidden md:flex justify-between items-center mt-6 px-4">
                    <div className="flex items-center gap-3">
-                      <span className="text-[9px] font-black text-(--apple-gray) uppercase tracking-[0.4em]">Groq Qwen-3.3</span>
+                      <span className="text-[9px] font-black text-(--apple-gray) uppercase tracking-[0.4em]">GPT-4o</span>
                       <div className="w-1 h-1 rounded-full bg-(--apple-gray)" />
                       <span className="text-[9px] font-black text-(--apple-gray) uppercase tracking-[0.4em]">Optimized Inference</span>
                    </div>
