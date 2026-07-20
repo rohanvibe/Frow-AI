@@ -113,6 +113,17 @@ export class AIRouter {
     const allText = this.extractAllText(messages, currentMessage);
     const textLower = allText.toLowerCase();
 
+    // Force Gemini if any message contains an image
+    const hasImage = messages.some(m => !!m.image);
+    if (hasImage) {
+      return {
+        selectedModel: 'gemini-2.5-flash',
+        provider: 'gemini',
+        complexity: ComplexityLevel.MEDIUM,
+        reasoning: 'Image detected in messages, forcing Gemini Vision',
+      };
+    }
+
     // Check for high complexity indicators
     const highComplexityScore = this.countKeywordMatches(
       textLower,

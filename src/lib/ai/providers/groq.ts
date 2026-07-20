@@ -12,9 +12,17 @@ export class GroqProvider extends BaseProvider {
   }
 
   async complete(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
+    // Clean messages to remove any properties Groq doesn't support
+    const cleanedMessages = request.messages.map(({ role, content, name, tool_call_id }) => {
+      const msg: any = { role, content };
+      if (name) msg.name = name;
+      if (tool_call_id) msg.tool_call_id = tool_call_id;
+      return msg;
+    });
+
     const response = await this.makeRequest('/chat/completions', {
       model: this.model,
-      messages: request.messages,
+      messages: cleanedMessages,
       tools: request.tools,
       tool_choice: request.tool_choice,
       temperature: request.temperature || 0.1,
@@ -39,9 +47,17 @@ export class GroqProvider extends BaseProvider {
   }
 
   async stream(request: ChatCompletionRequest): Promise<ReadableStream> {
+    // Clean messages to remove any properties Groq doesn't support
+    const cleanedMessages = request.messages.map(({ role, content, name, tool_call_id }) => {
+      const msg: any = { role, content };
+      if (name) msg.name = name;
+      if (tool_call_id) msg.tool_call_id = tool_call_id;
+      return msg;
+    });
+
     const response = await this.makeRequest('/chat/completions', {
       model: this.model,
-      messages: request.messages,
+      messages: cleanedMessages,
       tools: request.tools,
       tool_choice: request.tool_choice,
       temperature: request.temperature || 0.1,
