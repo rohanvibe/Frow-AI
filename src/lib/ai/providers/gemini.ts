@@ -88,18 +88,34 @@ export class GeminiProvider extends BaseProvider {
 
   private convertToGeminiFormat(messages: Message[]): any[] {
     return messages.map(msg => {
+      let parts: any[] = []
       if (msg.role === 'system') {
-        return { role: 'user', parts: [{ text: `System: ${msg.content}` }] };
-      }
-      if (msg.role === 'tool') {
-        return { 
-          role: 'user', 
-          parts: [{ text: `Tool Result (${msg.name}): ${msg.content}` }] 
-        };
+        parts = [{ text: `System: ${msg.content}` }];
+      } else if (msg.role === 'tool') {
+        parts = [{ text: `Tool Result (${msg.name}): ${msg.content}` }];
+      } else {
+        parts = [{ text: msg.content }];
+        if (msg.image) {
+          try {
+            // Expected format: "data:image/jpeg;base64,..."
+            const [header, base64Data] = msg.image.split(';base64,');
+            const mimeType = header.split(':')[1];
+            if (mimeType && base64Data) {
+              parts.push({
+                inlineData: {
+                  mimeType,
+                  data: base64Data,
+                },
+              });
+            }
+          } catch (e) {
+            console.error('[GeminiProvider] Error parsing image data URL', e);
+          }
+        }
       }
       return { 
         role: msg.role === 'assistant' ? 'model' : 'user', 
-        parts: [{ text: msg.content }] 
+        parts
       };
     });
   }

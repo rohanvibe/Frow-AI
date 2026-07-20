@@ -1,4 +1,4 @@
-﻿import { searchWeb } from './search';
+import { searchWeb } from './search';
 
 export interface ImageResult {
   url: string;
@@ -23,6 +23,7 @@ const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 export interface ImageIntent {
   query: string;
   limit: number;
+  action: 'search' | 'generate';
 }
 
 /**
@@ -59,7 +60,19 @@ export function detectImageIntent(message: string): ImageIntent | null {
   }
 
   // 2. Extract Query
-  const patterns = [
+  const generatePatterns = [
+    /(?:generate|create|make|draw|render) (?:a |an |the |some |several )?(?:picture|image|photo|visual|gallery) of (.+)/i,
+    /(?:generate|create|make|draw|render) (.+) (?:picture|image|photo|visual)/i,
+  ];
+
+  for (const pattern of generatePatterns) {
+    const match = msg.match(pattern);
+    if (match && match[1]) {
+      return { query: match[1].trim(), limit, action: 'generate' };
+    }
+  }
+
+  const searchPatterns = [
     /show me (?:a |an |the |some |several )?(?:picture|image|photo|visual|gallery) of (.+)/i,
     /what does (.+) look like/i,
     /find (?:a |an |the |some |several )?(?:picture|image|photo|visual) of (.+)/i,
@@ -74,10 +87,10 @@ export function detectImageIntent(message: string): ImageIntent | null {
     /^see (.+)$/i,
   ];
 
-  for (const pattern of patterns) {
+  for (const pattern of searchPatterns) {
     const match = msg.match(pattern);
     if (match && match[1]) {
-      return { query: match[1].trim(), limit };
+      return { query: match[1].trim(), limit, action: 'search' };
     }
   }
 
@@ -87,7 +100,7 @@ export function detectImageIntent(message: string): ImageIntent | null {
      const query = msg
        .replace(/\b(?:image|photo|picture|show|me|of|a|an|the|find|search|get|gallery|visual|visuals|some|several|many|few)\b/gi, '')
        .trim();
-     if (query.length > 2) return { query, limit };
+     if (query.length > 2) return { query, limit, action: 'search' };
   }
 
   return null;
@@ -181,6 +194,59 @@ export async function fetchVerifiedImages(query: string, limit = 5): Promise<Ima
     return finalImages;
   } catch (error) {
     console.error('[ImageEngine] Error:', error);
+    return [];
+  }
+}
+
+export async function generateImage(query: string, limit = 1): Promise<ImageResult[]> {
+  console.log(`[ImageEngine] Generating image for: ${query}`);
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    console.warn('[ImageEngine] No Gemini API Key for generation');
+    return [];
+  }
+
+  try {
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict',
+      {
+        method: 'POST',
+        headers: {
+          'x-goog-api-key': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          instances: [{ prompt: query }],
+          parameters: { sampleCount: limit }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      console.error('[ImageEngine] Error from Imagen API:', await response.text());
+      return [];
+    }
+
+    const data = await response.json();
+    const results: ImageResult[] = [];
+
+    if (data.predictions) {
+      for (const pred of data.predictions) {
+        // predictions contain base64 bytes
+        if (pred.bytesBase64Encoded) {
+          results.push({
+            url: `data:${pred.mimeType};base64,${pred.bytesBase64Encoded}`,
+            source: 'Imagen 3',
+            alt: query,
+            score: 100
+          });
+        }
+      }
+    }
+
+    return results;
+  } catch (error) {
+    console.error('[ImageEngine] Generation Error:', error);
     return [];
   }
 }

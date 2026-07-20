@@ -125,7 +125,7 @@ function PythonSandbox({ code }: { code: string }) {
   }, [])
 
   return (
-    <div className="my-6 rounded-(--radius-lg) bg-(--surface) border border-(--border-color) overflow-hidden shadow-2xl">
+    <div className="my-6 rounded-lg bg-(--surface) border border-(--border-color) overflow-hidden shadow-2xl">
       <div className="px-4 py-3 bg-(--surface-secondary) border-b border-(--border-color) flex items-center justify-between">
         <div className="flex items-center gap-2">
            <div className={`w-2 h-2 rounded-full ${isRunning ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`} />
@@ -142,7 +142,7 @@ function PythonSandbox({ code }: { code: string }) {
           {isRunning ? 'Running...' : 'Execute Code'}
         </Button>
       </div>
-      <div className="p-5 text-[13px] font-mono text-(--foreground) bg-(--background)/40 max-h-[400px] overflow-y-auto custom-scrollbar">
+      <div className="p-5 text-[13px] font-mono text-(--foreground) bg-(--background)/40 max-h-100 overflow-y-auto custom-scrollbar">
         {output && <div className="text-(--apple-blue) mb-3 font-bold uppercase tracking-widest text-[9px] flex items-center gap-2"><CheckCircle2 className="w-3 h-3" /> Console Output:</div>}
         {output && <pre className="whitespace-pre-wrap leading-relaxed opacity-90">{output}</pre>}
         {error && <div className="text-red-500 mb-3 font-bold uppercase tracking-widest text-[9px] flex items-center gap-2"><X className="w-3 h-3" /> Execution Error:</div>}
@@ -204,7 +204,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
   }
 
   return (
-    <div className="my-8 max-w-sm mx-auto rounded-[32px] bg-[#1c1c1e] border border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden">
+    <div className="my-8 max-w-sm mx-auto rounded-4xl bg-[#1c1c1e] border border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden">
       <div className="p-6 pb-2">
         <div className="flex items-center gap-2 mb-6 opacity-40">
            <div className="p-1 rounded-md bg-white/10">
@@ -213,7 +213,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
            <span className="text-[10px] font-bold uppercase tracking-widest text-white">Frow Instruments</span>
         </div>
         
-        <div className="flex flex-col items-end min-h-[100px] justify-center px-2">
+        <div className="flex flex-col items-end min-h-25 justify-center px-2">
            <div className="text-[14px] text-white/40 font-medium mb-1 tracking-tight">{expression || '0'}</div>
            <div className={`text-4xl font-semibold tracking-tighter ${result === 'Error' ? 'text-red-500' : 'text-[#34c759]'} transition-all`}>
               {result !== null ? result : (expression ? '' : '0')}
@@ -238,7 +238,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
          ))}
       </div>
       
-      <div className="p-4 bg-black/40 flex items-center justify-center gap-2 border-t border-white/5 min-h-[60px]">
+      <div className="p-4 bg-black/40 flex items-center justify-center gap-2 border-t border-white/5 min-h-15">
         {result && result !== 'Error' ? (
           <motion.div 
             initial={{ opacity: 0, y: 5 }}
@@ -310,7 +310,7 @@ function Mermaid({ chart }: { chart: string }) {
 
   return (
     <div 
-      className="mermaid-wrapper my-6 p-6 bg-(--surface) rounded-(--radius-lg) border border-(--border-color) flex justify-center overflow-x-auto shadow-xl" 
+      className="mermaid-wrapper my-6 p-6 bg-(--surface) rounded-lg border border-(--border-color) flex justify-center overflow-x-auto shadow-xl" 
       dangerouslySetInnerHTML={{ __html: svg }} 
     />
   )
@@ -363,7 +363,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
       
       {/* Curoky-inspired Background Accents */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[100%] h-[500px] bg-gradient-to-b from-purple-500/20 via-magenta-500/5 to-transparent blur-[120px] opacity-50" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-125 bg-linear-to-b from-purple-500/20 via-magenta-500/5 to-transparent blur-[120px] opacity-50" />
         <div className="absolute top-[10%] left-[10%] w-[30%] aspect-square bg-blue-600/10 rounded-full blur-[140px] animate-pulse" />
         <div className="absolute top-[20%] right-[5%] w-[25%] aspect-square bg-purple-600/10 rounded-full blur-[140px]" />
         
@@ -383,7 +383,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
             <Logo className="w-5 h-5 text-white" />
             <span className="text-[13px] font-black tracking-tight text-white">Frow</span>
           </div>
-          <div className="h-4 w-[1px] bg-white/20 mx-1"></div>
+          <div className="h-4 w-px bg-white/20 mx-1"></div>
           <Button variant="ghost" size="sm" onClick={() => window.location.href = '/auth'} className="rounded-full px-6 text-[13px] text-white hover:bg-white/10 border-none">Log In</Button>
           <Button size="sm" onClick={onEnter} className="rounded-full px-8 bg-white text-black text-[13px] font-bold border-none shadow-xl">Get Started</Button>
         </nav>
@@ -416,7 +416,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + i * 0.1, type: "spring", damping: 15 }}
-                className="inline-block mr-5 bg-gradient-to-b from-white via-white to-white/70 bg-clip-text text-transparent"
+                className="inline-block mr-5 bg-linear-to-b from-white via-white to-white/70 bg-clip-text text-transparent"
               >
                 {word}
               </motion.span>
@@ -426,7 +426,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6, duration: 1 }}
-              className="bg-gradient-to-r from-purple-400 via-magenta-400 to-pink-400 bg-clip-text text-transparent"
+              className="bg-linear-to-r from-purple-400 via-magenta-400 to-pink-400 bg-clip-text text-transparent"
             >
               with Frow
             </motion.span>
@@ -445,7 +445,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
         {/* Action Buttons & Arch Portal Container */}
         <motion.div className="relative w-full flex flex-col items-center justify-center pt-2 group">
               {/* Curoky Glowing Arch Architecture (Positioned Behind) */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[15%] w-full h-[400px] flex items-center justify-center z-0 pointer-events-none scale-110 md:scale-125">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[15%] w-full h-100 flex items-center justify-center z-0 pointer-events-none scale-110 md:scale-125">
             {/* Semicircle Arcs */}
             <motion.svg 
               onMouseEnter={() => setIsHovered(true)}
@@ -458,7 +458,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
                 hover: { scale: 1.05, y: -10 }
               }}
               transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
-              className="absolute top-0 w-[800px] h-[800px] opacity-80 pointer-events-auto cursor-pointer"
+              className="absolute top-0 w-200 h-200 opacity-80 pointer-events-auto cursor-pointer"
             >
               <motion.circle 
                 cx="400" 
@@ -487,7 +487,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
                 hover: { scale: 1.10, y: -20 }
               }}
               transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
-              className="absolute top-20 w-[600px] h-[600px] opacity-60 pointer-events-auto cursor-pointer"
+              className="absolute top-20 w-150 h-150 opacity-60 pointer-events-auto cursor-pointer"
             >
               <motion.circle 
                 cx="300" 
@@ -516,7 +516,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
                 hover: { scale: 1.15, y: -30 }
               }}
               transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
-              className="absolute top-40 w-[400px] h-[400px] opacity-40 pointer-events-auto cursor-pointer"
+              className="absolute top-40 w-100 h-100 opacity-40 pointer-events-auto cursor-pointer"
             >
               <motion.circle 
                 cx="200" 
@@ -595,7 +595,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
             viewport={{ once: true, margin: "-100px" }}
             transition={{ delay: i * 0.15, type: "spring", damping: 20 }}
             whileHover={{ y: -8, backgroundColor: "rgba(255,255,255,0.03)", borderColor: "rgba(168,85,247,0.3)" }}
-            className="p-12 rounded-[48px] bg-white/[0.01] text-left space-y-8 border border-white/5 transition-all duration-500 group cursor-default backdrop-blur-sm"
+            className="p-12 rounded-[48px] bg-white/1 text-left space-y-8 border border-white/5 transition-all duration-500 group cursor-default backdrop-blur-sm"
           >
             <motion.div 
               whileHover={{ rotate: 5, scale: 1.1 }}
@@ -624,7 +624,7 @@ const ChatInput = memo(({
   }, [input])
 
   return (
-    <div className="relative bg-(--surface) rounded-(--radius-lg) p-2 shadow-xl group-focus-within:ring-1 ring-blue-500/20 transition-all border border-(--border-color)">
+    <div className="relative bg-(--surface) rounded-lg p-2 shadow-xl group-focus-within:ring-1 ring-blue-500/20 transition-all border border-(--border-color)">
        <Button 
          type="button" 
          variant="ghost" 
@@ -746,7 +746,7 @@ const MessageBubble = memo(function MessageBubble({
       )}
       <div className="flex-1 space-y-4 min-w-0 overflow-hidden">
         <div
-          className={`p-6 md:p-8 rounded-(--radius-lg) bg-(--surface) shadow-xl relative overflow-hidden border border-white/5 ${
+          className={`p-6 md:p-8 rounded-lg bg-(--surface) shadow-xl relative overflow-hidden border border-white/5 ${
             msg.role === 'assistant' ? 'ring-1 ring-blue-500/10' : ''
           }`}
         >
@@ -786,7 +786,7 @@ const MessageBubble = memo(function MessageBubble({
               <textarea
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-sm font-medium outline-none focus:border-blue-500/50 min-h-[100px] resize-none"
+                className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-sm font-medium outline-none focus:border-blue-500/50 min-h-25 resize-none"
                 autoFocus
               />
               <div className="flex justify-end gap-2">
@@ -795,7 +795,7 @@ const MessageBubble = memo(function MessageBubble({
               </div>
             </div>
           ) : (
-            <div className={`text-(--foreground) leading-relaxed text-lg prose prose-lg max-w-none prose-pre:rounded-(--radius-md) prose-code:text-(--apple-blue) break-words overflow-x-hidden min-w-0 selection:bg-blue-500/40 dark:prose-invert ${
+            <div className={`text-(--foreground) leading-relaxed text-lg prose prose-lg max-w-none prose-pre:rounded-md prose-code:text-(--apple-blue) wrap-break-word overflow-x-hidden min-w-0 selection:bg-blue-500/40 dark:prose-invert ${
               msg.role === 'assistant' && loading && isLast ? 'typing-cursor' : ''
             }`}>
               {msg.content === '' && loading ? (
@@ -827,7 +827,7 @@ const MessageBubble = memo(function MessageBubble({
               )}
 
               {/* Images */}
-              {msg.role === 'assistant' && msg.images && msg.images.length > 0 && (
+              {msg.images && msg.images.length > 0 && (
                 <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                   <div className="flex items-center gap-3 mb-2 px-1">
                     <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
@@ -845,12 +845,12 @@ const MessageBubble = memo(function MessageBubble({
                         >
                           <div className="relative overflow-hidden bg-(--surface-secondary)" style={{ aspectRatio: aspectRatio.toString() }}>
                             <img
-                              src={`/api/proxy-image?url=${encodeURIComponent(img.url)}`}
-                              alt={img.alt}
+                              src={typeof img === 'string' && img.startsWith('data:') ? img : `/api/proxy-image?url=${encodeURIComponent(img.url || img)}`}
+                              alt={img.alt || 'Attached image'}
                               className="w-full h-full object-cover transition-all duration-1000 group-hover/img:scale-105"
                               loading="lazy"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover/img:opacity-60 transition-opacity" />
+                            <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover/img:opacity-60 transition-opacity" />
                             <div className="absolute bottom-0 inset-x-0 p-8 flex flex-col gap-2 translate-y-2 group-hover/img:translate-y-0 transition-transform">
                               <p className="text-[14px] font-black uppercase tracking-[0.2em] text-white drop-shadow-2xl line-clamp-2">{img.alt}</p>
                               <div className="flex items-center justify-between mt-2 border-t border-white/10 pt-4">
@@ -961,7 +961,7 @@ function ModelSelector({ selectedModel, onSelectModel }: { selectedModel: string
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="absolute left-0 bottom-full mb-2 w-[280px] bg-[#1c1c1e] dark:bg-[#1c1c1e] border border-white/10 rounded-[24px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden z-50 p-2 backdrop-blur-xl"
+            className="absolute left-0 bottom-full mb-2 w-70 bg-[#1c1c1e] dark:bg-[#1c1c1e] border border-white/10 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden z-50 p-2 backdrop-blur-xl"
           >
             <div className="px-3 py-3 flex items-center gap-2 border-b border-white/5 mb-2">
                <Activity className="w-3.5 h-3.5 text-white/40" />
@@ -1111,7 +1111,7 @@ export default function ChatPage() {
   const [highlightedAnchor, setHighlightedAnchor] = useState<string | null>(null)
   
   const [profileMemories, setProfileMemories] = useState<string[]>([])
-  const [attachedFile, setAttachedFile] = useState<{ name: string, content: string } | null>(null)
+  const [attachedFile, setAttachedFile] = useState<{ name: string, content: string, type?: string } | null>(null)
   const [isListening, setIsListening] = useState(false)
   
   // Phase 1 Sidebar States
@@ -1199,15 +1199,24 @@ export default function ChatPage() {
       'application/javascript', 'text/javascript',
     ]
     const isText = textTypes.includes(file.type) || /\.(txt|md|csv|json|xml|html|js|ts|py|java|c|cpp|cs|go|rs|rb|php|yaml|yml|toml|ini|env|sh|bat|sql)$/i.test(file.name)
+    const isImage = file.type.startsWith('image/')
 
     if (isText) {
       const reader = new FileReader()
       reader.onload = (event) => {
         const content = event.target?.result as string
-        setAttachedFile({ name: file.name, content })
+        setAttachedFile({ name: file.name, content, type: 'text' })
         toast(`"${file.name}" attached`, "success")
       }
       reader.readAsText(file)
+    } else if (isImage) {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const content = event.target?.result as string
+        setAttachedFile({ name: file.name, content, type: 'image' })
+        toast(`Image "${file.name}" attached`, "success")
+      }
+      reader.readAsDataURL(file)
     } else if (file.type === 'application/pdf') {
       // Read PDF as array buffer and extract raw text naively
       const reader = new FileReader()
@@ -1654,12 +1663,18 @@ export default function ChatPage() {
       chat_id: currentChatId || '',
       role: 'user',
       content: displayContent,
+      images: attachedFile?.type === 'image' ? [attachedFile.content] : [],
       created_at: new Date().toISOString()
     }
 
     let finalPrompt = displayContent
+    let imageAttachment = undefined
     if (attachedFile) {
-      finalPrompt = `[FILE CONTEXT: ${attachedFile.name}]\n\`\`\`\n${attachedFile.content}\n\`\`\`\n\n${displayContent}`
+      if (attachedFile.type === 'image') {
+        imageAttachment = attachedFile.content
+      } else {
+        finalPrompt = `[FILE CONTEXT: ${attachedFile.name}]\n\`\`\`\n${attachedFile.content}\n\`\`\`\n\n${displayContent}`
+      }
     }
 
     let wasJustCreated = false
@@ -1720,7 +1735,7 @@ export default function ChatPage() {
     setMessages(prev => [...prev, tempUserMsg])
     
     // Start DB insert immediately so its created_at timestamp is earlier than the assistant's
-    const userMsgInsert = !isGuest ? supabase.from('messages').insert([{ chat_id: chatId, role: 'user', content: displayContent }]).then(res => res) : Promise.resolve({ error: null })
+    const userMsgInsert = !isGuest ? supabase.from('messages').insert([{ chat_id: chatId, role: 'user', content: displayContent, images: tempUserMsg.images }]).then(res => res) : Promise.resolve({ error: null })
 
     // Create placeholder for assistant message
     const assistantMsgId = crypto.randomUUID()
@@ -1742,6 +1757,7 @@ export default function ChatPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             message: finalPrompt, 
+            image: imageAttachment,
             messages: messages.slice(-20), // Send last 20 messages for context
             chatId,
             selectedModel: selectedModel !== 'auto' ? selectedModel : undefined
@@ -2032,10 +2048,10 @@ export default function ChatPage() {
       </div>
     ),
     th: ({ children }: any) => <th className="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 bg-white/5 whitespace-nowrap">{children}</th>,
-    td: ({ children }: any) => <td className="px-6 py-4 text-sm border-t border-white/5 text-gray-300 whitespace-nowrap min-w-[120px]">{children}</td>,
-    ul: ({ children }: any) => <ul className="list-disc pl-5 space-y-2 mb-4 break-words">{children}</ul>,
-    ol: ({ children }: any) => <ol className="list-decimal pl-5 space-y-2 mb-4 break-words">{children}</ol>,
-    li: ({ children }: any) => <li className="leading-relaxed break-words">{children}</li>,
+    td: ({ children }: any) => <td className="px-6 py-4 text-sm border-t border-white/5 text-gray-300 whitespace-nowrap min-w-30">{children}</td>,
+    ul: ({ children }: any) => <ul className="list-disc pl-5 space-y-2 mb-4 wrap-break-word">{children}</ul>,
+    ol: ({ children }: any) => <ol className="list-decimal pl-5 space-y-2 mb-4 wrap-break-word">{children}</ol>,
+    li: ({ children }: any) => <li className="leading-relaxed wrap-break-word">{children}</li>,
     img: ({ src, alt }: any) => (
       <a href={typeof src === 'string' ? src : undefined} target="_blank" rel="noopener noreferrer" className="block my-6 max-w-2xl group relative cursor-zoom-in">
         <img src={typeof src === 'string' ? src : undefined} alt={typeof alt === 'string' ? alt : "Image"} className="w-full rounded-2xl border border-white/10 shadow-2xl transition-transform group-hover:scale-[1.01]" loading="lazy" />
@@ -2214,7 +2230,7 @@ export default function ChatPage() {
             </div>
 
             <div className="p-4 border-t border-(--border-color) space-y-2">
-              <div className="flex items-center gap-3 p-4 bg-(--surface) rounded-(--radius-md) border border-(--border-color) mb-4 shadow-sm">
+              <div className="flex items-center gap-3 p-4 bg-(--surface) rounded-md border border-(--border-color) mb-4 shadow-sm">
                 <div className="w-10 h-10 rounded-lg bg-(--apple-blue) flex items-center justify-center text-xs font-semibold text-white shadow-lg overflow-hidden">
                   {user?.user_metadata?.avatar_url ? (
                      <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
@@ -2523,7 +2539,7 @@ export default function ChatPage() {
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept=".txt,.md,.csv,.json,.xml,.html,.js,.ts,.py,.java,.c,.cpp,.cs,.go,.rs,.rb,.php,.yaml,.yml,.toml,.ini,.sh,.bat,.sql,.pdf"
+                accept=".txt,.md,.csv,.json,.xml,.html,.js,.ts,.py,.java,.c,.cpp,.cs,.go,.rs,.rb,.php,.yaml,.yml,.toml,.ini,.sh,.bat,.sql,.pdf,image/*"
                 onChange={handleFileUpload}
               />
 
@@ -2531,13 +2547,19 @@ export default function ChatPage() {
               {attachedFile && (
                 <div className="flex items-center gap-2 mt-3 px-1">
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-(--surface-tertiary) border border-(--border-color) text-sm text-(--foreground) font-medium max-w-xs truncate">
-                    <FileText className="w-3.5 h-3.5 text-(--apple-blue) shrink-0" />
+                    {attachedFile.type === 'image' ? (
+                      <img src={attachedFile.content} alt={attachedFile.name} className="w-5 h-5 object-cover rounded-md shrink-0" />
+                    ) : (
+                      <FileText className="w-3.5 h-3.5 text-(--apple-blue) shrink-0" />
+                    )}
                     <span className="truncate">{attachedFile.name}</span>
                     <button onClick={() => setAttachedFile(null)} className="ml-1 text-(--apple-gray) hover:text-red-500 shrink-0 transition-colors">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <span className="text-xs text-(--apple-gray)">AI will read this file</span>
+                  <span className="text-xs text-(--apple-gray)">
+                    {attachedFile.type === 'image' ? 'AI will see this image' : 'AI will read this file'}
+                  </span>
                 </div>
               )}
               
@@ -2633,7 +2655,7 @@ export default function ChatPage() {
                          )}
                       </div>
                       <div className="flex flex-col">
-                         <span className="text-[14px] font-bold tracking-tight text-(--foreground) truncate max-w-[140px]">
+                         <span className="text-[14px] font-bold tracking-tight text-(--foreground) truncate max-w-35">
                             {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
                          </span>
                          <span className="text-[11px] font-medium tracking-tight text-(--apple-gray)">System Operator</span>
@@ -2948,7 +2970,7 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
                   <textarea 
                     value={profile.custom_instructions}
                     onChange={(e) => setProfile({...profile, custom_instructions: e.target.value})}
-                    className="w-full bg-white/5 border border-white/5 rounded-3xl p-6 text-sm font-bold outline-none focus:border-purple-500/50 min-h-[160px] resize-none custom-scrollbar transition-all"
+                    className="w-full bg-white/5 border border-white/5 rounded-3xl p-6 text-sm font-bold outline-none focus:border-purple-500/50 min-h-40 resize-none custom-scrollbar transition-all"
                     placeholder="Define how the AI should behave..."
                   />
                 </div>
@@ -3138,7 +3160,7 @@ function ShortcutsTab({
                 tabIndex={0}
                 autoFocus
                 onKeyDown={(e) => handleKeyDown(e as any, id)}
-                className="px-2 py-1 rounded-lg border-2 border-purple-500/60 bg-purple-500/5 text-xs font-mono text-white outline-none min-w-[80px] text-center"
+                className="px-2 py-1 rounded-lg border-2 border-purple-500/60 bg-purple-500/5 text-xs font-mono text-white outline-none min-w-20 text-center"
               >
                 {captured ?? <span className="text-gray-500 animate-pulse text-[9px]">Press keys...</span>}
               </div>
@@ -3216,7 +3238,7 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
     <div className={`fixed inset-0 z-100 ${isActionStep ? 'pointer-events-none' : 'pointer-events-auto'} overflow-hidden`}>
       <motion.div 
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-        className={`absolute inset-0 bg-black/40 ${isActionStep ? 'backdrop-blur-0' : 'backdrop-blur-[4px]'} transition-all duration-700`} 
+        className={`absolute inset-0 bg-black/40 ${isActionStep ? 'backdrop-blur-0' : 'backdrop-blur-xs'} transition-all duration-700`} 
         onClick={(e) => !isActionStep && e.stopPropagation()}
       />
       
@@ -3229,7 +3251,7 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
           height: rect.height + 24,
         }}
         transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-        className="absolute border-2 border-purple-500 rounded-[24px] shadow-[0_0_40px_rgba(59,130,246,0.4)] z-101 will-change-transform"
+        className="absolute border-2 border-purple-500 rounded-3xl shadow-[0_0_40px_rgba(59,130,246,0.4)] z-101 will-change-transform"
       />
 
       {/* The Mascot & Thought Bubble */}
@@ -3254,13 +3276,13 @@ function OnboardingTutorial({ step, onNext, onComplete, isDemo, hasInteracted }:
         </motion.div>
 
         {/* Thought Cloud */}
-        <div className="relative w-[340px] mb-8">
+        <div className="relative w-85 mb-8">
           {/* Cloud Bubbles connecting to mascot */}
           <div className="absolute -left-4 bottom-2 w-5 h-5 rounded-full bg-[#1c1c1e] shadow-lg z-0 border border-white/10"></div>
           <div className="absolute -left-8 -bottom-2 w-3 h-3 rounded-full bg-[#1c1c1e] shadow-md z-0 border border-white/10"></div>
           
           {/* Main Bubble container */}
-          <div className="relative bg-[#1c1c1e] rounded-[32px] p-6 shadow-2xl z-10 border border-white/10">
+          <div className="relative bg-[#1c1c1e] rounded-4xl p-6 shadow-2xl z-10 border border-white/10">
             <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 rounded-xl bg-purple-500/20 flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-purple-400" />
@@ -3320,7 +3342,7 @@ function BigSignupModal({ onClose, onAction }: { onClose: () => void, onAction: 
                 animate={{ opacity: 1, scale: 1, y: 0 }} 
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-                className="relative w-full max-w-lg bg-(--surface) border border-white/5 rounded-(--radius-lg) overflow-hidden shadow-2xl"
+                className="relative w-full max-w-lg bg-(--surface) border border-white/5 rounded-lg overflow-hidden shadow-2xl"
             >
                 <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-purple-600 via-indigo-600 to-purple-600" />
                 
@@ -3340,7 +3362,7 @@ function BigSignupModal({ onClose, onAction }: { onClose: () => void, onAction: 
                             { icon: <Zap className="w-5 h-5 text-(--apple-orange)" />, text: "Self-Learning AI Memory" },
                             { icon: <Globe className="w-5 h-5 text-(--apple-green)" />, text: "Priority System Infrastructure" }
                         ].map((feat, i) => (
-                            <div key={i} className="flex items-center gap-4 p-5 rounded-(--radius-md) bg-white/2 border border-white/5">
+                            <div key={i} className="flex items-center gap-4 p-5 rounded-md bg-white/2 border border-white/5">
                                 {feat.icon}
                                 <span className="text-[14px] font-semibold text-gray-100">{feat.text}</span>
                             </div>
@@ -3402,7 +3424,7 @@ function EmptyState({ onCreateNew, onSelectPrompt }: { onCreateNew: () => void, 
           transition={{ delay: 0.2 }}
           className="text-4xl md:text-6xl font-black tracking-tighter text-(--foreground) leading-tight"
         >
-          Clear mind. <br/> <span className="bg-gradient-to-r from-purple-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Simple work.</span>
+          Clear mind. <br/> <span className="bg-linear-to-r from-purple-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Simple work.</span>
         </motion.h2>
         <motion.p 
           initial={{ opacity: 0 }}

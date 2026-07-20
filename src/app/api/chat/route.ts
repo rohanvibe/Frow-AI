@@ -24,20 +24,24 @@ export async function POST(req: Request) {
       .eq('id', user.id)
       .maybeSingle()
 
-    const { message, messages: history = [], chatId, skipSave, stream: requestedStream = true, selectedModel } = await req.json()
+    const { message, image, messages: history = [], chatId, skipSave, stream: requestedStream = true, selectedModel } = await req.json()
 
     if (!message && history.length === 0) {
       return NextResponse.json({ error: 'Message or history is required' }, { status: 400 })
     }
 
     // PHASE 1: Deterministic Intent Detection (Runs BEFORE LLM)
-    const { detectImageIntent, fetchVerifiedImages } = await import('@/utils/image-engine')
+    const { detectImageIntent, fetchVerifiedImages, generateImage } = await import('@/utils/image-engine')
     const imageIntent = detectImageIntent(message || '')
     let detectedImages: any[] = []
     
     if (imageIntent) {
-      console.log(`[Deterministic Flow] Image intent detected for: ${imageIntent.query} (Limit: ${imageIntent.limit})`)
-      detectedImages = await fetchVerifiedImages(imageIntent.query, imageIntent.limit)
+      console.log(`[Deterministic Flow] Image intent detected for: ${imageIntent.query} (Action: ${imageIntent.action}, Limit: ${imageIntent.limit})`)
+      if (imageIntent.action === 'generate') {
+        detectedImages = await generateImage(imageIntent.query, imageIntent.limit)
+      } else {
+        detectedImages = await fetchVerifiedImages(imageIntent.query, imageIntent.limit)
+      }
     }
 
     // Format memory if it exists
@@ -140,7 +144,12 @@ Use these tags ONLY for long-term facts.
     
     // Add the current message if it's not already in history
     if (message && (!history.length || history[history.length-1].content !== message)) {
-      apiMessages.push({ role: 'user', content: message })
+      if (image) {
+        // If image exists, add it to the user message
+        apiMessages.push({ role: 'user', content: message, image })
+      } else {
+        apiMessages.push({ role: 'user', content: message })
+      }
     }
 
     // Simple greetings detection for tool optimization
