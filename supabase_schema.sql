@@ -1,4 +1,4 @@
-﻿-- Create tables for Frow
+-- Create tables for Frow
 
 -- Chats table
 CREATE TABLE IF NOT EXISTS chats (
@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS messages (
   chat_id UUID NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
   role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
   content TEXT NOT NULL,
+  images JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

@@ -117,7 +117,7 @@ export class AIRouter {
     const hasImage = messages.some(m => !!m.image);
     if (hasImage) {
       return {
-        selectedModel: 'gemini-2.5-flash',
+        selectedModel: 'gemini-2.0-flash-exp',
         provider: 'gemini',
         complexity: ComplexityLevel.MEDIUM,
         reasoning: 'Image detected in messages, forcing Gemini Vision',

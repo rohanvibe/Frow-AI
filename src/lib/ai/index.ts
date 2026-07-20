@@ -37,8 +37,8 @@ export class AIService {
     const geminiApiKey = process.env.GEMINI_API_KEY;
     if (geminiApiKey) {
       // Use actual Gemini model names
-      this.providers.set('gemini-2.5-flash', new GeminiProvider(geminiApiKey, 'gemini-2.0-flash-exp'));
-      this.providers.set('gemini-2.5-pro', new GeminiProvider(geminiApiKey, 'gemini-2.0-pro-exp'));
+      this.providers.set('gemini-2.0-flash-exp', new GeminiProvider(geminiApiKey, 'gemini-2.0-flash-exp'));
+      this.providers.set('gemini-2.0-pro-exp', new GeminiProvider(geminiApiKey, 'gemini-2.0-pro-exp'));
       console.log('[AIService] Gemini providers initialized');
     } else {
       console.warn('[AIService] GEMINI_API_KEY not found');

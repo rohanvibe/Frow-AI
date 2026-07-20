@@ -615,25 +615,78 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
 }
 
 const ChatInput = memo(({ 
-  input, setInput, sendMessage, loading, startVoiceInput, isListening, fileInputRef, currentChatId, setChatDrafts, isMobile, stopResponding 
+  input, setInput, sendMessage, loading, startVoiceInput, isListening, fileInputRef, imageInputRef, currentChatId, setChatDrafts, isMobile, stopResponding 
 }: any) => {
   const [local, setLocal] = useState(input)
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false)
+  const attachmentMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setLocal(input)
   }, [input])
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (attachmentMenuRef.current && !attachmentMenuRef.current.contains(event.target as Node)) {
+        setShowAttachmentMenu(false)
+      }
+    }
+    if (showAttachmentMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showAttachmentMenu])
+
   return (
     <div className="relative bg-(--surface) rounded-lg p-2 shadow-xl group-focus-within:ring-1 ring-blue-500/20 transition-all border border-(--border-color)">
-       <Button 
-         type="button" 
-         variant="ghost" 
-         size="icon" 
-         className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full text-(--apple-gray) hover:text-(--foreground) hover:bg-(--surface-tertiary) transition-colors z-10" 
-         onClick={() => fileInputRef.current?.click()}
-       >
-         <Plus className="w-5 h-5 md:w-6 md:h-6" />
-       </Button>
+       <div ref={attachmentMenuRef} className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20">
+         <Button 
+           type="button" 
+           variant="ghost" 
+           size="icon" 
+           className="w-10 h-10 md:w-12 md:h-12 rounded-full text-(--apple-gray) hover:text-(--foreground) hover:bg-(--surface-tertiary) transition-colors" 
+           onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
+         >
+           <Plus className={`w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 ${showAttachmentMenu ? 'rotate-45 text-white' : ''}`} />
+         </Button>
+         
+         <AnimatePresence>
+           {showAttachmentMenu && (
+             <motion.div
+               initial={{ opacity: 0, y: 10, scale: 0.95 }}
+               animate={{ opacity: 1, y: 0, scale: 1 }}
+               exit={{ opacity: 0, y: 10, scale: 0.95 }}
+               transition={{ duration: 0.15, ease: "easeOut" }}
+               className="absolute bottom-full left-0 mb-3 w-48 rounded-2xl bg-[#1c1c1e]/95 backdrop-blur-md border border-white/10 shadow-2xl p-1.5 flex flex-col gap-1 text-white"
+             >
+               <button
+                 type="button"
+                 onClick={() => {
+                   setShowAttachmentMenu(false)
+                   imageInputRef.current?.click()
+                 }}
+                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-left text-sm font-medium transition-colors cursor-pointer"
+               >
+                 <Camera className="w-4 h-4 text-blue-400" />
+                 <span>Choose Photo</span>
+               </button>
+               <button
+                 type="button"
+                 onClick={() => {
+                   setShowAttachmentMenu(false)
+                   fileInputRef.current?.click()
+                 }}
+                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-left text-sm font-medium transition-colors cursor-pointer"
+               >
+                 <FileText className="w-4 h-4 text-emerald-400" />
+                 <span>Choose File / Folder</span>
+               </button>
+             </motion.div>
+           )}
+         </AnimatePresence>
+       </div>
        <textarea 
          id="chat-input"
          value={local}
@@ -1157,6 +1210,7 @@ export default function ChatPage() {
   }, [user, chats])
   const abortControllerRef = useRef<AbortController | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const skipFetchRef = useRef(false)
   const supabase = createClient()
   const router = useRouter()
@@ -1735,7 +1789,15 @@ export default function ChatPage() {
     setMessages(prev => [...prev, tempUserMsg])
     
     // Start DB insert immediately so its created_at timestamp is earlier than the assistant's
-    const userMsgInsert = !isGuest ? supabase.from('messages').insert([{ chat_id: chatId, role: 'user', content: displayContent, images: tempUserMsg.images }]).then(res => res) : Promise.resolve({ error: null })
+    const userMsgInsert = !isGuest 
+      ? supabase.from('messages').insert([{ chat_id: chatId, role: 'user', content: displayContent, images: tempUserMsg.images }]).then(res => {
+          if (res.error && (res.error.message?.includes('column "images" of relation "messages" does not exist') || res.error.code === '42703')) {
+            console.warn("[Database] 'images' column is missing. Falling back to insert without images.")
+            return supabase.from('messages').insert([{ chat_id: chatId, role: 'user', content: displayContent }])
+          }
+          return res
+        }) 
+      : Promise.resolve({ error: null, data: null }) as any
 
     // Create placeholder for assistant message
     const assistantMsgId = crypto.randomUUID()
@@ -1898,8 +1960,13 @@ export default function ChatPage() {
 
         if (!isGuest) {
           // Await the user insert first to guarantee sequential timestamp order in the DB
-          const userResult = await userMsgInsert
-          const assistantResult = await supabase.from('messages').insert([{ chat_id: chatId, role: 'assistant', content: finalContent }])
+          userResult = await userMsgInsert
+          
+          assistantResult = await supabase.from('messages').insert([{ chat_id: chatId, role: 'assistant', content: finalContent, images: detectedImages }])
+          if (assistantResult.error && (assistantResult.error.message?.includes('column "images" of relation "messages" does not exist') || assistantResult.error.code === '42703')) {
+             console.warn("[Database] 'images' column is missing. Falling back assistant insert without images.")
+             assistantResult = await supabase.from('messages').insert([{ chat_id: chatId, role: 'assistant', content: finalContent }])
+          }
 
           if (userResult.error) console.error("User message save error:", userResult.error)
           if (assistantResult.error) console.error("Assistant message save error:", assistantResult.error)
@@ -2524,6 +2591,7 @@ export default function ChatPage() {
                   startVoiceInput={startVoiceInput} 
                   isListening={isListening} 
                   fileInputRef={fileInputRef} 
+                  imageInputRef={imageInputRef} 
                   currentChatId={currentChatId} 
                   setChatDrafts={setChatDrafts} 
                   isMobile={isMobile} 
@@ -2534,12 +2602,21 @@ export default function ChatPage() {
                 <ModelSelector selectedModel={selectedModel} onSelectModel={handleModelChange} />
               </form>
 
-              {/* Hidden file input */}
+              {/* Hidden document/file input */}
               <input
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept=".txt,.md,.csv,.json,.xml,.html,.js,.ts,.py,.java,.c,.cpp,.cs,.go,.rs,.rb,.php,.yaml,.yml,.toml,.ini,.sh,.bat,.sql,.pdf,image/*"
+                accept=".txt,.md,.csv,.json,.xml,.html,.js,.ts,.py,.java,.c,.cpp,.cs,.go,.rs,.rb,.php,.yaml,.yml,.toml,.ini,.sh,.bat,.sql,.pdf"
+                onChange={handleFileUpload}
+              />
+
+              {/* Hidden image input */}
+              <input
+                ref={imageInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
                 onChange={handleFileUpload}
               />
 

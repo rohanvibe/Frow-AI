@@ -139,7 +139,14 @@ Use these tags ONLY for long-term facts.
     // Construct full message history for the AI
     const apiMessages: any[] = [
       { role: 'system', content: systemPrompt },
-      ...history.map((m: any) => ({ role: m.role, content: m.content })),
+      ...history.map((m: any) => ({
+        role: m.role,
+        content: m.content,
+        image: m.images && m.images.length > 0 ? m.images[0] : (m.image || undefined),
+        name: m.name || undefined,
+        tool_call_id: m.tool_call_id || undefined,
+        tool_calls: m.tool_calls || undefined
+      })),
     ]
     
     // Add the current message if it's not already in history
@@ -175,14 +182,20 @@ Use these tags ONLY for long-term facts.
 
     // Use AI service for intelligent routing and fallback
     let routingDecision
-    if (selectedModel && selectedModel !== 'auto') {
+    const hasImageInput = !!image || apiMessages.some(m => !!m.image)
+
+    if (hasImageInput) {
+      // Force Gemini if any image is present, because Groq does not support images
+      routingDecision = AIRouter.forceModel('gemini', 'gemini-2.0-flash-exp')
+      console.log('[Chat API] Image detected, forcing Gemini Flash')
+    } else if (selectedModel && selectedModel !== 'auto') {
       // User manually selected a model
       const provider = selectedModel.includes('gemini') ? 'gemini' : 'groq'
       routingDecision = AIRouter.forceModel(provider, selectedModel)
       console.log('[Chat API] User selected model:', selectedModel)
     } else {
       // Use automatic routing
-      routingDecision = aiService.getRoutingDecision(history, message)
+      routingDecision = aiService.getRoutingDecision(apiMessages, message)
     }
     console.log('[Chat API] Routing decision:', routingDecision)
 
