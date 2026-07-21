@@ -227,56 +227,59 @@ export async function generateImage(query: string, limit = 1): Promise<ImageResu
   console.log(`[ImageEngine] Generating image via Gemini Flash for: ${query}`);
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
-  if (apiKey) {
-    try {
-      // Use Gemini 2.0 Flash with image generation modality (FREE tier)
-      // This uses the same API key as text generation - no billing required
-      const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=' + apiKey,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: `Generate a high-quality image of: ${query}` }] }],
-            generationConfig: {
-              responseModalities: ['IMAGE', 'TEXT'],
-              temperature: 1.0,
-            },
-          }),
-          signal: AbortSignal.timeout(20000),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const results: ImageResult[] = [];
-        const parts = data.candidates?.[0]?.content?.parts || [];
-        for (const part of parts) {
-          if (part.inlineData?.data && part.inlineData?.mimeType) {
-            results.push({
-              url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
-              source: 'Gemini Flash Image Generation',
-              alt: query,
-              score: 100,
-            });
-          }
-          if (results.length >= limit) break;
-        }
-        if (results.length > 0) {
-          console.log(`[ImageEngine] Gemini Flash generated ${results.length} image(s)`);
-          return results;
-        }
-        console.warn('[ImageEngine] Gemini Flash returned no image parts:', JSON.stringify(data).slice(0, 300));
-      } else {
-        const errText = await response.text();
-        console.warn(`[ImageEngine] Gemini Flash image gen returned ${response.status}: ${errText.slice(0, 200)}`);
-      }
-    } catch (error) {
-      console.warn('[ImageEngine] Gemini Flash image gen failed, falling back to Pexels:', error);
-    }
+  if (!apiKey) {
+    console.warn('[ImageEngine] No Google API key — cannot generate image');
+    return [];
   }
 
-  // FALLBACK: Use Pexels search when Gemini image generation is unavailable
-  console.log(`[ImageEngine] Falling back to Pexels for: ${query}`);
-  return fetchVerifiedImages(query, limit);
+  try {
+    // Use Gemini 2.0 Flash with image generation modality (FREE tier)
+    // Same API key as text generation — no billing required
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=' + apiKey,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: `Generate a high-quality image of: ${query}` }] }],
+          generationConfig: {
+            responseModalities: ['IMAGE', 'TEXT'],
+            temperature: 1.0,
+          },
+        }),
+        signal: AbortSignal.timeout(20000),
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      const results: ImageResult[] = [];
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      for (const part of parts) {
+        if (part.inlineData?.data && part.inlineData?.mimeType) {
+          results.push({
+            url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+            source: 'Gemini Flash Image Generation',
+            alt: query,
+            score: 100,
+          });
+        }
+        if (results.length >= limit) break;
+      }
+      if (results.length > 0) {
+        console.log(`[ImageEngine] Gemini Flash generated ${results.length} image(s)`);
+        return results;
+      }
+      console.warn('[ImageEngine] Gemini Flash returned no image parts:', JSON.stringify(data).slice(0, 300));
+    } else {
+      const errText = await response.text();
+      console.warn(`[ImageEngine] Gemini Flash image gen returned ${response.status}: ${errText.slice(0, 200)}`);
+    }
+  } catch (error) {
+    console.warn('[ImageEngine] Gemini Flash image generation failed:', error);
+  }
+
+  // Generation failed — return empty. Do NOT fall back to Pexels for generation
+  // requests (a real photo is not the same as a generated image).
+  return [];
 }
