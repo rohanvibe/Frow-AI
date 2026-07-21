@@ -152,16 +152,21 @@ Use these tags ONLY for long-term facts.
     // Add the current message if it's not already in history
     if (message && (!history.length || history[history.length-1].content !== message)) {
       if (image) {
-        // If image exists, add it to the user message
-        apiMessages.push({ role: 'user', content: message, image })
+        // If image exists, add it to the user message — prepend a vision instruction so the LLM knows what to do
+        apiMessages.push({ 
+          role: 'user', 
+          content: message && message.trim() ? message : 'Please describe what you see in this image in detail.',
+          image 
+        })
       } else {
         apiMessages.push({ role: 'user', content: message })
       }
     }
 
     // Simple greetings detection for tool optimization
+    // IMPORTANT: Never treat an image upload as a simple greeting
     const prompt = (message || '').toLowerCase()
-    const isSimpleGreeting = (prompt.length < 15 && (prompt === 'hello' || prompt === 'hi' || prompt === 'hey' || prompt === 'hola' || prompt.includes('hello ') || prompt.includes('hi ') || prompt.includes('hey ')))
+    const isSimpleGreeting = !image && (prompt.length < 15 && (prompt === 'hello' || prompt === 'hi' || prompt === 'hey' || prompt === 'hola' || prompt.includes('hello ') || prompt.includes('hi ') || prompt.includes('hey ')))
 
     const tools = [
       {
@@ -184,18 +189,28 @@ Use these tags ONLY for long-term facts.
     let routingDecision
     const hasImageInput = !!image || apiMessages.some(m => !!m.image)
 
+    // Determine forced model/provider from routing decision
+    let forcedModel: string | undefined
+    let forcedProvider: string | undefined
+
     if (hasImageInput) {
-      // Force Gemini if any image is present, because Groq does not support images
+      // Force Gemini Vision if any image is present — Groq does NOT support vision
       routingDecision = AIRouter.forceModel('gemini', 'gemini-2.0-flash-exp')
+      forcedModel = 'gemini-2.0-flash-exp'
+      forcedProvider = 'gemini'
       console.log('[Chat API] Image detected, forcing Gemini Flash')
     } else if (selectedModel && selectedModel !== 'auto') {
       // User manually selected a model
       const provider = selectedModel.includes('gemini') ? 'gemini' : 'groq'
       routingDecision = AIRouter.forceModel(provider, selectedModel)
+      forcedModel = selectedModel
+      forcedProvider = provider
       console.log('[Chat API] User selected model:', selectedModel)
     } else {
       // Use automatic routing
       routingDecision = aiService.getRoutingDecision(apiMessages, message)
+      forcedModel = routingDecision.selectedModel
+      forcedProvider = routingDecision.provider
     }
     console.log('[Chat API] Routing decision:', routingDecision)
 
@@ -208,13 +223,25 @@ Use these tags ONLY for long-term facts.
         tool_choice: isSimpleGreeting ? undefined : 'auto',
         temperature: 0.1,
         max_tokens: 4096,
-        forceModel: (selectedModel && selectedModel !== 'auto') ? selectedModel : undefined,
-        forceProvider: (selectedModel && selectedModel !== 'auto') ? (selectedModel.includes('gemini') ? 'gemini' : 'groq') : undefined,
+        forceModel: forcedModel,
+        forceProvider: forcedProvider,
       })
     } catch (error: any) {
-      console.error('[Chat API] AI Service Error:', error)
-      // Fallback: Try without tools if tool calling fails
-      console.log('[Chat API] Retrying without tools due to error')
+      console.error('[Chat API] AI Service Error:', error.message)
+      const errLower = (error.message || '').toLowerCase()
+
+      // If Groq returned "empty output" error, escalate to Gemini instead of retrying same provider
+      const isGroqEmptyOutputError = errLower.includes('model output') || errLower.includes('cannot both be empty') || errLower.includes('empty output')
+      
+      const retryModel = isGroqEmptyOutputError ? 'gemini-2.0-flash-exp' : forcedModel
+      const retryProvider = isGroqEmptyOutputError ? 'gemini' : forcedProvider
+
+      if (isGroqEmptyOutputError) {
+        console.log('[Chat API] Groq returned empty output — escalating to Gemini Flash')
+      } else {
+        console.log('[Chat API] Retrying without tools due to error')
+      }
+      
       try {
         aiResponse = await aiService.complete(apiMessages, {
           currentMessage: message,
@@ -222,8 +249,8 @@ Use these tags ONLY for long-term facts.
           tool_choice: undefined,
           temperature: 0.1,
           max_tokens: 4096,
-          forceModel: (selectedModel && selectedModel !== 'auto') ? selectedModel : undefined,
-          forceProvider: (selectedModel && selectedModel !== 'auto') ? (selectedModel.includes('gemini') ? 'gemini' : 'groq') : undefined,
+          forceModel: retryModel,
+          forceProvider: retryProvider,
         })
       } catch (retryError: any) {
         console.error('[Chat API] Retry failed:', retryError)
@@ -300,8 +327,8 @@ Use these tags ONLY for long-term facts.
       // Final call after all tools are executed using AI service
       const finalStream = await aiService.stream(apiMessages, {
         temperature: 0.1,
-        forceModel: (selectedModel && selectedModel !== 'auto') ? selectedModel : undefined,
-        forceProvider: (selectedModel && selectedModel !== 'auto') ? (selectedModel.includes('gemini') ? 'gemini' : 'groq') : undefined,
+        forceModel: forcedModel,
+        forceProvider: forcedProvider,
       })
       return handleStreaming(finalStream, detectedImages)
     }
@@ -338,8 +365,8 @@ Use these tags ONLY for long-term facts.
           
           const finalStream = await aiService.stream(apiMessages, {
             temperature: 0.1,
-            forceModel: (selectedModel && selectedModel !== 'auto') ? selectedModel : undefined,
-            forceProvider: (selectedModel && selectedModel !== 'auto') ? (selectedModel.includes('gemini') ? 'gemini' : 'groq') : undefined,
+            forceModel: forcedModel,
+            forceProvider: forcedProvider,
           })
           return handleStreaming(finalStream, detectedImages)
        }

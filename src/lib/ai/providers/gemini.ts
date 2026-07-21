@@ -12,23 +12,40 @@ export class GeminiProvider extends BaseProvider {
   }
 
   async complete(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
-    const geminiMessages = this.convertToGeminiFormat(request.messages);
+    // Separate system message from conversation
+    const systemMsg = request.messages.find(m => m.role === 'system');
+    const conversationMessages = request.messages.filter(m => m.role !== 'system');
+    const geminiMessages = this.convertToGeminiFormat(conversationMessages);
     
-    console.log(`[GeminiProvider] Requesting model: ${this.model}`);
+    // Check if any message in the conversation contains an image
+    const hasImages = conversationMessages.some(m => !!m.image);
+    
+    console.log(`[GeminiProvider] Requesting model: ${this.model} (hasImages: ${hasImages})`);
+    
+    const body: any = {
+      contents: geminiMessages,
+      generationConfig: {
+        temperature: request.temperature || 0.1,
+        maxOutputTokens: request.max_tokens || 8192,
+      },
+    };
+
+    // Add system instruction in proper Gemini format
+    if (systemMsg?.content) {
+      body.systemInstruction = { parts: [{ text: systemMsg.content }] };
+    }
+
+    // Gemini API does NOT support function calling when images are in the conversation
+    if (!hasImages && request.tools) {
+      body.tools = this.convertTools(request.tools);
+    }
     
     const response = await fetch(
       `${this.baseURL}/models/${this.model}:generateContent?key=${this.apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: geminiMessages,
-          generationConfig: {
-            temperature: request.temperature || 0.1,
-            maxOutputTokens: request.max_tokens || 8192,
-          },
-          tools: request.tools ? this.convertTools(request.tools) : undefined,
-        }),
+        body: JSON.stringify(body),
       }
     );
 
@@ -44,8 +61,11 @@ export class GeminiProvider extends BaseProvider {
     let content = '';
     if (data.candidates && data.candidates.length > 0) {
       const candidate = data.candidates[0];
-      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-        content = candidate.content.parts[0].text || '';
+      if (candidate.content && candidate.content.parts) {
+        // Concatenate all text parts (Gemini can return multiple parts)
+        content = candidate.content.parts
+          .map((p: any) => p.text || '')
+          .join('');
       }
     }
     
@@ -61,20 +81,29 @@ export class GeminiProvider extends BaseProvider {
   }
 
   async stream(request: ChatCompletionRequest): Promise<ReadableStream> {
-    const geminiMessages = this.convertToGeminiFormat(request.messages);
+    // Separate system message from conversation
+    const systemMsg = request.messages.find(m => m.role === 'system');
+    const conversationMessages = request.messages.filter(m => m.role !== 'system');
+    const geminiMessages = this.convertToGeminiFormat(conversationMessages);
+    
+    const body: any = {
+      contents: geminiMessages,
+      generationConfig: {
+        temperature: request.temperature || 0.1,
+        maxOutputTokens: request.max_tokens,
+      },
+    };
+
+    if (systemMsg?.content) {
+      body.systemInstruction = { parts: [{ text: systemMsg.content }] };
+    }
     
     const response = await fetch(
       `${this.baseURL}/models/${this.model}:streamGenerateContent?key=${this.apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: geminiMessages,
-          generationConfig: {
-            temperature: request.temperature || 0.1,
-            maxOutputTokens: request.max_tokens,
-          },
-        }),
+        body: JSON.stringify(body),
       }
     );
 
@@ -87,37 +116,39 @@ export class GeminiProvider extends BaseProvider {
   }
 
   private convertToGeminiFormat(messages: Message[]): any[] {
-    return messages.map(msg => {
-      let parts: any[] = []
-      if (msg.role === 'system') {
-        parts = [{ text: `System: ${msg.content}` }];
-      } else if (msg.role === 'tool') {
-        parts = [{ text: `Tool Result (${msg.name}): ${msg.content}` }];
+    const result: any[] = [];
+    for (const msg of messages) {
+      // Skip system messages — handled via systemInstruction at the top level
+      if (msg.role === 'system') continue;
+      let parts: any[] = [];
+      if (msg.role === 'tool') {
+        // Tool result as text since Gemini handles this as a user turn
+        parts = [{ text: `Tool Result (${msg.name || 'tool'}): ${msg.content}` }];
       } else {
-        parts = [{ text: msg.content }];
+        if (msg.content) parts = [{ text: msg.content }];
         if (msg.image) {
           try {
             // Expected format: "data:image/jpeg;base64,..."
             const [header, base64Data] = msg.image.split(';base64,');
             const mimeType = header.split(':')[1];
             if (mimeType && base64Data) {
-              parts.push({
-                inlineData: {
-                  mimeType,
-                  data: base64Data,
-                },
-              });
+              // For Gemini vision: image BEFORE text works better
+              parts = [
+                { inlineData: { mimeType, data: base64Data } },
+                ...(msg.content ? [{ text: msg.content }] : []),
+              ];
             }
           } catch (e) {
             console.error('[GeminiProvider] Error parsing image data URL', e);
           }
         }
       }
-      return { 
+      result.push({ 
         role: msg.role === 'assistant' ? 'model' : 'user', 
         parts
-      };
-    });
+      });
+    }
+    return result;
   }
 
   private convertTools(tools: any[]): any {

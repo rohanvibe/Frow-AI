@@ -139,6 +139,7 @@ async function validateImage(url: string, timeout = 2500): Promise<{ valid: bool
 
 /**
  * PHASE 2 & 4: Sourcing & Ranking
+ * Uses Pexels as the primary reliable source, with Tavily as supplementary.
  */
 export async function fetchVerifiedImages(query: string, limit = 5): Promise<ImageResult[]> {
   // Check Cache first
@@ -148,40 +149,64 @@ export async function fetchVerifiedImages(query: string, limit = 5): Promise<Ima
     return cached.data;
   }
 
-  console.log(`[ImageEngine] Fetching for: ${query} (Web Search Only)`);
+  console.log(`[ImageEngine] Fetching for: ${query}`);
   const startTime = Date.now();
 
   const results: ImageResult[] = [];
 
   try {
-    // Use Web Search exclusively
-    const webContent = await searchWeb(query).catch(() => "");
-    
-    const webImagesMatch = webContent.match(/\[VERIFIED IMAGES FOUND.*?\]:\n([\s\S]*?)(?:\n\n|$)/);
-    if (webImagesMatch && webImagesMatch[1]) {
-      const urls = webImagesMatch[1].split('\n').filter(u => u.startsWith('http'));
-      for (const url of urls) {
-        results.push({
-          url,
-          source: url,
-          alt: query,
-          score: 100
-        });
+    // PRIMARY: Pexels API (most reliable, structured response)
+    const pexelsKey = process.env.PEXELS_API_KEY;
+    if (pexelsKey) {
+      try {
+        const pexelsRes = await fetch(
+          `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${Math.min(limit + 2, 10)}&orientation=landscape`,
+          { headers: { Authorization: pexelsKey }, signal: AbortSignal.timeout(5000) }
+        );
+        if (pexelsRes.ok) {
+          const pexelsData = await pexelsRes.json();
+          if (pexelsData.photos && pexelsData.photos.length > 0) {
+            for (const photo of pexelsData.photos.slice(0, limit)) {
+              results.push({
+                url: photo.src.large2x || photo.src.large,
+                source: photo.url,
+                alt: photo.alt || query,
+                width: photo.width,
+                height: photo.height,
+                attribution: `Photo by ${photo.photographer} on Pexels`,
+                score: 100,
+              });
+            }
+            console.log(`[ImageEngine] Pexels returned ${results.length} images for "${query}"`);
+          }
+        }
+      } catch (e) {
+        console.warn('[ImageEngine] Pexels failed:', e);
       }
     }
 
-    console.log(`[ImageEngine] Web search returned ${results.length} images`);
+    // FALLBACK: Tavily web search images (only if Pexels returned nothing)
+    if (results.length === 0) {
+      try {
+        const webContent = await searchWeb(query).catch(() => "");
+        const webImagesMatch = webContent.match(/\[VERIFIED IMAGES FOUND.*?\]:\n([\s\S]*?)(?:\n\n|$)/);
+        if (webImagesMatch && webImagesMatch[1]) {
+          const urls = webImagesMatch[1].split('\n').filter(u => u.startsWith('http'));
+          const validated = await Promise.all(
+            urls.slice(0, limit + 3).map(async (url) => {
+              const { valid } = await validateImage(url);
+              return valid ? { url, source: url, alt: query, score: 80 } as ImageResult : null;
+            })
+          );
+          results.push(...(validated.filter(Boolean) as ImageResult[]).slice(0, limit));
+        }
+        console.log(`[ImageEngine] Tavily fallback returned ${results.length} images`);
+      } catch (e) {
+        console.warn('[ImageEngine] Tavily fallback failed:', e);
+      }
+    }
 
-    // PHASE 3: Strict Validation
-    const validatedResults = await Promise.all(
-      results.map(async (img) => {
-        const { valid } = await validateImage(img.url);
-        return valid ? img : null;
-      })
-    );
-
-    const finalImages = (validatedResults.filter(Boolean) as ImageResult[])
-      .slice(0, limit);
+    const finalImages = results.slice(0, limit);
 
     // PHASE 5: Update Cache
     if (finalImages.length > 0) {
@@ -189,7 +214,7 @@ export async function fetchVerifiedImages(query: string, limit = 5): Promise<Ima
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[ImageEngine] Success rate: ${finalImages.length}/${results.length}. Latency: ${duration}ms`);
+    console.log(`[ImageEngine] Total: ${finalImages.length} images. Latency: ${duration}ms`);
 
     return finalImages;
   } catch (error) {
@@ -199,55 +224,59 @@ export async function fetchVerifiedImages(query: string, limit = 5): Promise<Ima
 }
 
 export async function generateImage(query: string, limit = 1): Promise<ImageResult[]> {
-  console.log(`[ImageEngine] Generating image for: ${query}`);
+  console.log(`[ImageEngine] Generating image via Gemini Flash for: ${query}`);
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  if (!apiKey) {
-    console.warn('[ImageEngine] No Gemini API Key for generation');
-    return [];
-  }
 
-  try {
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict',
-      {
-        method: 'POST',
-        headers: {
-          'x-goog-api-key': apiKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          instances: [{ prompt: query }],
-          parameters: { sampleCount: limit }
-        })
-      }
-    );
-
-    if (!response.ok) {
-      console.error('[ImageEngine] Error from Imagen API:', await response.text());
-      return [];
-    }
-
-    const data = await response.json();
-    const results: ImageResult[] = [];
-
-    if (data.predictions) {
-      for (const pred of data.predictions) {
-        // predictions contain base64 bytes
-        if (pred.bytesBase64Encoded) {
-          results.push({
-            url: `data:${pred.mimeType};base64,${pred.bytesBase64Encoded}`,
-            source: 'Imagen 3',
-            alt: query,
-            score: 100
-          });
+  if (apiKey) {
+    try {
+      // Use Gemini 2.0 Flash with image generation modality (FREE tier)
+      // This uses the same API key as text generation - no billing required
+      const response = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=' + apiKey,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: `Generate a high-quality image of: ${query}` }] }],
+            generationConfig: {
+              responseModalities: ['IMAGE', 'TEXT'],
+              temperature: 1.0,
+            },
+          }),
+          signal: AbortSignal.timeout(20000),
         }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const results: ImageResult[] = [];
+        const parts = data.candidates?.[0]?.content?.parts || [];
+        for (const part of parts) {
+          if (part.inlineData?.data && part.inlineData?.mimeType) {
+            results.push({
+              url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+              source: 'Gemini Flash Image Generation',
+              alt: query,
+              score: 100,
+            });
+          }
+          if (results.length >= limit) break;
+        }
+        if (results.length > 0) {
+          console.log(`[ImageEngine] Gemini Flash generated ${results.length} image(s)`);
+          return results;
+        }
+        console.warn('[ImageEngine] Gemini Flash returned no image parts:', JSON.stringify(data).slice(0, 300));
+      } else {
+        const errText = await response.text();
+        console.warn(`[ImageEngine] Gemini Flash image gen returned ${response.status}: ${errText.slice(0, 200)}`);
       }
+    } catch (error) {
+      console.warn('[ImageEngine] Gemini Flash image gen failed, falling back to Pexels:', error);
     }
-
-    return results;
-  } catch (error) {
-    console.error('[ImageEngine] Generation Error:', error);
-    return [];
   }
-}
 
+  // FALLBACK: Use Pexels search when Gemini image generation is unavailable
+  console.log(`[ImageEngine] Falling back to Pexels for: ${query}`);
+  return fetchVerifiedImages(query, limit);
+}
