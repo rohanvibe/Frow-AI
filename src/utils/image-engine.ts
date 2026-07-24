@@ -233,10 +233,10 @@ export async function generateImage(query: string, limit = 1): Promise<ImageResu
   }
 
   try {
-    // Use Gemini 2.0 Flash with image generation modality (FREE tier)
+    // Use Gemini 3.1 Flash Image ("Nano Banana 2") with image generation modality
     // Same API key as text generation — no billing required
     const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=' + apiKey,
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=' + apiKey,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

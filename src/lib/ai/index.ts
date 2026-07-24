@@ -36,9 +36,11 @@ export class AIService {
     // Initialize Gemini Flash
     const geminiApiKey = process.env.GEMINI_API_KEY;
     if (geminiApiKey) {
-      // Use actual Gemini model names
+      // Use actual Gemini model names (Updated to 3.1 architecture)
+      this.providers.set('gemini-3.1-flash', new GeminiProvider(geminiApiKey, 'gemini-3.1-flash'));
+      this.providers.set('gemini-3.1-pro', new GeminiProvider(geminiApiKey, 'gemini-3.1-pro'));
       this.providers.set('gemini-2.0-flash-exp', new GeminiProvider(geminiApiKey, 'gemini-2.0-flash-exp'));
-      this.providers.set('gemini-2.0-pro-exp', new GeminiProvider(geminiApiKey, 'gemini-2.0-pro-exp'));
+
       console.log('[AIService] Gemini providers initialized');
     } else {
       console.warn('[AIService] GEMINI_API_KEY not found');
