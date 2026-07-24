@@ -204,8 +204,8 @@ Use these tags ONLY for long-term facts.
 
     if (hasImageInput) {
       // Force Gemini Vision if any image is present — Groq does NOT support vision
-      routingDecision = AIRouter.forceModel('gemini', 'gemini-3.1-pro')
-      forcedModel = 'gemini-3.1-pro'
+      routingDecision = AIRouter.forceModel('gemini', 'gemini-2.0-flash')
+      forcedModel = 'gemini-2.0-flash'
       forcedProvider = 'gemini'
       console.log('[Chat API] Image detected, forcing Gemini Flash')
     } else if (selectedModel && selectedModel !== 'auto') {
