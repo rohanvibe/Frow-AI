@@ -242,7 +242,7 @@ Use these tags ONLY for long-term facts.
       // If Groq returned "empty output" error, escalate to Gemini instead of retrying same provider
       const isGroqEmptyOutputError = errLower.includes('model output') || errLower.includes('cannot both be empty') || errLower.includes('empty output')
       
-      const retryModel = isGroqEmptyOutputError ? 'gemini-2.0-flash-exp' : forcedModel
+      const retryModel = isGroqEmptyOutputError ? 'gemini-2.0-flash' : forcedModel
       const retryProvider = isGroqEmptyOutputError ? 'gemini' : forcedProvider
 
       if (isGroqEmptyOutputError) {
