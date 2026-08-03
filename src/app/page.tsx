@@ -62,7 +62,9 @@ import {
   MousePointer2,
   Mic,
   FileUp,
-  ChevronDown
+  ChevronDown,
+  Download,
+  Edit3
 } from 'lucide-react'
 import { motion, AnimatePresence, useScroll, useMotionValue, useSpring, useTransform, useMotionValueEvent } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
@@ -615,11 +617,62 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
 }
 
 const ChatInput = memo(({ 
-  input, setInput, sendMessage, loading, startVoiceInput, isListening, fileInputRef, imageInputRef, currentChatId, setChatDrafts, isMobile, stopResponding 
+  input, setInput, sendMessage, loading, startVoiceInput, isListening, fileInputRef, imageInputRef, currentChatId, setChatDrafts, isMobile, stopResponding, setAttachedFile
 }: any) => {
   const [local, setLocal] = useState(input)
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const attachmentMenuRef = useRef<HTMLDivElement>(null)
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0]
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          if (setAttachedFile) {
+            setAttachedFile({ name: file.name, content: reader.result as string, type: 'image' })
+          }
+        }
+        reader.readAsDataURL(file)
+      }
+    } else {
+      const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain')
+      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+        try {
+          const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`
+          const res = await fetch(proxyUrl)
+          const blob = await res.blob()
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            if (setAttachedFile) {
+              setAttachedFile({ name: 'Dragged Image', content: reader.result as string, type: 'image' })
+            }
+          }
+          reader.readAsDataURL(blob)
+        } catch (error) {
+          console.error("Failed to load dropped URL as image:", error)
+          setInput((prev: string) => prev + " " + url)
+        }
+      }
+    }
+  }
 
   useEffect(() => {
     setLocal(input)
@@ -640,7 +693,12 @@ const ChatInput = memo(({
   }, [showAttachmentMenu])
 
   return (
-    <div className="relative bg-(--surface) rounded-lg p-2 shadow-xl group-focus-within:ring-1 ring-blue-500/20 transition-all border border-(--border-color)">
+    <div 
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`relative bg-(--surface) rounded-lg p-2 shadow-xl group-focus-within:ring-1 ring-blue-500/20 transition-all border ${isDragging ? 'border-blue-500 bg-blue-500/5' : 'border-(--border-color)'}`}
+    >
        <div ref={attachmentMenuRef} className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20">
          <Button 
            type="button" 
@@ -908,9 +966,38 @@ const MessageBubble = memo(function MessageBubble({
                               <p className="text-[14px] font-black uppercase tracking-[0.2em] text-white drop-shadow-2xl line-clamp-2">{img.alt}</p>
                               <div className="flex items-center justify-between mt-2 border-t border-white/10 pt-4">
                                 <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">{img.attribution || 'Visual Resource'}</span>
-                                <a href={img.source} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-sm">
-                                  Source <ExternalLink className="w-3 h-3" />
-                                </a>
+                                <div className="flex gap-2">
+                                  <button type="button" onClick={() => {
+                                      const chatInput = document.getElementById('chat-input') as HTMLTextAreaElement;
+                                      if (chatInput) {
+                                          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+                                          nativeInputValueSetter?.call(chatInput, img.alt || '');
+                                          const ev = new Event('input', { bubbles: true });
+                                          chatInput.dispatchEvent(ev);
+                                          chatInput.focus();
+                                      }
+                                  }} className="text-[10px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-sm cursor-pointer">
+                                    Edit <Edit3 className="w-3 h-3" />
+                                  </button>
+                                  <button type="button" onClick={async () => {
+                                      try {
+                                        const imageUrl = typeof img === 'string' && img.startsWith('data:') ? img : `/api/proxy-image?url=${encodeURIComponent(img.url || img)}`;
+                                        const res = await fetch(imageUrl);
+                                        const blob = await res.blob();
+                                        const blobUrl = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = blobUrl;
+                                        a.download = `frow-image-${Date.now()}.png`;
+                                        a.click();
+                                        URL.revokeObjectURL(blobUrl);
+                                      } catch (e) { console.error('Download failed', e) }
+                                  }} className="text-[10px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-sm cursor-pointer">
+                                    Download <Download className="w-3 h-3" />
+                                  </button>
+                                  <a href={img.source} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-sm">
+                                    Source <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -987,8 +1074,8 @@ function ModelSelector({ selectedModel, onSelectModel }: { selectedModel: string
   const models = [
     { id: 'auto', name: 'Auto (Smart Routing)', icon: Sparkles, color: 'text-purple-400', bg: 'bg-purple-500/10' },
     { id: 'openai/gpt-oss-120b', name: 'GPT (Fast)', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-    { id: 'gemini-2.0-flash-exp', name: 'Gemini Flash (Balanced)', icon: Zap, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { id: 'gemini-2.0-pro-exp', name: 'Gemini Pro (Advanced)', icon: Star, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { id: 'gemini-2.0-flash', name: 'Gemini Flash (Balanced)', icon: Zap, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    { id: 'gemini-2.0-pro', name: 'Gemini Pro (Advanced)', icon: Star, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
   ]
   
   const current = models.find(m => m.id === selectedModel) || models[0]
@@ -1070,7 +1157,7 @@ export default function ChatPage() {
   const [showPrompts, setShowPrompts] = useState(false)
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [modelType, setModelType] = useState<'default' | 'byok'>('default')
-  const [selectedModel, setSelectedModel] = useState<'auto' | 'openai/gpt-oss-120b' | 'gemini-2.0-flash-exp' | 'gemini-2.0-pro-exp'>('auto')
+  const [selectedModel, setSelectedModel] = useState<'auto' | 'openai/gpt-oss-120b' | 'gemini-2.0-flash' | 'gemini-2.0-pro'>('auto')
 
   // Load user's model preference from profile
   useEffect(() => {
@@ -1091,7 +1178,7 @@ export default function ChatPage() {
   }, [user])
 
   // Save model preference when changed
-  const handleModelChange = async (model: 'auto' | 'openai/gpt-oss-120b' | 'gemini-2.0-flash-exp' | 'gemini-2.0-pro-exp') => {
+  const handleModelChange = async (model: 'auto' | 'openai/gpt-oss-120b' | 'gemini-2.0-flash' | 'gemini-2.0-pro') => {
     setSelectedModel(model)
     if (user) {
       await supabase
@@ -2596,6 +2683,7 @@ export default function ChatPage() {
                   setChatDrafts={setChatDrafts} 
                   isMobile={isMobile} 
                   stopResponding={stopResponding} 
+                  setAttachedFile={setAttachedFile}
                 />
                 
                 {/* Model Selection Dropdown */}

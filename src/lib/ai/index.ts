@@ -11,8 +11,8 @@ import {
 export class AIService {
   private providers: Map<string, any> = new Map();
   private fallbackChain: string[] = [
-    'gemini-2.0-pro-exp',
-    'gemini-2.0-flash-exp',
+    'gemini-2.0-pro',
+    'gemini-2.0-flash',
     'openai/gpt-oss-120b',
   ];
 
