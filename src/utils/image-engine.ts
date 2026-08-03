@@ -36,16 +36,18 @@ export function detectImageIntent(message: string): ImageIntent | null {
   // 1. Determine Quantity Limit
   let limit = 3; // Default for plural "images"
   
+  const imgSynonyms = 'picture|pictures|image|images|img|photo|photos|visual|visuals|gallery|pic|pics|imaage|imge|photograph';
+
   const singlePatterns = [
-    /\b(?:a|an|one|single|the|a single)\s+(?:picture|image|photo|visual)\b/i,
-    /\b(?:picture|image|photo|visual)\s+of\b/i, // "image of bugatti" (singular by implication)
+    new RegExp(`\\b(?:a|an|one|single|the|a single)\\s+(?:${imgSynonyms})\\b`, 'i'),
+    new RegExp(`\\b(?:${imgSynonyms})\\s+of\\b`, 'i'),
   ];
 
   if (singlePatterns.some(p => p.test(msg))) {
     limit = 1;
   } else {
     // Check for explicit numbers
-    const numMatch = msg.match(/\b(\d+)\s+(?:images?|photos?|pictures?|visuals?|galleries)\b/i);
+    const numMatch = msg.match(new RegExp(`\\b(\\d+)\\s+(?:${imgSynonyms})\\b`, 'i'));
     if (numMatch) {
       limit = Math.min(Math.max(parseInt(numMatch[1]), 1), 10);
     } else {
@@ -61,8 +63,8 @@ export function detectImageIntent(message: string): ImageIntent | null {
 
   // 2. Extract Query
   const generatePatterns = [
-    /(?:generate|create|make|draw|render) (?:a |an |the |some |several )?(?:picture|image|photo|visual|gallery) of (.+)/i,
-    /(?:generate|create|make|draw|render) (.+) (?:picture|image|photo|visual)/i,
+    new RegExp(`(?:generate|create|make|draw|render).*?(?:${imgSynonyms}) of (.+)`, 'i'),
+    new RegExp(`(?:generate|create|make|draw|render) (.+?) (?:${imgSynonyms})`, 'i'),
   ];
 
   for (const pattern of generatePatterns) {
@@ -73,16 +75,10 @@ export function detectImageIntent(message: string): ImageIntent | null {
   }
 
   const searchPatterns = [
-    /show me (?:a |an |the |some |several )?(?:picture|image|photo|visual|gallery) of (.+)/i,
+    new RegExp(`(?:show|find|search|get).*?(?:${imgSynonyms}) of (.+)`, 'i'),
     /what does (.+) look like/i,
-    /find (?:a |an |the |some |several )?(?:picture|image|photo|visual) of (.+)/i,
-    /search (?:for )?(?:a |an |the |some |several )?(?:picture|image|photo) of (.+)/i,
-    /get (?:me )?(?:a |an |the |some |several )?(?:picture|image|photo) of (.+)/i,
-    /images? of (.+)/i,
-    /photos? of (.+)/i,
-    /pictures? of (.+)/i,
-    /gallery of (.+)/i,
-    /visuals? for (.+)/i,
+    new RegExp(`(?:${imgSynonyms}) of (.+)`, 'i'),
+    new RegExp(`(?:${imgSynonyms}) for (.+)`, 'i'),
     /^show (.+)$/i,
     /^see (.+)$/i,
   ];
@@ -95,10 +91,10 @@ export function detectImageIntent(message: string): ImageIntent | null {
   }
 
   // Fallback for simple "bugatti image" or "bugatti photo"
-  const keywords = ['image', 'photo', 'picture', 'show', 'gallery', 'visual'];
+  const keywords = ['image', 'photo', 'picture', 'show', 'gallery', 'visual', 'pic', 'imaage', 'img'];
   if (keywords.some(k => msg.includes(k))) {
      const query = msg
-       .replace(/\b(?:image|photo|picture|show|me|of|a|an|the|find|search|get|gallery|visual|visuals|some|several|many|few)\b/gi, '')
+       .replace(new RegExp(`\\b(?:${imgSynonyms}|show|me|of|a|an|the|find|search|get|some|several|many|few)\\b`, 'gi'), '')
        .trim();
      if (query.length > 2) return { query, limit, action: 'search' };
   }
