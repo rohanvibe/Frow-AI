@@ -2,6 +2,7 @@
 import { GroqProvider } from './providers/groq';
 import { GeminiProvider } from './providers/gemini';
 import { AIRouter } from './router';
+import { FALLBACK_CHAIN } from '@/config/models';
 import {
   ChatCompletionRequest,
   ChatCompletionResponse,
@@ -10,11 +11,7 @@ import {
 
 export class AIService {
   private providers: Map<string, any> = new Map();
-  private fallbackChain: string[] = [
-    'gemini-2.0-pro',
-    'gemini-2.0-flash',
-    'openai/gpt-oss-120b',
-  ];
+  private fallbackChain: string[] = FALLBACK_CHAIN as string[];
 
   constructor() {
     this.initializeProviders();
@@ -26,23 +23,22 @@ export class AIService {
   private initializeProviders() {
     // Initialize Groq (Qwen)
     const groqApiKey = process.env.GROQ_API_KEY;
-    if (groqApiKey) {
+    if (groqApiKey && !groqApiKey.startsWith('your_')) {
       this.providers.set('openai/gpt-oss-120b', new GroqProvider(groqApiKey, 'openai/gpt-oss-120b'));
       console.log('[AIService] Groq provider initialized');
     } else {
-      console.warn('[AIService] GROQ_API_KEY not found');
+      console.warn('[AIService] GROQ_API_KEY not found or is a placeholder');
     }
 
     // Initialize Gemini Flash
     const geminiApiKey = process.env.GEMINI_API_KEY;
-    if (geminiApiKey) {
-      // Use actual Gemini model names (Updated to 3.1 architecture)
-      this.providers.set('gemini-3.1-flash', new GeminiProvider(geminiApiKey, 'gemini-3.1-flash'));
-      this.providers.set('gemini-3.1-pro', new GeminiProvider(geminiApiKey, 'gemini-3.1-pro'));
-      this.providers.set('gemini-2.0-flash', new GeminiProvider(geminiApiKey, 'gemini-2.0-flash'));
+    if (geminiApiKey && !geminiApiKey.startsWith('your_')) {
+      // Use actual stable Gemini model names
+      this.providers.set('gemini-1.5-flash', new GeminiProvider(geminiApiKey, 'gemini-1.5-flash'));
+      this.providers.set('gemini-1.5-pro', new GeminiProvider(geminiApiKey, 'gemini-1.5-pro'));
       console.log('[AIService] Gemini providers initialized');
     } else {
-      console.warn('[AIService] GEMINI_API_KEY not found');
+      console.warn('[AIService] GEMINI_API_KEY not found or is a placeholder — vision will NOT work');
     }
   }
 

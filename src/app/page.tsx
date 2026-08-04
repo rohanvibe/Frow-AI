@@ -66,6 +66,7 @@ import {
   Download,
   Edit3
 } from 'lucide-react'
+import { AI_MODELS, ModelId } from '@/config/models'
 import { motion, AnimatePresence, useScroll, useMotionValue, useSpring, useTransform, useMotionValueEvent } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -653,22 +654,35 @@ const ChatInput = memo(({
         reader.readAsDataURL(file)
       }
     } else {
-      const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain')
-      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-        try {
-          const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`
-          const res = await fetch(proxyUrl)
-          const blob = await res.blob()
-          const reader = new FileReader()
-          reader.onloadend = () => {
-            if (setAttachedFile) {
-              setAttachedFile({ name: 'Dragged Image', content: reader.result as string, type: 'image' })
+      let url = ''
+      const htmlData = e.dataTransfer.getData('text/html')
+      if (htmlData) {
+        const imgMatch = htmlData.match(/<img[^>]+src="([^">]+)"/)
+        if (imgMatch) url = imgMatch[1]
+      }
+      if (!url) {
+        url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain')
+      }
+      
+      if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/'))) {
+        if (url.startsWith('data:image/')) {
+          if (setAttachedFile) setAttachedFile({ name: 'Dragged Image', content: url, type: 'image' })
+        } else {
+          try {
+            const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`
+            const res = await fetch(proxyUrl)
+            const blob = await res.blob()
+            const reader = new FileReader()
+            reader.onloadend = () => {
+              if (setAttachedFile) {
+                setAttachedFile({ name: 'Dragged Image', content: reader.result as string, type: 'image' })
+              }
             }
+            reader.readAsDataURL(blob)
+          } catch (error) {
+            console.error("Failed to load dropped URL as image:", error)
+            setInput((prev: string) => prev + " " + url)
           }
-          reader.readAsDataURL(blob)
-        } catch (error) {
-          console.error("Failed to load dropped URL as image:", error)
-          setInput((prev: string) => prev + " " + url)
         }
       }
     }
@@ -971,7 +985,7 @@ const MessageBubble = memo(function MessageBubble({
                                       const chatInput = document.getElementById('chat-input') as HTMLTextAreaElement;
                                       if (chatInput) {
                                           const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
-                                          nativeInputValueSetter?.call(chatInput, img.alt || '');
+                                          nativeInputValueSetter?.call(chatInput, "generate an image of " + (img.alt || ''));
                                           const ev = new Event('input', { bubbles: true });
                                           chatInput.dispatchEvent(ev);
                                           chatInput.focus();
@@ -1071,14 +1085,7 @@ function ModelSelector({ selectedModel, onSelectModel }: { selectedModel: string
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const models = [
-    { id: 'auto', name: 'Auto (Smart Routing)', icon: Sparkles, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { id: 'openai/gpt-oss-120b', name: 'GPT (Fast)', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-    { id: 'gemini-2.0-flash', name: 'Gemini Flash (Balanced)', icon: Zap, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { id: 'gemini-2.0-pro', name: 'Gemini Pro (Advanced)', icon: Star, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  ]
-  
-  const current = models.find(m => m.id === selectedModel) || models[0]
+  const current = AI_MODELS.find(m => m.id === selectedModel) || AI_MODELS[0]
 
   return (
     <div className="relative mt-4 flex items-center" ref={dropdownRef}>
@@ -1108,7 +1115,7 @@ function ModelSelector({ selectedModel, onSelectModel }: { selectedModel: string
                <span className="text-[10px] font-black uppercase tracking-widest text-white/40">AI Model Engine</span>
             </div>
             <div className="space-y-1">
-              {models.map(model => (
+              {AI_MODELS.map(model => (
                 <button
                   key={model.id}
                   type="button"
@@ -1157,7 +1164,7 @@ export default function ChatPage() {
   const [showPrompts, setShowPrompts] = useState(false)
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [modelType, setModelType] = useState<'default' | 'byok'>('default')
-  const [selectedModel, setSelectedModel] = useState<'auto' | 'openai/gpt-oss-120b' | 'gemini-2.0-flash' | 'gemini-2.0-pro'>('auto')
+  const [selectedModel, setSelectedModel] = useState<ModelId>('auto')
 
   // Load user's model preference from profile
   useEffect(() => {
@@ -1178,7 +1185,7 @@ export default function ChatPage() {
   }, [user])
 
   // Save model preference when changed
-  const handleModelChange = async (model: 'auto' | 'openai/gpt-oss-120b' | 'gemini-2.0-flash' | 'gemini-2.0-pro') => {
+  const handleModelChange = async (model: ModelId) => {
     setSelectedModel(model)
     if (user) {
       await supabase
