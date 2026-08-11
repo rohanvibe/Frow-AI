@@ -204,8 +204,8 @@ Use these tags ONLY for long-term facts.
 
     if (hasImageInput) {
       // Force Gemini Vision if any image is present — Groq does NOT support vision
-      routingDecision = AIRouter.forceModel('gemini', 'gemini-1.5-flash')
-      forcedModel = 'gemini-1.5-flash'
+      routingDecision = AIRouter.forceModel('gemini', 'gemini-2.0-flash')
+      forcedModel = 'gemini-2.0-flash'
       forcedProvider = 'gemini'
       console.log('[Chat API] Image detected, forcing Gemini Flash')
     } else if (selectedModel && selectedModel !== 'auto') {
@@ -242,7 +242,7 @@ Use these tags ONLY for long-term facts.
       // If Groq returned "empty output" error, escalate to Gemini instead of retrying same provider
       const isGroqEmptyOutputError = errLower.includes('model output') || errLower.includes('cannot both be empty') || errLower.includes('empty output')
       
-      const retryModel = isGroqEmptyOutputError ? 'gemini-1.5-flash' : forcedModel
+      const retryModel = isGroqEmptyOutputError ? 'gemini-2.0-flash' : forcedModel
       const retryProvider = isGroqEmptyOutputError ? 'gemini' : forcedProvider
 
       if (isGroqEmptyOutputError) {

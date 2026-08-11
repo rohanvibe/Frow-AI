@@ -2,7 +2,7 @@
 import { GroqProvider } from './providers/groq';
 import { GeminiProvider } from './providers/gemini';
 import { AIRouter } from './router';
-import { FALLBACK_CHAIN } from '@/config/models';
+import { FALLBACK_CHAIN, VISION_MODELS } from '@/config/models';
 import {
   ChatCompletionRequest,
   ChatCompletionResponse,
@@ -30,13 +30,11 @@ export class AIService {
       console.warn('[AIService] GROQ_API_KEY not found or is a placeholder');
     }
 
-    // Initialize Gemini Flash
+    // Initialize Gemini
     const geminiApiKey = process.env.GEMINI_API_KEY;
     if (geminiApiKey && !geminiApiKey.startsWith('your_')) {
-      // Use actual stable Gemini model names
-      this.providers.set('gemini-1.5-flash', new GeminiProvider(geminiApiKey, 'gemini-1.5-flash'));
-      this.providers.set('gemini-1.5-pro', new GeminiProvider(geminiApiKey, 'gemini-1.5-pro'));
-      console.log('[AIService] Gemini providers initialized');
+      this.providers.set('gemini-2.0-flash', new GeminiProvider(geminiApiKey, 'gemini-2.0-flash'));
+      console.log('[AIService] Gemini provider initialized');
     } else {
       console.warn('[AIService] GEMINI_API_KEY not found or is a placeholder — vision will NOT work');
     }
@@ -50,6 +48,13 @@ export class AIService {
     currentMessage?: string
   ): RoutingDecision {
     return AIRouter.analyzeComplexity(messages, currentMessage);
+  }
+
+  /**
+   * Check if any message in the request contains an image
+   */
+  private hasImages(messages: any[]): boolean {
+    return messages.some(m => !!m.image);
   }
 
   /**
@@ -161,6 +166,18 @@ export class AIService {
   }
 
   /**
+   * Get the filtered fallback chain: if images are present, only use vision-capable models
+   */
+  private getFallbackChain(request: ChatCompletionRequest): string[] {
+    const requestHasImages = this.hasImages(request.messages);
+    if (requestHasImages) {
+      // Only fall back to models that support vision — NEVER send images to text-only models
+      return this.fallbackChain.filter(m => (VISION_MODELS as readonly string[]).includes(m));
+    }
+    return this.fallbackChain;
+  }
+
+  /**
    * Execute request with fallback chain
    */
   private async executeWithFallback(
@@ -169,14 +186,21 @@ export class AIService {
     routingDecision: RoutingDecision,
     attempt: number = 0
   ): Promise<ChatCompletionResponse> {
+    const chain = this.getFallbackChain(request);
     const provider = this.providers.get(model);
 
     if (!provider) {
       console.error(`[AIService] Provider not found for model: ${model}`);
-      if (attempt < this.fallbackChain.length - 1) {
-        const nextModel = this.fallbackChain[this.fallbackChain.indexOf(model) + 1];
+      const currentIndex = chain.indexOf(model);
+      if (currentIndex >= 0 && currentIndex < chain.length - 1) {
+        const nextModel = chain[currentIndex + 1];
         console.log(`[AIService] Falling back to: ${nextModel}`);
         return this.executeWithFallback(nextModel, request, routingDecision, attempt + 1);
+      }
+      // Try the first model in the chain as a last resort
+      if (chain.length > 0 && chain[0] !== model) {
+        console.log(`[AIService] Trying first available in chain: ${chain[0]}`);
+        return this.executeWithFallback(chain[0], request, routingDecision, attempt + 1);
       }
       throw new Error(`No available providers for model: ${model}`);
     }
@@ -190,9 +214,9 @@ export class AIService {
       console.error(`[AIService] Error with ${model}:`, error.message);
       
       // Check if we have more fallback options
-      const currentIndex = this.fallbackChain.indexOf(model);
-      if (currentIndex < this.fallbackChain.length - 1) {
-        const nextModel = this.fallbackChain[currentIndex + 1];
+      const currentIndex = chain.indexOf(model);
+      if (currentIndex >= 0 && currentIndex < chain.length - 1) {
+        const nextModel = chain[currentIndex + 1];
         console.log(`[AIService] Falling back to: ${nextModel}`);
         return this.executeWithFallback(nextModel, request, routingDecision, attempt + 1);
       }
@@ -211,14 +235,20 @@ export class AIService {
     routingDecision: RoutingDecision,
     attempt: number = 0
   ): Promise<ReadableStream> {
+    const chain = this.getFallbackChain(request);
     const provider = this.providers.get(model);
 
     if (!provider) {
       console.error(`[AIService] Provider not found for model: ${model}`);
-      if (attempt < this.fallbackChain.length - 1) {
-        const nextModel = this.fallbackChain[this.fallbackChain.indexOf(model) + 1];
+      const currentIndex = chain.indexOf(model);
+      if (currentIndex >= 0 && currentIndex < chain.length - 1) {
+        const nextModel = chain[currentIndex + 1];
         console.log(`[AIService] Falling back to: ${nextModel}`);
         return this.executeStreamWithFallback(nextModel, request, routingDecision, attempt + 1);
+      }
+      if (chain.length > 0 && chain[0] !== model) {
+        console.log(`[AIService] Trying first available in chain: ${chain[0]}`);
+        return this.executeStreamWithFallback(chain[0], request, routingDecision, attempt + 1);
       }
       throw new Error(`No available providers for model: ${model}`);
     }
@@ -232,9 +262,9 @@ export class AIService {
       console.error(`[AIService] Error with ${model}:`, error.message);
       
       // Check if we have more fallback options
-      const currentIndex = this.fallbackChain.indexOf(model);
-      if (currentIndex < this.fallbackChain.length - 1) {
-        const nextModel = this.fallbackChain[currentIndex + 1];
+      const currentIndex = chain.indexOf(model);
+      if (currentIndex >= 0 && currentIndex < chain.length - 1) {
+        const nextModel = chain[currentIndex + 1];
         console.log(`[AIService] Falling back to: ${nextModel}`);
         return this.executeStreamWithFallback(nextModel, request, routingDecision, attempt + 1);
       }

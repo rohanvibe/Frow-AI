@@ -99,7 +99,7 @@ export class GeminiProvider extends BaseProvider {
     }
     
     const response = await fetch(
-      `${this.baseURL}/models/${this.model}:streamGenerateContent?key=${this.apiKey}`,
+      `${this.baseURL}/models/${this.model}:streamGenerateContent?alt=sse&key=${this.apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -170,27 +170,45 @@ export class GeminiProvider extends BaseProvider {
           return;
         }
 
+        let buffer = '';
+
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            // Keep the last potentially incomplete line in the buffer
+            buffer = lines.pop() || '';
 
             for (const line of lines) {
-              if (line.trim().startsWith('data:')) {
+              const trimmed = line.trim();
+              if (trimmed.startsWith('data:')) {
+                const jsonStr = trimmed.slice(5).trim();
+                if (jsonStr === '[DONE]') continue;
                 try {
-                  const json = JSON.parse(line.slice(5).trim());
-                  const content = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                  if (content) {
-                    controller.enqueue(encoder.encode(content));
+                  const json = JSON.parse(jsonStr);
+                  const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                  if (text) {
+                    controller.enqueue(encoder.encode(text));
                   }
                 } catch (e) {
-                  // Ignore parse errors
+                  // Ignore partial JSON parse errors
                 }
               }
             }
+          }
+          // Process any remaining buffer
+          if (buffer.trim().startsWith('data:')) {
+            const jsonStr = buffer.trim().slice(5).trim();
+            try {
+              const json = JSON.parse(jsonStr);
+              const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              if (text) {
+                controller.enqueue(encoder.encode(text));
+              }
+            } catch (e) { /* ignore */ }
           }
         } catch (error) {
           controller.error(error);

@@ -1799,9 +1799,15 @@ export default function ChatPage() {
   const sendMessage = async (e?: React.FormEvent, customMsg?: string) => {
     if (e) e.preventDefault()
     
-    const displayContent = customMsg || input
-    if (!displayContent.trim() || loading) return
+    const hasImage = attachedFile?.type === 'image'
+    const rawContent = customMsg || input
+    // Allow sending with just an image (no text required)
+    if (!rawContent.trim() && !hasImage) return
+    if (loading) return
     if (!user && !isGuest) return
+    
+    // If image is attached with no text, use a default vision prompt
+    const displayContent = rawContent.trim() || (hasImage ? 'What is in this image?' : '')
     
     userScrolledUpRef.current = false
 
@@ -1811,7 +1817,7 @@ export default function ChatPage() {
       chat_id: currentChatId || '',
       role: 'user',
       content: displayContent,
-      images: attachedFile?.type === 'image' ? [attachedFile.content] : [],
+      images: hasImage ? [attachedFile!.content] : [],
       created_at: new Date().toISOString()
     }
 
