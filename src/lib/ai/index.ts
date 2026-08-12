@@ -33,7 +33,7 @@ export class AIService {
     // Initialize Gemini
     const geminiApiKey = process.env.GEMINI_API_KEY;
     if (geminiApiKey && !geminiApiKey.startsWith('your_')) {
-      this.providers.set('gemini-1.5-flash', new GeminiProvider(geminiApiKey, 'gemini-1.5-flash'));
+      this.providers.set('gemini-2.5-flash', new GeminiProvider(geminiApiKey, 'gemini-2.5-flash'));
       console.log('[AIService] Gemini provider initialized');
     } else {
       console.warn('[AIService] GEMINI_API_KEY not found or is a placeholder — vision will NOT work');
