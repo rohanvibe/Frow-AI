@@ -117,7 +117,7 @@ export class AIRouter {
     const hasImage = messages.some(m => !!m.image);
     if (hasImage) {
       return {
-        selectedModel: 'gemini-2.0-flash',
+        selectedModel: 'gemini-1.5-flash',
         provider: 'gemini',
         complexity: ComplexityLevel.MEDIUM,
         reasoning: 'Image detected in messages, forcing Gemini Vision',
@@ -210,12 +210,12 @@ export class AIRouter {
       case ComplexityLevel.HIGH:
         return {
           provider: 'gemini',
-          model: 'gemini-2.0-flash',
+          model: 'gemini-1.5-flash',
         };
       case ComplexityLevel.MEDIUM:
         return {
           provider: 'gemini',
-          model: 'gemini-2.0-flash',
+          model: 'gemini-1.5-flash',
         };
       case ComplexityLevel.SIMPLE:
       default:
