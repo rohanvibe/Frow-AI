@@ -1814,12 +1814,30 @@ export default function ChatPage() {
     // Add user message immediately
     const tempUserMsg: Message = {
       id: crypto.randomUUID(),
-      chat_id: currentChatId || '',
+      chat_id: currentChatId || 'pending',
       role: 'user',
       content: displayContent,
       images: hasImage ? [attachedFile!.content] : [],
       created_at: new Date().toISOString()
     }
+
+    // Create placeholder for assistant message immediately
+    const assistantMsgId = crypto.randomUUID()
+    const tempAssistantMsg: Message = {
+      id: assistantMsgId,
+      chat_id: currentChatId || 'pending',
+      role: 'assistant',
+      content: '', 
+      images: [],
+      created_at: new Date().toISOString()
+    }
+
+    // UI Updates immediately for responsiveness
+    setMessages(prev => [...prev, tempUserMsg, tempAssistantMsg])
+    setInput('')
+    setAttachedFile(null)
+    setLoading(true)
+    abortControllerRef.current = new AbortController()
 
     let finalPrompt = displayContent
     let imageAttachment = undefined
@@ -1845,7 +1863,9 @@ export default function ChatPage() {
       if (isGuest) {
         chatId = 'guest-session-' + Date.now()
         tempUserMsg.chat_id = chatId
+        tempAssistantMsg.chat_id = chatId
         setCurrentChatId(chatId)
+        setMessages(prev => prev.map(m => m.chat_id === 'pending' ? { ...m, chat_id: chatId as string } : m))
       } else {
         const { data } = await supabase
           .from('chats')
@@ -1855,10 +1875,12 @@ export default function ChatPage() {
         if (data) {
           chatId = data.id
           tempUserMsg.chat_id = data.id as string
+          tempAssistantMsg.chat_id = data.id as string
           wasJustCreated = true
           skipFetchRef.current = true 
           setCurrentChatId(chatId)
           setChats(prev => [data, ...prev])
+          setMessages(prev => prev.map(m => m.chat_id === 'pending' ? { ...m, chat_id: data.id as string } : m))
         } else return
       }
     }
@@ -1880,13 +1902,6 @@ export default function ChatPage() {
         }
       }).catch(err => console.error("Naming failed:", err))
     }
-
-    setInput('')
-    setAttachedFile(null)
-    setLoading(true)
-    abortControllerRef.current = new AbortController()
-
-    setMessages(prev => [...prev, tempUserMsg])
     
     // Start DB insert immediately so its created_at timestamp is earlier than the assistant's
     const userMsgInsert = !isGuest 
@@ -1898,18 +1913,6 @@ export default function ChatPage() {
           return res
         }) 
       : Promise.resolve({ error: null, data: null }) as any
-
-    // Create placeholder for assistant message
-    const assistantMsgId = crypto.randomUUID()
-    const tempAssistantMsg: Message = {
-      id: assistantMsgId,
-      chat_id: chatId!,
-      role: 'assistant',
-      content: '', 
-      images: [],
-      created_at: new Date().toISOString()
-    }
-    setMessages(prev => [...prev, tempAssistantMsg])
 
     let finalContent = ''
     try {

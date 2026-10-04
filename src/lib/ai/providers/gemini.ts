@@ -59,18 +59,30 @@ export class GeminiProvider extends BaseProvider {
     
     // Handle different response formats from Gemini
     let content = '';
+    let tool_calls: any[] = [];
     if (data.candidates && data.candidates.length > 0) {
       const candidate = data.candidates[0];
       if (candidate.content && candidate.content.parts) {
-        // Concatenate all text parts (Gemini can return multiple parts)
-        content = candidate.content.parts
-          .map((p: any) => p.text || '')
-          .join('');
+        for (const p of candidate.content.parts) {
+          if (p.text) {
+            content += p.text;
+          } else if (p.functionCall) {
+            tool_calls.push({
+              id: 'call_' + Math.random().toString(36).substring(2, 9),
+              type: 'function',
+              function: {
+                name: p.functionCall.name,
+                arguments: JSON.stringify(p.functionCall.args || {})
+              }
+            });
+          }
+        }
       }
     }
     
     return {
       content,
+      tool_calls: tool_calls.length > 0 ? tool_calls : undefined,
       model: this.model,
       usage: data.usageMetadata ? {
         prompt_tokens: data.usageMetadata.promptTokenCount || 0,

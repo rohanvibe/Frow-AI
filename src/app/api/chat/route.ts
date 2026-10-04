@@ -306,7 +306,7 @@ Use these tags ONLY for long-term facts.
     if (!messageObj.content && (!messageObj.tool_calls || messageObj.tool_calls.length === 0)) {
        messageObj.content = isSimpleGreeting 
          ? "Hey 👋 I’m ready when you are—what do you want to work on, build, or figure out today?" 
-         : "I'm ready. What would you like to build or analyze?"
+         : "I couldn't process that properly. Could you rephrase or try again?"
     }
 
     // Step 2: Handle Tool Calls (Multiple)
