@@ -169,7 +169,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
   useEffect(() => {
     if (expression) {
       try {
-        const clean = expression.replace(/Ã—/g, '*').replace(/Ã·/g, '/')
+        const clean = expression.replace(/Ã—/g, '*').replace(/Ã·/g, '/').replace(/\^/g, '**')
         // eslint-disable-next-line no-eval
         const res = eval(clean)
         setResult(String(res))
@@ -194,7 +194,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
     } else if (val === '=') {
       try {
         // Clean and compute
-        const clean = expression.replace(/Ã—/g, '*').replace(/Ã·/g, '/')
+        const clean = expression.replace(/Ã—/g, '*').replace(/Ã·/g, '/').replace(/\^/g, '**')
         // eslint-disable-next-line no-eval
         const res = eval(clean)
         setResult(String(res))
