@@ -70,6 +70,7 @@ export class AIService {
       max_tokens?: number;
       forceModel?: string;
       forceProvider?: string;
+      routingDecision?: RoutingDecision;
     } = {}
   ): Promise<ChatCompletionResponse> {
     const {
@@ -80,11 +81,14 @@ export class AIService {
       max_tokens,
       forceModel,
       forceProvider,
+      routingDecision: customRoutingDecision,
     } = options;
 
     // Get routing decision
     let routingDecision: RoutingDecision;
-    if (forceModel && forceProvider) {
+    if (customRoutingDecision) {
+      routingDecision = customRoutingDecision;
+    } else if (forceModel && forceProvider) {
       routingDecision = AIRouter.forceModel(forceProvider, forceModel);
     } else {
       routingDecision = this.getRoutingDecision(messages, currentMessage);
@@ -124,6 +128,7 @@ export class AIService {
       max_tokens?: number;
       forceModel?: string;
       forceProvider?: string;
+      routingDecision?: RoutingDecision;
     } = {}
   ): Promise<ReadableStream> {
     const {
@@ -134,11 +139,14 @@ export class AIService {
       max_tokens,
       forceModel,
       forceProvider,
+      routingDecision: customRoutingDecision,
     } = options;
 
     // Get routing decision
     let routingDecision: RoutingDecision;
-    if (forceModel && forceProvider) {
+    if (customRoutingDecision) {
+      routingDecision = customRoutingDecision;
+    } else if (forceModel && forceProvider) {
       routingDecision = AIRouter.forceModel(forceProvider, forceModel);
     } else {
       routingDecision = this.getRoutingDecision(messages, currentMessage);
@@ -184,41 +192,47 @@ export class AIService {
     model: string,
     request: ChatCompletionRequest,
     routingDecision: RoutingDecision,
-    attempt: number = 0
+    attemptedModels: string[] = []
   ): Promise<ChatCompletionResponse> {
-    const chain = this.getFallbackChain(request);
+    const currentAttempted = [...attemptedModels, model];
     const provider = this.providers.get(model);
 
     if (!provider) {
       console.error(`[AIService] Provider not found for model: ${model}`);
-      const currentIndex = chain.indexOf(model);
-      if (currentIndex >= 0 && currentIndex < chain.length - 1) {
-        const nextModel = chain[currentIndex + 1];
-        console.log(`[AIService] Falling back to: ${nextModel}`);
-        return this.executeWithFallback(nextModel, request, routingDecision, attempt + 1);
+      // Do not silently switch providers if the user explicitly selected this model
+      if (routingDecision.isExplicitChoice) {
+        throw new Error(`Provider not available for explicitly selected model: ${model}`);
       }
-      // Try the first model in the chain as a last resort
-      if (chain.length > 0 && chain[0] !== model) {
-        console.log(`[AIService] Trying first available in chain: ${chain[0]}`);
-        return this.executeWithFallback(chain[0], request, routingDecision, attempt + 1);
+
+      // Automatic fallback for auto-selected models: pick next untried model in chain
+      const chain = this.getFallbackChain(request);
+      const nextModel = chain.find(m => !currentAttempted.includes(m));
+      if (nextModel) {
+        console.log(`[AIService] Falling back to: ${nextModel}`);
+        return this.executeWithFallback(nextModel, request, routingDecision, currentAttempted);
       }
       throw new Error(`No available providers for model: ${model}`);
     }
 
     try {
-      console.log(`[AIService] Attempting completion with ${model} (attempt ${attempt + 1})`);
+      console.log(`[AIService] Attempting completion with ${model} (attempt ${currentAttempted.length})`);
       const response = await provider.complete(request);
       console.log(`[AIService] Success with ${model}`);
       return response;
     } catch (error: any) {
       console.error(`[AIService] Error with ${model}:`, error.message);
       
-      // Check if we have more fallback options
-      const currentIndex = chain.indexOf(model);
-      if (currentIndex >= 0 && currentIndex < chain.length - 1) {
-        const nextModel = chain[currentIndex + 1];
+      // If user explicitly chose this model, do not silently switch providers on failure
+      if (routingDecision.isExplicitChoice) {
+        throw new Error(`Model '${model}' failed: ${error.message}`);
+      }
+
+      // Safe fallback allowed only for auto-selected models (preserving required capabilities)
+      const chain = this.getFallbackChain(request);
+      const nextModel = chain.find(m => !currentAttempted.includes(m));
+      if (nextModel) {
         console.log(`[AIService] Falling back to: ${nextModel}`);
-        return this.executeWithFallback(nextModel, request, routingDecision, attempt + 1);
+        return this.executeWithFallback(nextModel, request, routingDecision, currentAttempted);
       }
 
       // No more fallbacks, throw error
@@ -233,40 +247,47 @@ export class AIService {
     model: string,
     request: ChatCompletionRequest,
     routingDecision: RoutingDecision,
-    attempt: number = 0
+    attemptedModels: string[] = []
   ): Promise<ReadableStream> {
-    const chain = this.getFallbackChain(request);
+    const currentAttempted = [...attemptedModels, model];
     const provider = this.providers.get(model);
 
     if (!provider) {
       console.error(`[AIService] Provider not found for model: ${model}`);
-      const currentIndex = chain.indexOf(model);
-      if (currentIndex >= 0 && currentIndex < chain.length - 1) {
-        const nextModel = chain[currentIndex + 1];
-        console.log(`[AIService] Falling back to: ${nextModel}`);
-        return this.executeStreamWithFallback(nextModel, request, routingDecision, attempt + 1);
+      // Do not silently switch providers if the user explicitly selected this model
+      if (routingDecision.isExplicitChoice) {
+        throw new Error(`Provider not available for explicitly selected model: ${model}`);
       }
-      if (chain.length > 0 && chain[0] !== model) {
-        console.log(`[AIService] Trying first available in chain: ${chain[0]}`);
-        return this.executeStreamWithFallback(chain[0], request, routingDecision, attempt + 1);
+
+      // Automatic fallback for auto-selected models: pick next untried model in chain
+      const chain = this.getFallbackChain(request);
+      const nextModel = chain.find(m => !currentAttempted.includes(m));
+      if (nextModel) {
+        console.log(`[AIService] Falling back to: ${nextModel}`);
+        return this.executeStreamWithFallback(nextModel, request, routingDecision, currentAttempted);
       }
       throw new Error(`No available providers for model: ${model}`);
     }
 
     try {
-      console.log(`[AIService] Attempting stream with ${model} (attempt ${attempt + 1})`);
+      console.log(`[AIService] Attempting stream with ${model} (attempt ${currentAttempted.length})`);
       const stream = await provider.stream(request);
       console.log(`[AIService] Stream started with ${model}`);
       return stream;
     } catch (error: any) {
       console.error(`[AIService] Error with ${model}:`, error.message);
       
-      // Check if we have more fallback options
-      const currentIndex = chain.indexOf(model);
-      if (currentIndex >= 0 && currentIndex < chain.length - 1) {
-        const nextModel = chain[currentIndex + 1];
+      // If user explicitly chose this model, do not silently switch providers on failure
+      if (routingDecision.isExplicitChoice) {
+        throw new Error(`Model '${model}' failed: ${error.message}`);
+      }
+
+      // Safe fallback allowed only for auto-selected models (preserving required capabilities)
+      const chain = this.getFallbackChain(request);
+      const nextModel = chain.find(m => !currentAttempted.includes(m));
+      if (nextModel) {
         console.log(`[AIService] Falling back to: ${nextModel}`);
-        return this.executeStreamWithFallback(nextModel, request, routingDecision, attempt + 1);
+        return this.executeStreamWithFallback(nextModel, request, routingDecision, currentAttempted);
       }
 
       // No more fallbacks, throw error

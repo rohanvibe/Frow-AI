@@ -62,4 +62,12 @@ export interface RoutingDecision {
   provider: string;
   complexity: ComplexityLevel;
   reasoning: string;
+  isExplicitChoice?: boolean;
 }
+
+export interface RoutingOptions {
+  selectedModel?: string | null;
+  currentMessage?: string;
+  hasImage?: boolean;
+}
+

@@ -19,7 +19,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --test tests/routing.test.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
