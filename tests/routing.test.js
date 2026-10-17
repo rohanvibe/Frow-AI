@@ -292,6 +292,11 @@ const {
   executeSingleToolCall,
   executeToolCalls,
   CHAT_TOOLS,
+  tokenize,
+  prepareRetrievalQuery,
+  rankMemories,
+  retrieveRelevantMemories,
+  buildChatContext,
 } = require(path.join(__dirname, '../src/lib/chat/index.ts'));
 
 test('ChatContext: isSimpleGreetingPrompt correctly identifies greetings vs content', () => {
@@ -431,5 +436,118 @@ test('ChatTools: executeToolCalls processes valid tool call and populates apiMes
   assert.strictEqual(messages[1].name, 'search_web');
   assert.strictEqual(typeof messages[1].content, 'string');
 });
+
+// Tests for Memory Retrieval & Ranking (Issue #4)
+test('ChatMemory: relevant memories rank above irrelevant ones', () => {
+  const memories = [
+    'fitness | Runs 5k every morning before work',
+    'editor | Prefers Neovim with Lua plugins for coding',
+    'diet | Allergic to peanuts and shellfish',
+  ];
+
+  const { ranked } = rankMemories(memories, 'What code editor do I use?');
+  assert(ranked.length > 0, 'Should find relevant memory');
+  assert.strictEqual(ranked[0].tag, 'editor');
+  assert(ranked[0].fact.includes('Neovim'));
+  // The first ranked item must have a higher score than any other match
+  if (ranked.length > 1) {
+    assert(ranked[0].score > ranked[1].score);
+  }
+});
+
+test('ChatMemory: recent conversation context improves retrieval for ambiguous follow-up messages', () => {
+  const memories = [
+    'shoes | Nike Pegasus trail runners are Gore-Tex waterproof',
+    'car | Drives a blue Honda Civic 2020',
+  ];
+
+  // Ambiguous follow-up: "Are they waterproof?" alone doesn't mention "shoes" or "Nike"
+  const history = [
+    { role: 'user', content: 'I need to check the Nike trail shoes I bought' },
+    { role: 'assistant', content: 'You bought the Nike Pegasus trail runners.' },
+  ];
+
+  const query = prepareRetrievalQuery('Are they waterproof?', history);
+  assert(query.includes('waterproof'));
+  assert(query.includes('nike') || query.includes('shoes') || query.includes('pegasus'));
+
+  const { ranked } = rankMemories(memories, query);
+  assert(ranked.length > 0, 'Should disambiguate and find the shoe memory');
+  assert.strictEqual(ranked[0].tag, 'shoes');
+  assert(ranked[0].fact.includes('waterproof'));
+});
+
+test('ChatMemory: irrelevant memories are excluded and return empty prompt', () => {
+  const memories = [
+    'pref | Likes dark mode',
+    'sports | Watches basketball on weekends',
+  ];
+
+  const result = retrieveRelevantMemories(memories, 'What is the capital of Australia?', []);
+  assert.strictEqual(result.matchedMemories.length, 0);
+  assert.strictEqual(result.memoryPrompt, '');
+});
+
+test('ChatMemory: empty queries and no-match results degrade safely', () => {
+  const memories = ['tag | Some user fact'];
+
+  const emptyRes1 = retrieveRelevantMemories(memories, '', []);
+  assert.strictEqual(emptyRes1.matchedMemories.length, 0);
+  assert.strictEqual(emptyRes1.memoryPrompt, '');
+
+  const emptyRes2 = retrieveRelevantMemories(memories, '   ', []);
+  assert.strictEqual(emptyRes2.matchedMemories.length, 0);
+  assert.strictEqual(emptyRes2.memoryPrompt, '');
+
+  const noMatchRes = retrieveRelevantMemories([], 'anything', []);
+  assert.strictEqual(noMatchRes.matchedMemories.length, 0);
+  assert.strictEqual(noMatchRes.memoryPrompt, '');
+});
+
+test('ChatMemory: retrieval failures degrade gracefully with malformed data', () => {
+  const malformedMemories = [null, undefined, 42, { broken: true }, 'valid | fact'];
+
+  const res = retrieveRelevantMemories(malformedMemories, 'fact', []);
+  // Should safely parse without throwing and match the valid fact
+  assert(res.matchedMemories.length > 0);
+  assert(res.matchedMemories[0].fact.includes('fact'));
+});
+
+test('ChatMemory: user isolation is strictly enforced', async () => {
+  let queriedUserId = null;
+  const mockSupabase = {
+    from: (table) => {
+      assert.strictEqual(table, 'profiles');
+      return {
+        select: () => ({
+          eq: (col, val) => {
+            assert.strictEqual(col, 'id');
+            queriedUserId = val;
+            return {
+              maybeSingle: async () => ({
+                data: {
+                  custom_instructions: '',
+                  ai_memory: ['secret | Memory exclusively for ' + val],
+                },
+              }),
+            };
+          },
+        }),
+      };
+    },
+  };
+
+  const userA = { id: 'user_123', user_metadata: { full_name: 'User A' }, app_metadata: { role: 'User' } };
+  const ctxA = await buildChatContext(mockSupabase, userA, [], 'Tell me my secret');
+  assert.strictEqual(queriedUserId, 'user_123');
+  assert(ctxA.apiMessages[0].content.includes('Memory exclusively for user_123'));
+
+  const userB = { id: 'user_456', user_metadata: { full_name: 'User B' }, app_metadata: { role: 'User' } };
+  const ctxB = await buildChatContext(mockSupabase, userB, [], 'Tell me my secret');
+  assert.strictEqual(queriedUserId, 'user_456');
+  assert(ctxB.apiMessages[0].content.includes('Memory exclusively for user_456'));
+  assert(!ctxB.apiMessages[0].content.includes('user_123'));
+});
+
 
 

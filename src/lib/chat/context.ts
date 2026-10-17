@@ -30,56 +30,18 @@ export function isSimpleGreetingPrompt(message?: string, image?: string): boolea
   )
 }
 
+import { retrieveRelevantMemories } from './memory'
+
 /**
- * Filters memories based on active conversation context
+ * Filters and ranks memories based on query relevance and recency.
+ * (Backwards-compatible wrapper around retrieveRelevantMemories)
  */
-function filterMemories(memories: any[], history: any[], message?: string): { memoryPrompt: string } {
-  if (!Array.isArray(memories) || memories.length === 0) {
-    return { memoryPrompt: '' }
-  }
-
-  const userContextStr = (
-    history.slice(-3).map((h: any) => h.content || '').join(' ') + ' ' + (message || '')
-  ).toLowerCase()
-
-  const filteredMemories = memories
-    .map((m: any, i: number) => {
-      if (typeof m === 'string' && m.includes('|')) {
-        const parts = m.split('|')
-        const tag = parts[0].trim()
-        const fact = parts.slice(1).join('|').trim()
-        return { id: i, tag, fact, raw: m }
-      }
-      return { id: i, tag: '', fact: m, raw: m }
-    })
-    .filter(item => {
-      if (!item.tag) return true
-      if (history.length <= 2) return true
-      return (
-        userContextStr.includes(item.tag.toLowerCase()) ||
-        userContextStr.includes('remember') ||
-        userContextStr.includes('forget') ||
-        userContextStr.length < 20
-      )
-    })
-
-  if (filteredMemories.length === 0) {
-    return { memoryPrompt: '' }
-  }
-
-  const memoryList = filteredMemories.map(m => `[ID: ${m.id}] ${m.raw}`).join('\n')
-  const tagList = memories
-    .map((m: any) => (typeof m === 'string' && m.includes('|') ? m.split('|')[0].trim() : ''))
-    .filter(Boolean)
-    .filter((val, i, arr) => arr.indexOf(val) === i)
-    .join(', ')
-
-  let memoryPrompt = `ACTIVE MEMORY FACTS:\n${memoryList}`
-  if (tagList && filteredMemories.length < memories.length) {
-    memoryPrompt += `\n\n(HIDDEN TAGS: ${tagList}. Mention these to load more facts.)`
-  }
-
-  return { memoryPrompt }
+export function filterMemories(
+  memories: any[],
+  history: any[],
+  message?: string
+): { memoryPrompt: string; hiddenTags?: string[] } {
+  return retrieveRelevantMemories(memories, message, history)
 }
 
 /**
