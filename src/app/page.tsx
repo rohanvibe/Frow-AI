@@ -1175,9 +1175,26 @@ export default function ChatPage() {
           .select('preferred_model')
           .eq('id', user.id)
           .maybeSingle()
-        
+
         if (profile?.preferred_model) {
-          setSelectedModel(profile.preferred_model)
+          // Remap obsolete model IDs that were saved before a model migration.
+          // Any ID not in AI_MODELS falls back to 'auto' to prevent
+          // "Provider not available for explicitly selected model" errors.
+          const OBSOLETE_MODEL_MAP: Record<string, ModelId> = {
+            'gemini-2.0-flash-exp': 'gemini-2.5-flash',
+            'gemini-2.0-flash':     'gemini-2.5-flash',
+            'gemini-1.5-flash':     'gemini-2.5-flash',
+            'gemini-1.5-pro':       'gemini-2.5-flash',
+          };
+          const saved = profile.preferred_model as string;
+          const validIds = AI_MODELS.map(m => m.id as string);
+          const remapped = OBSOLETE_MODEL_MAP[saved];
+          const resolved: ModelId = remapped
+            ? remapped
+            : validIds.includes(saved)
+              ? (saved as ModelId)
+              : 'auto';
+          setSelectedModel(resolved);
         }
       }
     }
