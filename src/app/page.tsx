@@ -1671,8 +1671,12 @@ export default function ChatPage() {
       .single()
     
     if (data) {
-      setChats([data, ...chats])
+      skipFetchRef.current = true
+      setMessages([])
+      setInput('')
+      setAttachedFile(null)
       setCurrentChatId(data.id)
+      setChats(prev => [data, ...prev.filter(c => c.id !== data.id)])
       trackEvent('chat_started', { method: 'button' })
       toast("New chat created", "success")
     }
@@ -1902,22 +1906,33 @@ export default function ChatPage() {
       }
     }
 
-    // Force immediate naming for new chats or if the current title is poor
+    // Automatic title generation for new conversations on first user prompt
     const currentChat = chats.find(c => c.id === chatId)
-    const isPoorTitle = !currentChat || currentChat.title === 'New Chat' || (typeof currentChat.title === 'string' && (currentChat.title.toLowerCase().includes('help') || currentChat.title.toLowerCase().includes('ai')))
-    
-    if (wasJustCreated || isPoorTitle) {
+    const isFirstMessage = messages.length === 0
+    const hasDefaultTitle = !currentChat || currentChat.title === 'New Chat' || currentChat.title === 'Untitled Chat'
+    const shouldGenerateTitle = (wasJustCreated || isFirstMessage || hasDefaultTitle) && hasDefaultTitle && !isGuest
+
+    if (shouldGenerateTitle && chatId) {
+      const activeChatId = chatId
       fetch('/api/chat/title', {
         method: 'POST',
-        body: JSON.stringify({ messages: [...messages, tempUserMsg].slice(-5) })
-      }).then(res => res.json()).then(titleData => {
-        if (titleData.title && titleData.title.toLowerCase() !== 'new chat' && typeof titleData.title === 'string' && !titleData.title.toLowerCase().includes('help')) {
-           const newTitle = titleData.title;
-           supabase.from('chats').update({ title: newTitle }).eq('id', chatId!).then(() => {
-             setChats(prev => prev.map(c => c.id === chatId ? { ...c, title: newTitle } : c))
-           })
-        }
-      }).catch(err => console.error("Naming failed:", err))
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          chatId: activeChatId,
+          messages: [{ role: 'user', content: displayContent }] 
+        })
+      })
+        .then(res => res.json())
+        .then(titleData => {
+          if (titleData?.title && typeof titleData.title === 'string') {
+            const newTitle = titleData.title.trim()
+            if (newTitle && newTitle.toLowerCase() !== 'new chat' && newTitle.toLowerCase() !== 'untitled chat') {
+              setChats(prev => prev.map(c => c.id === activeChatId ? { ...c, title: newTitle } : c))
+              void supabase.from('chats').update({ title: newTitle }).eq('id', activeChatId)
+            }
+          }
+        })
+        .catch(err => console.error("Title generation failed:", err))
     }
     
     // Start DB insert immediately so its created_at timestamp is earlier than the assistant's
@@ -2098,21 +2113,6 @@ export default function ChatPage() {
       } else {
         // BYOK logic... (same as before but with abort signal support)
       }
-
-        // Secondary naming fallback (if first one failed or for existing New Chats)
-        const currentChat = chats.find(c => c.id === chatId)
-        if (currentChat?.title === 'New Chat' && !isGuest) {
-           fetch('/api/chat/title', {
-             method: 'POST',
-             body: JSON.stringify({ messages: [...messages, { role: 'assistant', content: finalContent }] })
-           }).then(res => res.json()).then(data => {
-             if (data.title) {
-               supabase.from('chats').update({ title: data.title }).eq('id', chatId!).then(() => {
-                 setChats(prev => prev.map(c => c.id === chatId ? { ...c, title: data.title } : c))
-               })
-             }
-           }).catch(err => console.error("Title generation failed:", err))
-        }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         process.env.NODE_ENV === 'development' && console.error("Fetch error:", err)
