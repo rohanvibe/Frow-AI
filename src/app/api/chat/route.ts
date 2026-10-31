@@ -10,7 +10,10 @@ import {
   executeToolCalls,
   executeChatCompletion,
   createDirectStreamResponse,
-  createChatStreamResponse,
+  COPYRIGHT_REFUSAL,
+  isCopyrightReproductionRequest,
+  shouldBlockCopyrightOutput,
+  checkCopyrightStream,
 } from '@/lib/chat'
 
 export const dynamic = 'force-dynamic'
@@ -40,6 +43,17 @@ export async function POST(req: Request) {
 
     if (!message && history.length === 0) {
       return NextResponse.json({ error: 'Message or history is required' }, { status: 400 })
+    }
+
+    const copyrightPrompt =
+      message || [...history].reverse().find((item: any) => item?.role === 'user')?.content || ''
+
+    // Block explicit requests for substantial reproduction before calling any provider.
+    if (isCopyrightReproductionRequest(copyrightPrompt)) {
+      if (!requestedStream) {
+        return NextResponse.json({ content: COPYRIGHT_REFUSAL, images: [] })
+      }
+      return createDirectStreamResponse(COPYRIGHT_REFUSAL)
     }
 
     // 3. Resolve deterministic image intent (generation or search) before LLM
@@ -109,7 +123,12 @@ export async function POST(req: Request) {
         forceProvider: routingDecision.provider,
         routingDecision,
       })
-      return createChatStreamResponse(finalStream, detectedImages)
+      const safeContent = await checkCopyrightStream(finalStream, copyrightPrompt)
+      return createDirectStreamResponse(safeContent, detectedImages)
+    }
+
+    if (shouldBlockCopyrightOutput(copyrightPrompt, messageObj.content || '')) {
+      messageObj.content = COPYRIGHT_REFUSAL
     }
 
     // 8. Deliver non-tool response (streamed directly or JSON)

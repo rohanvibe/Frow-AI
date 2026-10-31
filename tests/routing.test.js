@@ -300,7 +300,41 @@ const {
   cleanGeneratedTitle,
   generateFallbackTitle,
   isDefaultChatTitle,
+  isCopyrightReproductionRequest,
+  shouldBlockCopyrightOutput,
+  checkCopyrightStream,
+  COPYRIGHT_REFUSAL,
 } = require(path.join(__dirname, '../src/lib/chat/index.ts'));
+
+test('Copyright guard: blocks requests to reproduce protected material', () => {
+  assert.strictEqual(isCopyrightReproductionRequest('Give me the full lyrics to Example Song'), true);
+  assert.strictEqual(isCopyrightReproductionRequest('Provide chapter 4 of Example Novel'), true);
+  assert.strictEqual(isCopyrightReproductionRequest('Paste the complete answer key for this paid workbook'), true);
+});
+
+test('Copyright guard: allows discussion, transformations, original work, and public-domain works', () => {
+  assert.strictEqual(isCopyrightReproductionRequest('Summarize the plot of Example Novel'), false);
+  assert.strictEqual(isCopyrightReproductionRequest('Analyze the themes in this poem'), false);
+  assert.strictEqual(isCopyrightReproductionRequest('Write an original story about a lost astronaut'), false);
+  assert.strictEqual(isCopyrightReproductionRequest('Provide the full text of this public domain poem'), false);
+});
+
+test('Copyright guard: checks complete streamed output before returning it', async () => {
+  const encoder = new TextEncoder();
+  const sourceText = Array.from({ length: 50 }, (_, i) => `sourceword${i}`).join(' ');
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(sourceText));
+      controller.close();
+    },
+  });
+
+  assert.strictEqual(await checkCopyrightStream(stream, sourceText), COPYRIGHT_REFUSAL);
+  assert.strictEqual(
+    shouldBlockCopyrightOutput('Summarize this story', 'A concise discussion of its themes.'),
+    false
+  );
+});
 
 test('ChatContext: isSimpleGreetingPrompt correctly identifies greetings vs content', () => {
   assert.strictEqual(isSimpleGreetingPrompt('hello'), true);
