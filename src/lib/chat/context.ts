@@ -18,16 +18,7 @@ export interface BuiltChatContext {
 export function isSimpleGreetingPrompt(message?: string, image?: string): boolean {
   if (image) return false
   const prompt = (message || '').toLowerCase().trim()
-  return (
-    prompt.length < 15 &&
-    (prompt === 'hello' ||
-      prompt === 'hi' ||
-      prompt === 'hey' ||
-      prompt === 'hola' ||
-      prompt.startsWith('hello ') ||
-      prompt.startsWith('hi ') ||
-      prompt.startsWith('hey '))
-  )
+  return /^(hello|hi|hey|hola)( there)?[!.?]*$/i.test(prompt)
 }
 
 import { retrieveRelevantMemories } from './memory'
@@ -65,7 +56,7 @@ export function buildSystemPrompt(params: {
   } = params
 
   return `You are Frow, an elite AI partner for high-leverage builders. You prioritize systems thinking, execution, and brutal honesty.
-When a user greets you (e.g., "hello", "hey", "hi"), respond warmly and professionally. Suggested greeting: "Hey 👋 I'm ready when you are—what do you want to work on, build, or figure out today?"
+When a user sends only a greeting (e.g., "hello", "hey", "hi"), respond warmly and briefly. Do not use a canned welcome message when the user asks a question or gives a task.
 
 ### 🧠 CORE PHILOSOPHY
 - **Brutal Truth**: 90% of ideas are average. Execution and positioning are everything. If a user's idea is weak, push back and help them refine it into something elite.
