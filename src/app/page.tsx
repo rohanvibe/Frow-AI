@@ -5,6 +5,7 @@ import { useShortcuts, ShortcutContextMenu, SHORTCUT_LABELS, DEFAULT_SHORTCUTS, 
 import type { ShortcutId, ContextMenuState } from '@/hooks/useShortcuts'
 import { createClient } from '@/utils/supabase/client'
 import { applyGeneratedChatTitle, isDefaultChatTitle } from '@/lib/chat/title'
+import { getResponseAnchorId } from '@/lib/chat/navigation'
 import { useRouter } from 'next/navigation'
 import { 
   Button, 
@@ -2609,7 +2610,7 @@ export default function ChatPage() {
                   return (
                     <button
                       key={m.id}
-                      onClick={() => { setIsSidebarOpen(true); scrollToMessage(m.id); }}
+                      onClick={() => { setIsSidebarOpen(true); scrollToMessage(getResponseAnchorId(messages, m.id)); }}
                       className={`w-2.5 h-2.5 rounded-full transition-all z-10 ${isActive ? 'bg-purple-500 scale-125 shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'bg-gray-600 hover:bg-purple-400'}`}
                     />
                   )
@@ -2923,7 +2924,7 @@ export default function ChatPage() {
                     {demoSidebarItems.map((item) => (
                       <button
                         key={item.id}
-                        onClick={() => scrollToMessage(item.targetId)}
+                        onClick={() => scrollToMessage(getResponseAnchorId(messages, item.targetId))}
                         className="w-full text-left p-4 rounded-2xl border border-blue-500/10 bg-blue-500/5 hover:bg-blue-600/10 hover:border-blue-500/30 transition-all group active:scale-[0.98] flex items-center gap-3"
                       >
                          <span className="text-[10px] font-black w-6 h-6 rounded-lg flex items-center justify-center shrink-0 bg-blue-500/20 text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
@@ -2962,10 +2963,10 @@ export default function ChatPage() {
                                  key={msg.id}
                                  onClick={() => { 
                                    trackEvent('sidebar_click', { type: 'thread_anchor' });
-                                   scrollToMessage(msg.id); 
+                                   scrollToMessage(getResponseAnchorId(messages, msg.id));
                                    if (isMobile) setIsSidebarOpen(false); 
                                  }}
-                                 onDoubleClick={() => copyToClipboard(window.location.href.split('#')[0] + '#msg-' + msg.id)}
+                                 onDoubleClick={() => copyToClipboard(window.location.href.split('#')[0] + '#msg-' + getResponseAnchorId(messages, msg.id))}
                                  title={msg.content}
                                  className={`w-full text-left p-2 rounded-xl transition-all group flex items-center gap-2 ${activeSidebarMsgId === msg.id ? 'bg-(--surface-tertiary) ring-1 ring-blue-500/30' : 'hover:bg-(--surface-tertiary)'}`}
                                >
@@ -2990,18 +2991,18 @@ export default function ChatPage() {
                            key={msg.id}
                            onClick={() => { 
                              trackEvent('sidebar_click', { type: 'chat_select' });
-                             scrollToMessage(msg.id); 
+                             scrollToMessage(getResponseAnchorId(messages, msg.id));
                              if (isMobile) setIsSidebarOpen(false); 
                            }}
-                           onDoubleClick={() => copyToClipboard(window.location.href.split('#')[0] + '#msg-' + msg.id)}
+                           onDoubleClick={() => copyToClipboard(window.location.href.split('#')[0] + '#msg-' + getResponseAnchorId(messages, msg.id))}
                            title={typeof msg.content === 'string' ? msg.content : "Message preview"}
                            className={`w-full text-left p-4 rounded-2xl border transition-all group active:scale-[0.98] relative overflow-hidden ${isActive || activeSidebarMsgId === msg.id ? 'bg-blue-600/10 border-blue-500/30' : 'border-white/3 bg-white/1 hover:bg-blue-600/5 hover:border-blue-500/20'}`}
                          >
                            <div className="flex items-center justify-between gap-4 relative z-10">
                              <div className="flex items-center gap-3 min-w-0 flex-1">
                                <span 
-                                 onClick={(e) => { e.stopPropagation(); copyToClipboard(window.location.href.split('#')[0] + '#msg-' + msg.id); }}
-                                 title="Click to copy direct link"
+                                 onClick={(e) => { e.stopPropagation(); copyToClipboard(window.location.href.split('#')[0] + '#msg-' + getResponseAnchorId(messages, msg.id)); }}
+                                 title="Click to copy response link"
                                  className={`cursor-pointer active:scale-95 text-[10px] font-black w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${isActive || isBookmarked ? 'text-blue-400 bg-blue-500/20 border-blue-500/30' : 'text-gray-500 bg-white/5 border-white/5 group-hover:text-blue-500'}`}
                                >
                                   {idx + 1}

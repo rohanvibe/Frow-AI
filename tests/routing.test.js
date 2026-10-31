@@ -305,7 +305,21 @@ const {
   shouldBlockCopyrightOutput,
   checkCopyrightStream,
   COPYRIGHT_REFUSAL,
+  getResponseAnchorId,
 } = require(path.join(__dirname, '../src/lib/chat/index.ts'));
+
+test('ChatNavigation: sidebar prompt anchors resolve to their assistant replies', () => {
+  const messages = [
+    { id: 'user-1', role: 'user', content: 'Explain black holes' },
+    { id: 'assistant-1', role: 'assistant', content: 'Black holes are regions of spacetime...' },
+    { id: 'user-2', role: 'user', content: 'What about their event horizons?' },
+    { id: 'assistant-2-placeholder', role: 'assistant', content: '' },
+  ];
+
+  assert.strictEqual(getResponseAnchorId(messages, 'user-1'), 'assistant-1');
+  assert.strictEqual(getResponseAnchorId(messages, 'user-2'), 'assistant-2-placeholder');
+  assert.strictEqual(getResponseAnchorId(messages, 'missing-user'), 'missing-user');
+});
 
 function makeTitleSupabaseMock(chat) {
   return {
