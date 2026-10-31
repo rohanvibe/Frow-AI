@@ -321,6 +321,43 @@ test('ChatNavigation: sidebar prompt anchors resolve to their assistant replies'
   assert.strictEqual(getResponseAnchorId(messages, 'missing-user'), 'missing-user');
 });
 
+test('Chat API: internal errors are logged without returning stack details', async () => {
+  const serverModulePath = path.join(__dirname, '../src/utils/supabase/server.ts');
+  const originalServerModule = require.cache[serverModulePath];
+  const serverModule = {
+    exports: {
+      createClient: async () => ({
+        auth: { getUser: async () => { throw new Error('secret database detail'); } },
+      }),
+    },
+  };
+  require.cache[serverModulePath] = serverModule;
+  const routePath = require.resolve(path.join(__dirname, '../src/app/api/chat/route.ts'));
+  delete require.cache[routePath];
+  const originalConsoleError = console.error;
+  let serverLog;
+  console.error = (...args) => { serverLog = args; };
+
+  try {
+    const { POST } = require(routePath);
+    const response = await POST(new Request('http://localhost/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Hello' }),
+    }));
+    const payload = await response.json();
+    assert.strictEqual(response.status, 500);
+    assert.strictEqual(payload.error, 'The chat request failed. Please try again.');
+    assert.strictEqual(Object.hasOwn(payload, 'details'), false);
+    assert.match(String(serverLog?.[1]?.stack), /secret database detail/);
+  } finally {
+    console.error = originalConsoleError;
+    delete require.cache[routePath];
+    if (originalServerModule) require.cache[serverModulePath] = originalServerModule;
+    else delete require.cache[serverModulePath];
+  }
+});
+
 function makeTitleSupabaseMock(chat) {
   return {
     auth: { getUser: async () => ({ data: { user: { id: chat.user_id } } }) },
@@ -387,6 +424,21 @@ test('Copyright guard: checks complete streamed output before returning it', asy
     shouldBlockCopyrightOutput('Summarize this story', 'A concise discussion of its themes.'),
     false
   );
+});
+
+test('Copyright guard: summaries and explanations can reuse supplied source passages', () => {
+  const source = Array.from({ length: 140 }, (_, i) => `documentword${i}`).join(' ');
+  const quotedSentence = source.split(' ').slice(40, 65).join(' ');
+  const summary = `The document describes its main findings and limitations. ${quotedSentence}. Overall, its conclusions depend on the stated assumptions and the evidence it presents.`;
+  const explanation = `The key idea is easier to understand when we focus on how its claims relate. ${quotedSentence}. This passage supports the author's broader point, while the surrounding evidence adds important context and qualifications.`;
+
+  assert.strictEqual(shouldBlockCopyrightOutput(`Summarize this document: ${source}`, summary), false);
+  assert.strictEqual(shouldBlockCopyrightOutput(`Explain this document: ${source}`, explanation), false);
+});
+
+test('Copyright guard: still blocks a substantially verbatim response to supplied text', () => {
+  const source = Array.from({ length: 100 }, (_, i) => `protectedword${i}`).join(' ');
+  assert.strictEqual(shouldBlockCopyrightOutput('Repeat this passage', source), true);
 });
 
 test('ChatContext: isSimpleGreetingPrompt correctly identifies greetings vs content', () => {

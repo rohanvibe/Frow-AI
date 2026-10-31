@@ -140,7 +140,7 @@ export function generateFallbackTitle(promptText?: string | null): string {
     const action = ({ learn: 'Learning', build: 'Building', create: 'Creating', make: 'Building', improve: 'Improving', fix: 'Fixing', understand: 'Understanding', study: 'Learning' } as Record<string, string>)[verb]
     semanticTitle = topicTitle(learning[2], action)
   } else if (question) {
-    let topic = question[1]
+    const topic = question[1]
       .replace(/^(?:do|does|did|is|are|can|could|would|will)\s+/i, '')
       .replace(/\b(work|works|function|functions|happen|happens|mean|means)\??$/i, '')
       .replace(/^(?:the|a|an)\s+/i, '')

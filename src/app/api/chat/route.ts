@@ -140,7 +140,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('Chat API Error:', error)
     return NextResponse.json(
-      { error: error.message || 'Server error', details: error.stack },
+      { error: 'The chat request failed. Please try again.' },
       { status: 500 }
     )
   }

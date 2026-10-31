@@ -47,17 +47,32 @@ function normalizeForMatch(value: string): string[] {
 export function reproducesSuppliedText(prompt: string, output: string): boolean {
   const source = normalizeForMatch(prompt)
   const result = normalizeForMatch(output)
-  if (source.length < 40 || result.length < 40) return false
+  if (source.length < 30 || result.length < 30) return false
 
-  // Flag a shared run of 35 words, or a large answer that substantially
-  // reproduces the supplied material. Short quotations remain available.
-  const sourcePhrases = new Set<string>()
-  const phraseLength = Math.min(35, Math.max(20, Math.ceil(result.length * 0.5)))
-  for (let index = 0; index <= source.length - phraseLength; index++) {
-    sourcePhrases.add(source.slice(index, index + phraseLength).join(' '))
+  // A summary or explanation can legitimately reuse a passage. Only block when
+  // the response itself is overwhelmingly one continuous verbatim passage.
+  const minimumRun = Math.max(30, Math.ceil(result.length * 0.8))
+  const seedLength = 8
+  const sourcePhrases = new Map<string, number[]>()
+  for (let index = 0; index <= source.length - seedLength; index++) {
+    const phrase = source.slice(index, index + seedLength).join(' ')
+    const positions = sourcePhrases.get(phrase) || []
+    if (positions.length < 100) positions.push(index)
+    sourcePhrases.set(phrase, positions)
   }
-  for (let index = 0; index <= result.length - phraseLength; index++) {
-    if (sourcePhrases.has(result.slice(index, index + phraseLength).join(' '))) return true
+
+  for (let outputIndex = 0; outputIndex <= result.length - seedLength; outputIndex++) {
+    const phrase = result.slice(outputIndex, outputIndex + seedLength).join(' ')
+    for (const sourceIndex of sourcePhrases.get(phrase) || []) {
+      let run = seedLength
+      while (
+        run < minimumRun &&
+        source[sourceIndex + run] === result[outputIndex + run]
+      ) {
+        run++
+      }
+      if (run >= minimumRun) return true
+    }
   }
   return false
 }

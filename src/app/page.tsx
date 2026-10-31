@@ -2119,9 +2119,14 @@ export default function ChatPage() {
             const newTitle = typeof titleData?.title === 'string' ? titleData.title.trim() : ''
             if (newTitle && !isDefaultChatTitle(newTitle)) {
               setChats(prev => applyGeneratedChatTitle(prev, activeChatId, newTitle))
+            } else {
+              titleRequestsRef.current.delete(activeChatId)
             }
           })
-          .catch(err => console.error('Title generation failed:', err))
+          .catch(err => {
+            titleRequestsRef.current.delete(activeChatId)
+            console.error('Title generation failed:', err)
+          })
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
