@@ -300,11 +300,50 @@ const {
   cleanGeneratedTitle,
   generateFallbackTitle,
   isDefaultChatTitle,
+  applyGeneratedChatTitle,
   isCopyrightReproductionRequest,
   shouldBlockCopyrightOutput,
   checkCopyrightStream,
   COPYRIGHT_REFUSAL,
 } = require(path.join(__dirname, '../src/lib/chat/index.ts'));
+
+function makeTitleSupabaseMock(chat) {
+  return {
+    auth: { getUser: async () => ({ data: { user: { id: chat.user_id } } }) },
+    from(table) {
+      assert.strictEqual(table, 'chats');
+      let operation = 'select';
+      let updates = null;
+      const filters = {};
+      const query = {
+        select() {
+          if (operation !== 'update') operation = 'select';
+          return query;
+        },
+        update(values) {
+          operation = 'update';
+          updates = values;
+          return query;
+        },
+        eq(key, value) {
+          filters[key] = value;
+          return query;
+        },
+        is(key, value) {
+          filters[key] = value;
+          return query;
+        },
+        async maybeSingle() {
+          const matches = Object.entries(filters).every(([key, value]) => chat[key] === value);
+          if (!matches) return { data: null, error: null };
+          if (operation === 'update') Object.assign(chat, updates);
+          return { data: { title: chat.title }, error: null };
+        },
+      };
+      return query;
+    },
+  };
+}
 
 test('Copyright guard: blocks requests to reproduce protected material', () => {
   assert.strictEqual(isCopyrightReproductionRequest('Give me the full lyrics to Example Song'), true);
@@ -605,16 +644,163 @@ test('ChatTitle: cleanGeneratedTitle truncates long titles appropriately', () =>
   assert(cleaned.endsWith('...'), 'Should end with ellipsis');
 });
 
-test('ChatTitle: generateFallbackTitle extracts 3-5 clean words from prompt', () => {
+test('ChatTitle: generateFallbackTitle captures topic and intent instead of the prompt prefix', () => {
   const prompt = 'How do I build an interactive dashboard using React and Tailwind CSS?';
   const fallback = generateFallbackTitle(prompt);
-  assert.strictEqual(fallback, 'How do I build an');
+  assert.strictEqual(fallback, 'Building Interactive Dashboard');
 
   const fileContextPrompt = '[FILE CONTEXT: test.csv]\n```csv\na,b,c\n```\nAnalyze this sales data and find top trends.';
   const fallbackFile = generateFallbackTitle(fileContextPrompt);
-  assert(fallbackFile.startsWith('Analyze this sales data'));
+  assert(fallbackFile.startsWith('Analyze This Sales Data'));
   assert(!fallbackFile.includes('FILE CONTEXT'));
   assert(!fallbackFile.includes('```'));
+});
+
+test('ChatTitle: fallback titles reflect common user intents and topics', () => {
+  assert.strictEqual(generateFallbackTitle('How do black holes work?'), 'Understanding Black Holes');
+  assert.strictEqual(generateFallbackTitle('Help me fix this React error'), 'Fixing React Error');
+  assert.strictEqual(generateFallbackTitle('I want to learn Japanese'), 'Learning Japanese');
+  assert.strictEqual(generateFallbackTitle('Why does Ubuntu use orange as its accent colour?'), "Ubuntu's Design Philosophy");
+  assert.strictEqual(generateFallbackTitle("Let's build an AI chatbot"), 'Building AI Chatbot');
+  assert.strictEqual(generateFallbackTitle('What is the difference between RAM and storage?'), 'RAM vs Storage');
+  assert.strictEqual(generateFallbackTitle('Can you explain how compound interest works?'), 'Understanding Compound Interest');
+  assert.strictEqual(generateFallbackTitle('I want to improve my drawing skills'), 'Improving Drawing Skills');
+});
+
+test('ChatTitle: sidebar title updates do not replace a manual rename', () => {
+  const chats = [
+    { id: 'chat-default', title: 'New Chat' },
+    { id: 'chat-renamed', title: 'My Project Notes' },
+  ];
+  const updated = applyGeneratedChatTitle(chats, 'chat-default', 'Building an AI Chatbot');
+  assert.strictEqual(updated[0].title, 'Building an AI Chatbot');
+  assert.strictEqual(updated[1].title, 'My Project Notes');
+
+  const afterManualRename = applyGeneratedChatTitle(
+    [{ id: 'chat-1', title: 'Research Plan' }],
+    'chat-1',
+    'Building an AI Chatbot'
+  );
+  assert.strictEqual(afterManualRename[0].title, 'Research Plan');
+});
+
+test('ChatTitle API: generates from the exchange and persists to the owned chat', async () => {
+  const serverModulePath = path.join(__dirname, '../src/utils/supabase/server.ts');
+  const aiModulePath = path.join(__dirname, '../src/lib/ai/index.ts');
+  const originalServerModule = require.cache[serverModulePath];
+  const serverModule = { exports: { createClient: null } };
+  let capturedMessages;
+  const chat = { id: 'chat-title-1', user_id: 'user-title-1', title: 'New Chat' };
+  const supabase = makeTitleSupabaseMock(chat);
+  serverModule.exports.createClient = async () => supabase;
+  require.cache[serverModulePath] = serverModule;
+
+  const aiModule = require(aiModulePath);
+  const originalComplete = aiModule.aiService.complete;
+  aiModule.aiService.complete = async (messages) => {
+    capturedMessages = messages;
+    return { content: 'Building an AI Chatbot' };
+  };
+
+  try {
+    const routePath = require.resolve(path.join(__dirname, '../src/app/api/chat/title/route.ts'));
+    delete require.cache[routePath];
+    const { POST } = require(routePath);
+    const response = await POST(new Request('http://localhost/api/chat/title', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chatId: chat.id,
+        messages: [
+          { role: 'user', content: 'I want to build an AI chatbot.' },
+          { role: 'assistant', content: 'We can start with model selection and API integration.' },
+        ],
+      }),
+    }));
+
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual((await response.json()).title, 'Building an AI Chatbot');
+    assert.strictEqual(chat.title, 'Building an AI Chatbot');
+    assert(capturedMessages[1].content.includes('Assistant: We can start with model selection'));
+  } finally {
+    aiModule.aiService.complete = originalComplete;
+    if (originalServerModule) require.cache[serverModulePath] = originalServerModule;
+    else delete require.cache[serverModulePath];
+  }
+});
+
+test('ChatTitle API: preserves a manual rename made while title generation is running', async () => {
+  const serverModulePath = path.join(__dirname, '../src/utils/supabase/server.ts');
+  const aiModulePath = path.join(__dirname, '../src/lib/ai/index.ts');
+  const originalServerModule = require.cache[serverModulePath];
+  const serverModule = { exports: { createClient: null } };
+  const chat = { id: 'chat-title-race', user_id: 'user-title-1', title: 'New Chat' };
+  serverModule.exports.createClient = async () => makeTitleSupabaseMock(chat);
+  require.cache[serverModulePath] = serverModule;
+
+  const aiModule = require(aiModulePath);
+  const originalComplete = aiModule.aiService.complete;
+  let completeCalls = 0;
+  aiModule.aiService.complete = async () => {
+    completeCalls++;
+    chat.title = 'My Manual Rename';
+    return { content: 'Building an AI Chatbot' };
+  };
+
+  try {
+    const routePath = require.resolve(path.join(__dirname, '../src/app/api/chat/title/route.ts'));
+    delete require.cache[routePath];
+    const { POST } = require(routePath);
+    const request = () => new Request('http://localhost/api/chat/title', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatId: chat.id, prompt: 'I want to build an AI chatbot.' }),
+    });
+    const response = await POST(request());
+    assert.strictEqual((await response.json()).title, 'My Manual Rename');
+    assert.strictEqual(chat.title, 'My Manual Rename');
+
+    const nextResponse = await POST(request());
+    assert.strictEqual((await nextResponse.json()).title, 'My Manual Rename');
+    assert.strictEqual(completeCalls, 1, 'a meaningful title should prevent another model request');
+  } finally {
+    aiModule.aiService.complete = originalComplete;
+    if (originalServerModule) require.cache[serverModulePath] = originalServerModule;
+    else delete require.cache[serverModulePath];
+  }
+});
+
+test('ChatTitle API: falls back to a meaningful title when AI generation fails', async () => {
+  const serverModulePath = path.join(__dirname, '../src/utils/supabase/server.ts');
+  const aiModulePath = path.join(__dirname, '../src/lib/ai/index.ts');
+  const originalServerModule = require.cache[serverModulePath];
+  const serverModule = { exports: { createClient: null } };
+  const chat = { id: 'chat-title-fallback', user_id: 'user-title-1', title: 'Untitled Chat' };
+  serverModule.exports.createClient = async () => makeTitleSupabaseMock(chat);
+  require.cache[serverModulePath] = serverModule;
+
+  const aiModule = require(aiModulePath);
+  const originalComplete = aiModule.aiService.complete;
+  aiModule.aiService.complete = async () => { throw new Error('provider unavailable'); };
+
+  try {
+    const routePath = require.resolve(path.join(__dirname, '../src/app/api/chat/title/route.ts'));
+    delete require.cache[routePath];
+    const { POST } = require(routePath);
+    const response = await POST(new Request('http://localhost/api/chat/title', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatId: chat.id, prompt: 'I want to learn Japanese' }),
+    }));
+
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual((await response.json()).title, 'Learning Japanese');
+    assert.strictEqual(chat.title, 'Learning Japanese');
+  } finally {
+    aiModule.aiService.complete = originalComplete;
+    if (originalServerModule) require.cache[serverModulePath] = originalServerModule;
+    else delete require.cache[serverModulePath];
+  }
 });
 
 test('ChatTitle: generateFallbackTitle handles empty or invalid inputs safely', () => {

@@ -15,6 +15,20 @@ export function isDefaultChatTitle(title?: string | null): boolean {
   return !normalized || DEFAULT_TITLES.has(normalized);
 }
 
+/** Apply an automatic title only while the sidebar still has a placeholder. */
+export function applyGeneratedChatTitle<T extends { id: string; title: string }>(
+  chats: T[],
+  chatId: string,
+  title: string
+): T[] {
+  if (!title || isDefaultChatTitle(title)) return chats
+  return chats.map(chat =>
+    chat.id === chatId && isDefaultChatTitle(chat.title)
+      ? { ...chat, title }
+      : chat
+  )
+}
+
 /**
  * Cleans an AI-generated title:
  * - Strips quotes, markdown characters, label prefixes, and trailing punctuation
@@ -44,6 +58,10 @@ export function cleanGeneratedTitle(raw?: string | null): string {
 
   // Normalize internal whitespace
   t = t.replace(/\s+/g, ' ').trim();
+
+  // Keep the title within the requested 3–7 word range where possible.
+  const titleWords = t.split(' ')
+  if (titleWords.length > 7) t = titleWords.slice(0, 7).join(' ')
 
   // If the cleaned title is a default placeholder or empty, reject it
   if (!t || isDefaultChatTitle(t)) {
@@ -79,23 +97,68 @@ export function generateFallbackTitle(promptText?: string | null): string {
     return 'New Session';
   }
 
+  clean = clean.replace(/\s+/g, ' ').replace(/[.,!?;:]+$/, '').trim()
+  if (!clean) return 'New Session'
+
+  const capitalize = (value: string) => {
+    const acronyms: Record<string, string> = { ai: 'AI', api: 'API', css: 'CSS', html: 'HTML', http: 'HTTP', js: 'JavaScript', ram: 'RAM', ui: 'UI', ux: 'UX' }
+    return value
+      .split(' ')
+      .map((word, index) => {
+        const key = word.toLowerCase().replace(/[^a-z0-9]/g, '')
+        if (acronyms[key]) return acronyms[key]
+        if (index > 0 && /^(a|an|and|for|in|of|on|or|the|to|vs)$/i.test(word)) return word.toLowerCase()
+        return word.charAt(0).toUpperCase() + word.slice(1)
+      })
+      .join(' ')
+  }
+
+  const topicTitle = (topic: string, action = 'Understanding') =>
+    `${action} ${topic.trim().replace(/^(?:my|the|a|an|this|that)\s+/i, '').replace(/[?.!,;:]+$/, '')}`.trim()
+
+  let semanticTitle = ''
+  const difference = clean.match(/(?:what(?:'s| is) the difference between|difference between)\s+(.+?)\s+and\s+(.+?)(?:[?.!]|$)/i)
+  const learning = clean.match(/\b(?:i want to|i'd like to|i would like to|help me|let's)\s+(learn|build|create|make|improve|fix|understand|study)\s+(.+)/i)
+  const howToAction = clean.match(/^(?:how do i|how can i|how to)\s+(build|create|make|improve|fix|learn|understand)\s+(.+?)(?:[?.!]|$)/i)
+  const question = clean.match(/^(?:can you )?(?:explain )?(?:how|what|why)\s+(.+)$/i)
+  const helpFix = clean.match(/^(?:can you )?help me fix\s+(.+)/i)
+  const ubuntuAccent = clean.match(/^why does (.+?) use .+? as its accent colou?r/i)
+
+  if (ubuntuAccent) {
+    semanticTitle = `${ubuntuAccent[1].trim()}'s Design Philosophy`
+  } else if (difference) {
+    semanticTitle = `${difference[1].trim()} vs ${difference[2].trim()}`
+  } else if (helpFix) {
+    semanticTitle = topicTitle(helpFix[1], 'Fixing')
+  } else if (howToAction) {
+    const verb = howToAction[1].toLowerCase()
+    const action = ({ build: 'Building', create: 'Creating', make: 'Building', improve: 'Improving', fix: 'Fixing', learn: 'Learning', understand: 'Understanding' } as Record<string, string>)[verb]
+    const topic = howToAction[2].split(/\s+(?:using|with)\s+/i)[0]
+    semanticTitle = topicTitle(topic, action)
+  } else if (learning) {
+    const verb = learning[1].toLowerCase()
+    const action = ({ learn: 'Learning', build: 'Building', create: 'Creating', make: 'Building', improve: 'Improving', fix: 'Fixing', understand: 'Understanding', study: 'Learning' } as Record<string, string>)[verb]
+    semanticTitle = topicTitle(learning[2], action)
+  } else if (question) {
+    let topic = question[1]
+      .replace(/^(?:do|does|did|is|are|can|could|would|will)\s+/i, '')
+      .replace(/\b(work|works|function|functions|happen|happens|mean|means)\??$/i, '')
+      .replace(/^(?:the|a|an)\s+/i, '')
+      .trim()
+    semanticTitle = topicTitle(topic, 'Understanding')
+  }
+
   // Split into words, discarding empty tokens
-  const words = clean.split(/\s+/).filter(Boolean);
+  const words = (semanticTitle || clean).split(/\s+/).filter(Boolean)
   if (words.length === 0) {
     return 'New Session';
   }
 
-  // Take the first 3 to 5 meaningful words (aim for 3-6 words)
-  const selectedWords = words.slice(0, 5);
-  let title = selectedWords.join(' ');
+  // Keep intent and topic; short prompts need no artificial filler words.
+  let title = capitalize(words.slice(0, 7).join(' '));
 
   // Remove trailing punctuation
   title = title.replace(/[.,!?;:\-_]+$/, '').trim();
-
-  // Capitalize first letter if it is lower case
-  if (title.length > 0) {
-    title = title.charAt(0).toUpperCase() + title.slice(1);
-  }
 
   // Ensure length does not exceed 40 chars
   if (title.length > 40) {

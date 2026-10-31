@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from '
 import { useShortcuts, ShortcutContextMenu, SHORTCUT_LABELS, DEFAULT_SHORTCUTS, captureShortcutString } from '@/hooks/useShortcuts'
 import type { ShortcutId, ContextMenuState } from '@/hooks/useShortcuts'
 import { createClient } from '@/utils/supabase/client'
+import { applyGeneratedChatTitle, isDefaultChatTitle } from '@/lib/chat/title'
 import { useRouter } from 'next/navigation'
 import { 
   Button, 
@@ -1216,6 +1217,7 @@ export default function ChatPage() {
   const [onboardingStep, setOnboardingStep] = useState<number>(-1)
   const [mascotMessage, setMascotMessage] = useState<string | null>(null)
   const prevLoadingRef = useRef(false)
+  const titleRequestsRef = useRef(new Set<string>())
 
   // Show mascot celebration toast when AI finishes a long response
   useEffect(() => {
@@ -1698,7 +1700,7 @@ export default function ChatPage() {
     if (!editingTitle.trim()) return
     const { error } = await supabase.from('chats').update({ title: editingTitle }).eq('id', id)
     if (!error) {
-      setChats(chats.map(c => c.id === id ? { ...c, title: editingTitle } : c))
+      setChats(prev => prev.map(c => c.id === id ? { ...c, title: editingTitle } : c))
       setEditingChatId(null)
       toast("Title updated", "success")
     }
@@ -1906,34 +1908,11 @@ export default function ChatPage() {
       }
     }
 
-    // Automatic title generation for new conversations on first user prompt
+    // Remember whether this chat needs its one automatic title request.
     const currentChat = chats.find(c => c.id === chatId)
     const isFirstMessage = messages.length === 0
-    const hasDefaultTitle = !currentChat || currentChat.title === 'New Chat' || currentChat.title === 'Untitled Chat'
+    const hasDefaultTitle = !currentChat || isDefaultChatTitle(currentChat.title)
     const shouldGenerateTitle = (wasJustCreated || isFirstMessage || hasDefaultTitle) && hasDefaultTitle && !isGuest
-
-    if (shouldGenerateTitle && chatId) {
-      const activeChatId = chatId
-      fetch('/api/chat/title', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          chatId: activeChatId,
-          messages: [{ role: 'user', content: displayContent }] 
-        })
-      })
-        .then(res => res.json())
-        .then(titleData => {
-          if (titleData?.title && typeof titleData.title === 'string') {
-            const newTitle = titleData.title.trim()
-            if (newTitle && newTitle.toLowerCase() !== 'new chat' && newTitle.toLowerCase() !== 'untitled chat') {
-              setChats(prev => prev.map(c => c.id === activeChatId ? { ...c, title: newTitle } : c))
-              void supabase.from('chats').update({ title: newTitle }).eq('id', activeChatId)
-            }
-          }
-        })
-        .catch(err => console.error("Title generation failed:", err))
-    }
     
     // Start DB insert immediately so its created_at timestamp is earlier than the assistant's
     const userMsgInsert = !isGuest 
@@ -2110,8 +2089,38 @@ export default function ChatPage() {
              toast("Storage sync failed. History may be incomplete.", "warning")
           }
         }
+
       } else {
         // BYOK logic... (same as before but with abort signal support)
+      }
+
+      // Generate one title after the first answer, when the conversation has enough context.
+      // The endpoint owns persistence; this client only updates the sidebar optimistically.
+      if (finalContent.trim() && shouldGenerateTitle && chatId && !titleRequestsRef.current.has(chatId)) {
+        const activeChatId = chatId
+        titleRequestsRef.current.add(activeChatId)
+        const titleMessages = [
+          ...messages.slice(-10),
+          { role: 'user', content: displayContent },
+          { role: 'assistant', content: finalContent },
+        ]
+
+        void fetch('/api/chat/title', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatId: activeChatId, messages: titleMessages }),
+        })
+          .then(async res => {
+            if (!res.ok) throw new Error(`Title request failed (${res.status})`)
+            return res.json()
+          })
+          .then(titleData => {
+            const newTitle = typeof titleData?.title === 'string' ? titleData.title.trim() : ''
+            if (newTitle && !isDefaultChatTitle(newTitle)) {
+              setChats(prev => applyGeneratedChatTitle(prev, activeChatId, newTitle))
+            }
+          })
+          .catch(err => console.error('Title generation failed:', err))
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
