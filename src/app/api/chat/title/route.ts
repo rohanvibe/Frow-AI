@@ -124,6 +124,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ title })
   } catch (error: any) {
     console.error('Title API Error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to generate title' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to generate title. Please try again.' },
+      { status: 500 }
+    )
   }
 }

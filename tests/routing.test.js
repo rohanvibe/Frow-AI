@@ -883,6 +883,53 @@ test('ChatTitle API: generates from the exchange and persists to the owned chat'
   }
 });
 
+test('ChatTitle API: returns a generic error and logs internal failure details', async () => {
+  const serverModulePath = path.join(__dirname, '../src/utils/supabase/server.ts');
+  const originalServerModule = require.cache[serverModulePath];
+  const serverModule = {
+    exports: {
+      createClient: async () => ({
+        auth: { getUser: async () => ({ data: { user: { id: 'user-title-error' } } }) },
+        from: () => {
+          const query = {
+            select: () => query,
+            eq: () => query,
+            maybeSingle: async () => { throw new Error('private database connection detail'); },
+          };
+          return query;
+        },
+      }),
+    },
+  };
+  require.cache[serverModulePath] = serverModule;
+
+  const routePath = require.resolve(path.join(__dirname, '../src/app/api/chat/title/route.ts'));
+  delete require.cache[routePath];
+  const originalConsoleError = console.error;
+  let serverLog;
+  console.error = (...args) => { serverLog = args; };
+
+  try {
+    const { POST } = require(routePath);
+    const response = await POST(new Request('http://localhost/api/chat/title', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatId: 'chat-title-error', prompt: 'Help me learn Japanese' }),
+    }));
+    const payload = await response.json();
+
+    assert.strictEqual(response.status, 500);
+    assert.deepStrictEqual(payload, { error: 'Failed to generate title. Please try again.' });
+    assert(!JSON.stringify(payload).includes('private database connection detail'));
+    assert.match(String(serverLog?.[1]?.message), /private database connection detail/);
+  } finally {
+    console.error = originalConsoleError;
+    delete require.cache[routePath];
+    if (originalServerModule) require.cache[serverModulePath] = originalServerModule;
+    else delete require.cache[serverModulePath];
+  }
+});
+
 test('ChatTitle API: preserves a manual rename made while title generation is running', async () => {
   const serverModulePath = path.join(__dirname, '../src/utils/supabase/server.ts');
   const aiModulePath = path.join(__dirname, '../src/lib/ai/index.ts');
