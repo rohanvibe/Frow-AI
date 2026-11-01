@@ -17,12 +17,49 @@ import {
   sanitizeClientChatHistory,
   isValidChatMessageContent,
   isValidImageDataUrl,
+  getChatMessageLimitError,
 } from '@/lib/chat'
 
 export const dynamic = 'force-dynamic'
+const MAX_CHAT_REQUEST_BYTES = 25 * 1024 * 1024
+
+async function readRequestBodyWithinLimit(request: Request): Promise<{ text: string; tooLarge: boolean }> {
+  const reader = request.body?.getReader()
+  if (!reader) return { text: '', tooLarge: false }
+
+  const chunks: Uint8Array[] = []
+  let totalBytes = 0
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      totalBytes += value.byteLength
+      if (totalBytes > MAX_CHAT_REQUEST_BYTES) {
+        await reader.cancel().catch(() => undefined)
+        return { text: '', tooLarge: true }
+      }
+      chunks.push(value)
+    }
+  } finally {
+    reader.releaseLock()
+  }
+
+  const bytes = new Uint8Array(totalBytes)
+  let offset = 0
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return { text: new TextDecoder().decode(bytes), tooLarge: false }
+}
 
 export async function POST(req: Request) {
   try {
+    const contentLength = req.headers.get('content-length')
+    if (contentLength && /^\d+$/.test(contentLength) && Number(contentLength) > MAX_CHAT_REQUEST_BYTES) {
+      return NextResponse.json({ error: 'Request body is too large.' }, { status: 413 })
+    }
+
     // 1. Authenticate user on server (never trust client-supplied identity)
     const supabase = await createClient()
     const {
@@ -34,7 +71,17 @@ export async function POST(req: Request) {
     }
 
     // 2. Validate request payload
-    const payload = await req.json().catch(() => null)
+    const { text: requestBody, tooLarge } = await readRequestBodyWithinLimit(req)
+    if (tooLarge) {
+      return NextResponse.json({ error: 'Request body is too large.' }, { status: 413 })
+    }
+
+    let payload: any
+    try {
+      payload = JSON.parse(requestBody)
+    } catch {
+      payload = null
+    }
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
@@ -51,6 +98,10 @@ export async function POST(req: Request) {
 
     if (rawHistory !== undefined && !Array.isArray(rawHistory)) {
       return NextResponse.json({ error: 'Messages must be an array' }, { status: 400 })
+    }
+    const limitError = getChatMessageLimitError(message, rawHistory ?? [])
+    if (limitError) {
+      return NextResponse.json({ error: limitError }, { status: 413 })
     }
     if (message !== undefined && !isValidChatMessageContent(message)) {
       return NextResponse.json({ error: 'Message content must be text within the size limit' }, { status: 400 })

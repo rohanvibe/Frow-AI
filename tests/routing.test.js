@@ -332,6 +332,9 @@ const {
   sanitizeClientChatHistory,
   isValidChatMessageContent,
   isValidImageDataUrl,
+  getChatMessageLimitError,
+  MAX_HISTORY_MESSAGES,
+  MAX_CHAT_MESSAGE_LENGTH,
   isCopyrightReproductionRequest,
   shouldBlockCopyrightOutput,
   checkCopyrightStream,
@@ -537,6 +540,86 @@ test('ChatContext: client system/developer/tool messages cannot override server 
   assert(context.apiMessages[0].content.includes('You are Frow'));
   assert(!context.apiMessages.some(message => message.content.includes('CLIENT SYSTEM OVERRIDE')));
   assert(!context.apiMessages.some(message => message.content.includes('CLIENT DEVELOPER OVERRIDE')));
+});
+
+test('Chat API validation: accepts normal history and rejects count or text limits without truncation', () => {
+  const normalHistory = [
+    { role: 'user', content: 'Question' },
+    { role: 'assistant', content: 'Answer' },
+  ];
+  assert.strictEqual(getChatMessageLimitError('Follow-up', normalHistory), null);
+  assert.strictEqual(
+    getChatMessageLimitError(undefined, Array(MAX_HISTORY_MESSAGES + 1).fill({ role: 'user', content: 'hi' })),
+    `Too many chat messages. The limit is ${MAX_HISTORY_MESSAGES}.`
+  );
+  assert.strictEqual(
+    getChatMessageLimitError('x'.repeat(MAX_CHAT_MESSAGE_LENGTH + 1), []),
+    `A chat message is too long. The limit is ${MAX_CHAT_MESSAGE_LENGTH} characters.`
+  );
+  assert.strictEqual(
+    getChatMessageLimitError(undefined, [{ role: 'assistant', content: 'x'.repeat(MAX_CHAT_MESSAGE_LENGTH + 1) }]),
+    `A chat message is too long. The limit is ${MAX_CHAT_MESSAGE_LENGTH} characters.`
+  );
+});
+
+test('Chat API: rejects requests exceeding the total body size limit', async () => {
+  const routePath = require.resolve(path.join(__dirname, '../src/app/api/chat/route.ts'));
+  delete require.cache[routePath];
+  try {
+    const { POST } = require(routePath);
+    const response = await POST(new Request('http://localhost/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': String(25 * 1024 * 1024 + 1),
+      },
+      body: '{}',
+    }));
+    assert.strictEqual(response.status, 413);
+    assert.deepStrictEqual(await response.json(), { error: 'Request body is too large.' });
+  } finally {
+    delete require.cache[routePath];
+  }
+});
+
+test('Chat API: returns 413 for excessive history and an overlong message', async () => {
+  const serverModulePath = path.join(__dirname, '../src/utils/supabase/server.ts');
+  const originalServerModule = require.cache[serverModulePath];
+  require.cache[serverModulePath] = {
+    exports: {
+      createClient: async () => ({
+        auth: { getUser: async () => ({ data: { user: { id: 'user-limit-test' } } }) },
+      }),
+    },
+  };
+
+  const routePath = require.resolve(path.join(__dirname, '../src/app/api/chat/route.ts'));
+  delete require.cache[routePath];
+  try {
+    const { POST } = require(routePath);
+    const makeRequest = (payload) => new Request('http://localhost/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const countResponse = await POST(makeRequest({
+      messages: Array(MAX_HISTORY_MESSAGES + 1).fill({ role: 'user', content: 'hello' }),
+    }));
+    assert.strictEqual(countResponse.status, 413);
+    assert.deepStrictEqual(await countResponse.json(), {
+      error: `Too many chat messages. The limit is ${MAX_HISTORY_MESSAGES}.`,
+    });
+
+    const lengthResponse = await POST(makeRequest({ message: 'x'.repeat(MAX_CHAT_MESSAGE_LENGTH + 1) }));
+    assert.strictEqual(lengthResponse.status, 413);
+    assert.deepStrictEqual(await lengthResponse.json(), {
+      error: `A chat message is too long. The limit is ${MAX_CHAT_MESSAGE_LENGTH} characters.`,
+    });
+  } finally {
+    delete require.cache[routePath];
+    if (originalServerModule) require.cache[serverModulePath] = originalServerModule;
+    else delete require.cache[serverModulePath];
+  }
 });
 
 test('ChatContext: buildSystemPrompt injects user identity and tool instructions', () => {

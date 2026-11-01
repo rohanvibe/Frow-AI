@@ -17,12 +17,31 @@ export type ClientHistoryMessage = {
   image?: string
 }
 
-const MAX_CHAT_MESSAGE_LENGTH = 50_000
-const MAX_HISTORY_MESSAGES = 20
+export const MAX_CHAT_MESSAGE_LENGTH = 50_000
+export const MAX_HISTORY_MESSAGES = 20
 const MAX_IMAGE_DATA_URL_LENGTH = 20_000_000
 
 export function isValidChatMessageContent(value: unknown): value is string {
   return typeof value === 'string' && value.length <= MAX_CHAT_MESSAGE_LENGTH
+}
+
+export function getChatMessageLimitError(message: unknown, history: unknown): string | null {
+  if (Array.isArray(history) && history.length > MAX_HISTORY_MESSAGES) {
+    return `Too many chat messages. The limit is ${MAX_HISTORY_MESSAGES}.`
+  }
+
+  const historyHasLongMessage = Array.isArray(history) && history.some((entry: any) =>
+    entry &&
+    typeof entry === 'object' &&
+    (entry.role === 'user' || entry.role === 'assistant') &&
+    typeof entry.content === 'string' &&
+    entry.content.length > MAX_CHAT_MESSAGE_LENGTH
+  )
+  if (historyHasLongMessage || (typeof message === 'string' && message.length > MAX_CHAT_MESSAGE_LENGTH)) {
+    return `A chat message is too long. The limit is ${MAX_CHAT_MESSAGE_LENGTH} characters.`
+  }
+
+  return null
 }
 
 export function isValidImageDataUrl(value: unknown): value is string {
@@ -38,7 +57,6 @@ export function sanitizeClientChatHistory(history: unknown): ClientHistoryMessag
   if (!Array.isArray(history)) return []
 
   return history
-    .slice(-MAX_HISTORY_MESSAGES)
     .flatMap((entry: any): ClientHistoryMessage[] => {
       if (
         !entry ||
