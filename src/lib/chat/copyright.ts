@@ -6,9 +6,6 @@ export const COPYRIGHT_REFUSAL =
 const TRANSFORM_REQUEST =
   /\b(summar(?:y|ize|ise)|explain|analy[sz]e|review|critique|discuss|compare|themes?|interpret|paraphrase|transform|adapt|inspire[ds]? by)\b/i
 
-const PUBLIC_DOMAIN_CUE =
-  /\b(public domain|public-domain|copyright expired|copyright-free|creative commons)\b/i
-
 const DIRECT_REPRODUCTION_ASK =
   /\b(give|show|send|provide|paste|print|write out|recite|repeat|quote|copy|reproduce|continue)\b[\s\S]{0,100}\b(lyrics?|songs?|novels?|books?|stories|articles?|papers?|publications?|scripts?|screenplays?|dialogue|poems?|textbooks?|workbooks?|lessons?|chapters?|pages?|works?|passages?|excerpts?|answer keys?|course materials?)\b/i
 
@@ -17,12 +14,12 @@ const SPECIFIC_REPRODUCTION_ASK =
 
 /**
  * Conservatively catches explicit requests to obtain protected expression.
- * Discussion and transformation requests, and requests clearly identifying a
- * public-domain source, remain allowed.
+ * Discussion and transformation requests remain allowed. A user's statement
+ * that a work is public domain is not, by itself, enough to verify its status.
  */
 export function isCopyrightReproductionRequest(prompt: string): boolean {
   const text = prompt.trim()
-  if (!text || PUBLIC_DOMAIN_CUE.test(text)) return false
+  if (!text) return false
 
   const asksForExactCopy =
     /\b(verbatim|word[- ]for[- ]word|exact(?:ly)?|copy|reproduce|recite|quote|write out|paste|print|repeat|continue|rest of|next chapter|next page)\b/i.test(

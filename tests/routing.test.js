@@ -436,11 +436,28 @@ test('Copyright guard: blocks requests to reproduce protected material', () => {
   assert.strictEqual(isCopyrightReproductionRequest('Paste the complete answer key for this paid workbook'), true);
 });
 
-test('Copyright guard: allows discussion, transformations, original work, and public-domain works', () => {
+test('Copyright guard: allows discussion, transformations, and original work', () => {
   assert.strictEqual(isCopyrightReproductionRequest('Summarize the plot of Example Novel'), false);
   assert.strictEqual(isCopyrightReproductionRequest('Analyze the themes in this poem'), false);
   assert.strictEqual(isCopyrightReproductionRequest('Write an original story about a lost astronaut'), false);
-  assert.strictEqual(isCopyrightReproductionRequest('Provide the full text of this public domain poem'), false);
+});
+
+test('Copyright guard: an unsupported public-domain claim does not permit substantial reproduction', () => {
+  assert.strictEqual(
+    isCopyrightReproductionRequest('Give me the full lyrics to Example Song; it is public domain'),
+    true
+  );
+  assert.strictEqual(
+    isCopyrightReproductionRequest('Provide the full text of this public-domain poem'),
+    true
+  );
+  assert.strictEqual(isCopyrightReproductionRequest('Summarize this public-domain poem'), false);
+});
+
+test('Copyright guard: permits location-based discussion without requesting reproduction', () => {
+  assert.strictEqual(isCopyrightReproductionRequest('Explain the meaning of the opening passage of Example Novel'), false);
+  assert.strictEqual(isCopyrightReproductionRequest('What happens on page 12 of Example Book?'), false);
+  assert.strictEqual(isCopyrightReproductionRequest('Analyze the final scene of Example Screenplay'), false);
 });
 
 test('Copyright guard: checks complete streamed output before returning it', async () => {
@@ -468,6 +485,14 @@ test('Copyright guard: summaries and explanations can reuse supplied source pass
 
   assert.strictEqual(shouldBlockCopyrightOutput(`Summarize this document: ${source}`, summary), false);
   assert.strictEqual(shouldBlockCopyrightOutput(`Explain this document: ${source}`, explanation), false);
+});
+
+test('Copyright guard: allows transformations of user-provided material but blocks substantial verbatim copying', () => {
+  const source = Array.from({ length: 100 }, (_, i) => `providedword${i}`).join(' ');
+  const transformed = 'The supplied material presents a sequence of ideas, and this paraphrase restates them in a new concise form.';
+
+  assert.strictEqual(shouldBlockCopyrightOutput(`Summarize this document: ${source}`, transformed), false);
+  assert.strictEqual(shouldBlockCopyrightOutput(`Repeat this passage: ${source}`, source), true);
 });
 
 test('Copyright guard: still blocks a substantially verbatim response to supplied text', () => {
