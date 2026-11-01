@@ -582,6 +582,18 @@ test('Chat API: rejects requests exceeding the total body size limit', async () 
   }
 });
 
+test('Mermaid rendering: uses strict security for generated SVG', () => {
+  const pageSource = fs.readFileSync(path.join(__dirname, '../src/app/page.tsx'), 'utf8');
+  const componentStart = pageSource.indexOf('function Mermaid(');
+  const componentEnd = pageSource.indexOf('function AppleTooltip(', componentStart);
+  const componentSource = pageSource.slice(componentStart, componentEnd);
+
+  assert.match(componentSource, /securityLevel:\s*'strict'/);
+  assert.doesNotMatch(componentSource, /securityLevel:\s*'loose'/);
+  assert.match(componentSource, /mermaid\.render\(id, cleanChart\)/);
+  assert.match(componentSource, /setSvg\(sanitizedSvg\)/);
+});
+
 test('Chat API: returns 413 for excessive history and an overlong message', async () => {
   const serverModulePath = path.join(__dirname, '../src/utils/supabase/server.ts');
   const originalServerModule = require.cache[serverModulePath];

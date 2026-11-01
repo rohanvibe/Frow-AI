@@ -268,11 +268,12 @@ function Mermaid({ chart }: { chart: string }) {
     const render = async () => {
       if (!chart) return
       setError(null)
+      setSvg('')
       try {
         mermaid.initialize({ 
           startOnLoad: false, 
           theme: 'dark',
-          securityLevel: 'loose',
+          securityLevel: 'strict',
           fontFamily: 'Inter, system-ui, sans-serif'
         })
         const id = 'mermaid-' + Math.random().toString(36).substring(7)
@@ -294,8 +295,10 @@ function Mermaid({ chart }: { chart: string }) {
         // 3. Strip out any trailing junk or comments that might confuse the parser
         cleanChart = cleanChart.split('\n').filter(line => !line.trim().startsWith('```')).join('\n')
 
-        const { svg: renderedSvg } = await mermaid.render(id, cleanChart)
-        setSvg(renderedSvg)
+        // In strict mode Mermaid sanitizes generated SVG before returning it.
+        // Only that sanitized result is passed to the SVG HTML insertion below.
+        const { svg: sanitizedSvg } = await mermaid.render(id, cleanChart)
+        setSvg(sanitizedSvg)
       } catch (err: any) {
         console.error('Mermaid render error:', err)
         setError('Diagram has a syntax error. I will attempt to re-render in a simpler format next time.')
