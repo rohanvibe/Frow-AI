@@ -6,6 +6,7 @@ import type { ShortcutId, ContextMenuState } from '@/hooks/useShortcuts'
 import { createClient } from '@/utils/supabase/client'
 import { applyGeneratedChatTitle, isDefaultChatTitle } from '@/lib/chat/title'
 import { getResponseAnchorId } from '@/lib/chat/navigation'
+import { evaluateMathExpression } from '@/lib/chat/calculator'
 import { useRouter } from 'next/navigation'
 import { 
   Button, 
@@ -171,10 +172,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
   useEffect(() => {
     if (expression) {
       try {
-        const clean = expression.replace(/Ã—/g, '*').replace(/Ã·/g, '/').replace(/\^/g, '**')
-        // eslint-disable-next-line no-eval
-        const res = eval(clean)
-        setResult(String(res))
+        setResult(String(evaluateMathExpression(expression)))
       } catch (e) {
         setResult(null)
       }
@@ -195,11 +193,7 @@ function Calculator({ initialExpression = '' }: { initialExpression?: string }) 
       setResult(null)
     } else if (val === '=') {
       try {
-        // Clean and compute
-        const clean = expression.replace(/Ã—/g, '*').replace(/Ã·/g, '/').replace(/\^/g, '**')
-        // eslint-disable-next-line no-eval
-        const res = eval(clean)
-        setResult(String(res))
+        setResult(String(evaluateMathExpression(expression)))
       } catch (e) {
         setResult('Error')
       }

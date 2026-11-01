@@ -42,6 +42,34 @@ Module._resolveFilename = function(request, parent, isMain, options) {
 // Import router and types
 const { AIRouter, UnsupportedModelCapabilityError } = require(path.join(__dirname, '../src/lib/ai/router.ts'));
 const { AIService } = require(path.join(__dirname, '../src/lib/ai/index.ts'));
+const { evaluateMathExpression } = require(path.join(__dirname, '../src/lib/chat/calculator.ts'));
+
+test('Calculator: supports arithmetic, decimals, parentheses, powers, and precedence', () => {
+  assert.strictEqual(evaluateMathExpression('2 + 3 * 4'), 14);
+  assert.strictEqual(evaluateMathExpression('(2 + 3) * 4'), 20);
+  assert.strictEqual(evaluateMathExpression('0.5 + .25'), 0.75);
+  assert.strictEqual(evaluateMathExpression('2^3^2'), 512);
+  assert.strictEqual(evaluateMathExpression('-2^2'), -4);
+  assert.strictEqual(evaluateMathExpression('8 ÷ 2 + 2×3'), 10);
+  assert.strictEqual(evaluateMathExpression('8 Ã· 2 + 2Ã—3'), 10);
+});
+
+test('Calculator: rejects invalid expressions and all JavaScript syntax', () => {
+  for (const expression of [
+    '',
+    '1 +',
+    '(1 + 2',
+    '1..2',
+    '1 / 0',
+    'Math.max(1, 2)',
+    'alert(1)',
+    'globalThis.process.exit()',
+    '1; console.log(1)',
+    '({}).constructor.constructor("return 1")()',
+  ]) {
+    assert.throws(() => evaluateMathExpression(expression), undefined, expression);
+  }
+});
 
 test('AIRouter: Simple conversational requests route to fast Groq model', () => {
   const decision1 = AIRouter.route([{ role: 'user', content: 'Hello, how can you help me today?' }]);
