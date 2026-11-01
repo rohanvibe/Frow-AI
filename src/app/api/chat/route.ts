@@ -14,6 +14,9 @@ import {
   isCopyrightReproductionRequest,
   shouldBlockCopyrightOutput,
   checkCopyrightStream,
+  sanitizeClientChatHistory,
+  isValidChatMessageContent,
+  isValidImageDataUrl,
 } from '@/lib/chat'
 
 export const dynamic = 'force-dynamic'
@@ -31,17 +34,35 @@ export async function POST(req: Request) {
     }
 
     // 2. Validate request payload
+    const payload = await req.json().catch(() => null)
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
+
     const {
       message,
-      image,
-      messages: history = [],
+      image: rawImage,
+      messages: rawHistory,
       chatId,
       skipSave,
       stream: requestedStream = true,
       selectedModel,
-    } = await req.json()
+    } = payload
 
-    if (!message && history.length === 0) {
+    if (rawHistory !== undefined && !Array.isArray(rawHistory)) {
+      return NextResponse.json({ error: 'Messages must be an array' }, { status: 400 })
+    }
+    if (message !== undefined && !isValidChatMessageContent(message)) {
+      return NextResponse.json({ error: 'Message content must be text within the size limit' }, { status: 400 })
+    }
+    if (rawImage !== undefined && rawImage !== null && !isValidImageDataUrl(rawImage)) {
+      return NextResponse.json({ error: 'Image attachment is invalid' }, { status: 400 })
+    }
+
+    const image = isValidImageDataUrl(rawImage) ? rawImage : undefined
+    const history = sanitizeClientChatHistory(rawHistory ?? [])
+
+    if (!message && history.length === 0 && !image) {
       return NextResponse.json({ error: 'Message or history is required' }, { status: 400 })
     }
 

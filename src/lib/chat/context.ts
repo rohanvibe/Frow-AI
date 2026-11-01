@@ -11,6 +11,51 @@ export interface BuiltChatContext {
   isSimpleGreeting: boolean
 }
 
+export type ClientHistoryMessage = {
+  role: 'user' | 'assistant'
+  content: string
+  image?: string
+}
+
+const MAX_CHAT_MESSAGE_LENGTH = 50_000
+const MAX_HISTORY_MESSAGES = 20
+const MAX_IMAGE_DATA_URL_LENGTH = 20_000_000
+
+export function isValidChatMessageContent(value: unknown): value is string {
+  return typeof value === 'string' && value.length <= MAX_CHAT_MESSAGE_LENGTH
+}
+
+export function isValidImageDataUrl(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length <= MAX_IMAGE_DATA_URL_LENGTH &&
+    /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+={0,2}$/i.test(value)
+  )
+}
+
+/** Keep only plain user/assistant text and supported image data from the client. */
+export function sanitizeClientChatHistory(history: unknown): ClientHistoryMessage[] {
+  if (!Array.isArray(history)) return []
+
+  return history
+    .slice(-MAX_HISTORY_MESSAGES)
+    .flatMap((entry: any): ClientHistoryMessage[] => {
+      if (
+        !entry ||
+        typeof entry !== 'object' ||
+        Array.isArray(entry) ||
+        (entry.role !== 'user' && entry.role !== 'assistant') ||
+        !isValidChatMessageContent(entry.content)
+      ) {
+        return []
+      }
+
+      const candidateImage = Array.isArray(entry.images) ? entry.images[0] : entry.image
+      const image = isValidImageDataUrl(candidateImage) ? candidateImage : undefined
+      return [{ role: entry.role, content: entry.content, ...(image ? { image } : {}) }]
+    })
+}
+
 /**
  * Checks whether the user's message is a simple conversational greeting
  * (used to skip unnecessary tool declarations for low latency)
@@ -129,6 +174,7 @@ export async function buildChatContext(
   image?: string,
   options: ChatContextOptions = { imageGenerationSucceeded: false, imageGenerationFailed: false }
 ): Promise<BuiltChatContext> {
+  const safeHistory = sanitizeClientChatHistory(history)
   const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Member'
   const userRole = user.app_metadata?.role || 'User'
 
@@ -146,7 +192,7 @@ export async function buildChatContext(
     } catch (e) {}
   }
 
-  const { memoryPrompt } = filterMemories(memories, history, message)
+  const { memoryPrompt } = filterMemories(memories, safeHistory, message)
 
   const systemPrompt = buildSystemPrompt({
     userName,
@@ -159,22 +205,18 @@ export async function buildChatContext(
 
   const apiMessages: any[] = [
     { role: 'system', content: systemPrompt },
-    ...history.map((m: any) => ({
-      role: m.role,
-      content: m.content,
-      image: m.images && m.images.length > 0 ? m.images[0] : (m.image || undefined),
-      name: m.name || undefined,
-      tool_call_id: m.tool_call_id || undefined,
-      tool_calls: m.tool_calls || undefined,
-    })),
+    ...safeHistory,
   ]
 
   // Add the current message if not already present at the end of history
-  if (message && (!history.length || history[history.length - 1].content !== message)) {
+  const currentMessageIsLastUserTurn =
+    safeHistory[safeHistory.length - 1]?.role === 'user' &&
+    safeHistory[safeHistory.length - 1]?.content === message
+  if ((message || image) && !currentMessageIsLastUserTurn) {
     if (image) {
       apiMessages.push({
         role: 'user',
-        content: message && message.trim() ? message : 'Please describe what you see in this image in detail.',
+        content: message?.trim() ? message : 'Please describe what you see in this image in detail.',
         image,
       })
     } else {
