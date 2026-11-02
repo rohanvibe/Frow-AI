@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 import { aiService } from '@/lib/ai'
-import { cleanGeneratedTitle, generateFallbackTitle, isDefaultChatTitle } from '@/lib/chat/title'
+import { cleanGeneratedTitle, generateFallbackTitle, isDefaultChatTitle, isPromptEchoTitle } from '@/lib/chat/title'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,14 +76,33 @@ export async function POST(req: Request) {
         max_tokens: 20,
       })
 
-      title = cleanGeneratedTitle(response?.content)
+      const generatedTitle = cleanGeneratedTitle(response?.content)
+      const userPrompts = Array.isArray(messages)
+        ? messages
+            .filter((item: any) => item?.role === 'user' && typeof item.content === 'string')
+            .map((item: any) => item.content.trim())
+            .filter(Boolean)
+        : [userPrompt]
+
+      // Some providers return a shortened copy of the prompt instead of a title.
+      // Treat that as an invalid title so the semantic fallback can label the topic.
+      title = userPrompts.some((message: string) => isPromptEchoTitle(generatedTitle, message))
+        ? ''
+        : generatedTitle
     } catch (aiError: any) {
       console.warn('[Title API] AI generation failed, using prompt fallback:', aiError?.message)
     }
 
     // Graceful fallback to prompt-based title if AI title was empty or failed
     if (!title) {
-      title = generateFallbackTitle(userPrompt)
+      const firstSubstantiveUserPrompt = Array.isArray(messages)
+        ? messages.find((item: any) =>
+            item?.role === 'user' &&
+            typeof item.content === 'string' &&
+            item.content.trim().length > 12
+          )?.content
+        : undefined
+      title = generateFallbackTitle(firstSubstantiveUserPrompt || userPrompt)
     }
 
     if (!title || isDefaultChatTitle(title)) {

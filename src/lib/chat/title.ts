@@ -76,6 +76,25 @@ export function cleanGeneratedTitle(raw?: string | null): string {
   return t;
 }
 
+/** Reject a model response that is just the opening words of the user's prompt. */
+export function isPromptEchoTitle(title: string, promptText: string): boolean {
+  const words = (value: string) => value
+    .toLocaleLowerCase()
+    .normalize('NFKD')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  const titleWords = words(title)
+  const promptWords = words(promptText)
+  if (titleWords.length < 3 || titleWords.length > promptWords.length) return false
+
+  const sharedPrefixLength = titleWords.findIndex((word, index) => word !== promptWords[index])
+  const matchingWords = sharedPrefixLength === -1 ? titleWords.length : sharedPrefixLength
+  return matchingWords >= Math.min(4, titleWords.length) && matchingWords / titleWords.length >= 0.8
+}
+
 /**
  * Generates a concise (3-6 words), readable fallback title directly from a user prompt.
  * Used when AI title generation is unavailable, rate-limited, or fails.
@@ -119,6 +138,8 @@ export function generateFallbackTitle(promptText?: string | null): string {
   let semanticTitle = ''
   const difference = clean.match(/(?:what(?:'s| is) the difference between|difference between)\s+(.+?)\s+and\s+(.+?)(?:[?.!]|$)/i)
   const learning = clean.match(/\b(?:i want to|i'd like to|i would like to|help me|let's)\s+(learn|build|create|make|improve|fix|understand|study)\s+(.+)/i)
+  const helpRequest = clean.match(/^(?:(?:can|could|would) you )?(?:please )?(?:help me (understand|learn about|figure out|build|create|make|improve|fix)|tell me about|explain|describe)\s+(.+)/i)
+  const needsHelp = clean.match(/^(?:i need help with|i'm having trouble with|i am having trouble with)\s+(.+)/i)
   const howToAction = clean.match(/^(?:how do i|how can i|how to)\s+(build|create|make|improve|fix|learn|understand)\s+(.+?)(?:[?.!]|$)/i)
   const question = clean.match(/^(?:can you )?(?:explain )?(?:how|what|why)\s+(.+)$/i)
   const helpFix = clean.match(/^(?:can you )?help me fix\s+(.+)/i)
@@ -126,6 +147,17 @@ export function generateFallbackTitle(promptText?: string | null): string {
 
   if (ubuntuAccent) {
     semanticTitle = `${ubuntuAccent[1].trim()}'s Design Philosophy`
+  } else if (helpRequest) {
+    const verb = (helpRequest[1] || 'understand').toLowerCase()
+    const action = ({ build: 'Building', create: 'Creating', make: 'Building', improve: 'Improving', fix: 'Fixing', learn: 'Learning', 'learn about': 'Learning', understand: 'Understanding', 'figure out': 'Understanding', explain: 'Understanding', describe: 'Understanding', 'tell me about': 'Understanding' } as Record<string, string>)[verb || '']
+    const topic = ['understand', 'figure out', 'explain', 'describe', 'tell me about'].includes(verb)
+      ? helpRequest[2]
+          .replace(/^(?:how|what|why)\s+/i, '')
+          .replace(/\b(work|works|function|functions|happen|happens|mean|means)\??$/i, '')
+      : helpRequest[2]
+    semanticTitle = topicTitle(topic, action || 'Understanding')
+  } else if (needsHelp) {
+    semanticTitle = topicTitle(needsHelp[1], 'Understanding')
   } else if (difference) {
     semanticTitle = `${difference[1].trim()} vs ${difference[2].trim()}`
   } else if (helpFix) {
