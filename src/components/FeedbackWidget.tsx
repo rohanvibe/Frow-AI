@@ -1,17 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, Bug, X, Send, CheckCircle2 } from 'lucide-react'
-import { Button, Input } from '@/components/ui'
+import { Button } from '@/components/ui'
 import { trackEvent } from '@/utils/analytics'
 
-export function FeedbackWidget() {
+export type FeedbackWidgetHandle = {
+  open: (initialMessage?: string) => void
+}
+
+export const FeedbackWidget = forwardRef<FeedbackWidgetHandle>(function FeedbackWidget(_props, ref) {
   const [isOpen, setIsOpen] = useState(false)
   const [type, setType] = useState<'feedback' | 'bug'>('feedback')
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  useImperativeHandle(ref, () => ({
+    open: (initialMessage = '') => {
+      setType('feedback')
+      setMessage(initialMessage)
+      setSubmitted(false)
+      setIsOpen(true)
+    },
+  }), [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,10 +116,11 @@ export function FeedbackWidget() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Open feedback"
         className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-600/30 border border-white/10"
       >
         <MessageSquare className="w-6 h-6" />
       </motion.button>
     </div>
   )
-}
+})

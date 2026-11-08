@@ -83,6 +83,13 @@ import { trackEvent } from '@/utils/analytics'
 import { DEMO_CONVERSATION, DEMO_SIDEBAR_ITEMS } from '@/utils/demo-data'
 // Feature test
 import { FeedbackWidget } from '@/components/FeedbackWidget'
+import type { FeedbackWidgetHandle } from '@/components/FeedbackWidget'
+import { FrowContextMenu } from '@/components/FrowContextMenu'
+import type { FrowContextMenuItem, FrowContextMenuState } from '@/components/FrowContextMenu'
+import {
+  Archive, Bookmark, Bug, ClipboardCopy, Code2, FileSearch, Languages,
+  MessageSquarePlus, Pin, PinOff, Play, TextSearch, WandSparkles,
+} from 'lucide-react'
 
 
 
@@ -143,6 +150,8 @@ function PythonSandbox({ code }: { code: string }) {
           size="sm" 
           onClick={runCode} 
           disabled={isRunning}
+          data-python-run="true"
+          aria-label="Run Python code"
           className="h-8 rounded-full bg-(--foreground) text-(--background) hover:opacity-90 text-[10px] font-black uppercase px-4 transition-all shadow-sm active:scale-95"
         >
           {isRunning ? 'Running...' : 'Execute Code'}
@@ -847,6 +856,7 @@ const MessageBubble = memo(function MessageBubble({
   isMobile,
   highlightedAnchor,
   savedMemoryMsgId,
+  bookmarkedMessages,
   markdownComponents,
   cleanContent,
 }: any) {
@@ -855,6 +865,9 @@ const MessageBubble = memo(function MessageBubble({
   return (
     <div
       id={`msg-${msg.id}`}
+      data-context-message="true"
+      data-message-id={msg.id}
+      data-message-role={msg.role}
       className={`group relative ${
         isHighlighted ? 'p-4 -m-4 rounded-2xl bg-blue-500/5 ring-1 ring-blue-500/20' : ''
       } transition-colors duration-700`}
@@ -890,6 +903,11 @@ const MessageBubble = memo(function MessageBubble({
                     <Check className="w-3 h-3 text-blue-500" />
                     <span className="text-[8px] font-black uppercase tracking-widest text-blue-500 pt-px">Saved</span>
                   </motion.div>
+                )}
+                {bookmarkedMessages?.has(msg.id) && (
+                  <span aria-label="Saved response" title="Saved response" className="text-amber-400">
+                    <Star className="w-3 h-3" fill="currentColor" />
+                  </span>
                 )}
               </AnimatePresence>
             </div>
@@ -1292,6 +1310,11 @@ export default function ChatPage() {
 
   // Shortcut state
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
+  const [frowContextMenu, setFrowContextMenu] = useState<FrowContextMenuState>(null)
+  const [pinnedChatIds, setPinnedChatIds] = useState<Set<string>>(new Set())
+  const [archivedChatIds, setArchivedChatIds] = useState<Set<string>>(new Set())
+  const [showArchivedChats, setShowArchivedChats] = useState(false)
+  const feedbackWidgetRef = useRef<FeedbackWidgetHandle | null>(null)
   const [chatDrafts, setChatDrafts] = useState<Record<string, string>>({})
   const [chatScrolls, setChatScrolls] = useState<Record<string, number>>({})
   const [showJumpToBottom, setShowJumpToBottom] = useState(false)
@@ -1345,6 +1368,155 @@ export default function ChatPage() {
     e.preventDefault()
     setContextMenu({ x: e.clientX, y: e.clientY, shortcutId: id, label: SHORTCUT_LABELS[id] })
   }, [])
+
+  useEffect(() => {
+    if (!user?.id) {
+      setPinnedChatIds(new Set())
+      setArchivedChatIds(new Set())
+      return
+    }
+    try {
+      setPinnedChatIds(new Set(JSON.parse(localStorage.getItem(`Frow_pinned_chats_${user.id}`) || '[]')))
+      setArchivedChatIds(new Set(JSON.parse(localStorage.getItem(`Frow_archived_chats_${user.id}`) || '[]')))
+    } catch {
+      setPinnedChatIds(new Set())
+      setArchivedChatIds(new Set())
+    }
+  }, [user?.id])
+
+  const togglePinnedChat = (chatId: string) => {
+    setPinnedChatIds(previous => {
+      const next = new Set(previous)
+      if (next.has(chatId)) next.delete(chatId)
+      else next.add(chatId)
+      if (user?.id) localStorage.setItem(`Frow_pinned_chats_${user.id}`, JSON.stringify([...next]))
+      return next
+    })
+  }
+
+  const toggleArchivedChat = (chatId: string) => {
+    setArchivedChatIds(previous => {
+      const next = new Set(previous)
+      if (next.has(chatId)) next.delete(chatId)
+      else next.add(chatId)
+      if (user?.id) localStorage.setItem(`Frow_archived_chats_${user.id}`, JSON.stringify([...next]))
+      return next
+    })
+  }
+
+  const focusComposerWith = (text: string) => {
+    setInput(current => current.trim() ? `${current.trim()}\n\n${text}` : text)
+    window.setTimeout(() => document.getElementById('chat-input')?.focus(), 0)
+  }
+
+  const openFrowContextMenu = (
+    event: React.MouseEvent,
+    label: string,
+    items: FrowContextMenuItem[]
+  ) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setFrowContextMenu({ point: { x: event.clientX, y: event.clientY }, label, items })
+  }
+
+  const handleFrowContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.defaultPrevented) return
+    const target = event.target instanceof HTMLElement ? event.target : null
+    if (!target || target.closest('[role="menu"]')) return
+
+    // Keep the browser's edit menu intact for inputs, textareas, and contenteditable controls.
+    if (target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]')) return
+
+    const chatTarget = target.closest<HTMLElement>('[data-context-chat-id]')
+    if (chatTarget) {
+      if (isDemo) return
+      const chat = chats.find(item => item.id === chatTarget.dataset.contextChatId)
+      if (!chat) return
+      const chatId = chat.id
+      const archived = archivedChatIds.has(chatId)
+      const pinned = pinnedChatIds.has(chatId)
+      openFrowContextMenu(event, `Actions for ${chat.title}`, [
+        { label: 'Rename', icon: Edit2, onSelect: () => { setEditingChatId(chatId); setEditingTitle(chat.title) } },
+        { label: pinned ? 'Unpin' : 'Pin', icon: pinned ? PinOff : Pin, onSelect: () => togglePinnedChat(chatId) },
+        { label: archived ? 'Restore from archive' : 'Archive', icon: Archive, onSelect: () => toggleArchivedChat(chatId) },
+        { label: 'Delete', icon: Trash2, separatorBefore: true, onSelect: () => {
+          if (window.confirm(`Delete “${chat.title}” and its messages? This cannot be undone.`)) void deleteChat(chatId)
+        } },
+      ])
+      return
+    }
+
+    const fileTarget = target.closest('[data-context-file]')
+    if (fileTarget && attachedFile) {
+      const file = attachedFile
+      const runFilePrompt = (instruction: string) => sendMessage(undefined, `${instruction}\n\nFile: ${file.name}`)
+      openFrowContextMenu(event, `Actions for ${file.name}`, [
+        { label: 'Analyze file', icon: FileSearch, onSelect: () => runFilePrompt('Analyze the attached file. Identify its purpose, structure, key details, and notable issues.') },
+        { label: 'Summarize', icon: TextSearch, onSelect: () => runFilePrompt('Summarize the attached file, focusing on its main points.') },
+        { label: 'Extract text', icon: ClipboardCopy, onSelect: () => runFilePrompt('Extract the readable text from the attached file and return it faithfully.') },
+        { label: 'Ask Frow about this file', icon: MessageSquarePlus, separatorBefore: true, onSelect: () => focusComposerWith(`About ${file.name}: `) },
+      ])
+      return
+    }
+
+    const codeTarget = target.closest<HTMLElement>('[data-context-code]')
+    if (codeTarget) {
+      const codeElement = codeTarget.querySelector('code')
+      const selection = window.getSelection()
+      const selectionRange = selection?.rangeCount ? selection.getRangeAt(0) : null
+      const selectionIsInCode = Boolean(selectionRange && codeTarget.contains(selectionRange.commonAncestorContainer))
+      const code = (selectionIsInCode ? selection?.toString().trim() : '') || codeElement?.textContent || ''
+      if (!code.trim()) return
+      const language = codeTarget.dataset.codeLanguage || 'text'
+      const codePrompt = (instruction: string) => sendMessage(undefined, `${instruction}\n\n\`\`\`${language}\n${code}\n\`\`\``)
+      const items: FrowContextMenuItem[] = [
+        { label: 'Copy code', icon: ClipboardCopy, onSelect: () => copyToClipboard(code) },
+        { label: 'Explain code', icon: Code2, separatorBefore: true, onSelect: () => codePrompt('Explain what this code does, step by step.') },
+        { label: 'Find bugs', icon: Bug, onSelect: () => codePrompt('Review this code for bugs and explain any fixes.') },
+        { label: 'Optimize code', icon: WandSparkles, onSelect: () => codePrompt('Improve the performance and clarity of this code while preserving its behavior.') },
+        { label: 'Add comments', icon: MessageSquare, onSelect: () => codePrompt('Add concise, useful comments to this code and return the complete commented code.') },
+        { label: 'Convert language…', icon: Languages, onSelect: () => focusComposerWith(`Convert this ${language} code to [target language]:\n\n\`\`\`${language}\n${code}\n\`\`\`\n\nTarget language: `) },
+      ]
+      if ((language === 'python' || language === 'py') && codeTarget.querySelector('[data-python-run]')) {
+        items.push({ label: 'Run code', icon: Play, separatorBefore: true, onSelect: () => codeTarget.querySelector<HTMLButtonElement>('[data-python-run]')?.click() })
+      }
+      openFrowContextMenu(event, `${language} code actions`, items)
+      return
+    }
+
+    const selectedText = window.getSelection()?.toString().trim()
+    if (selectedText) {
+      const withSelection = (instruction: string) => sendMessage(undefined, `${instruction}\n\nSelected text:\n${selectedText}`)
+      openFrowContextMenu(event, 'Actions for selected text', [
+        { label: 'Ask Frow', icon: MessageSquarePlus, onSelect: () => focusComposerWith(`Use this selected text as context:\n\n${selectedText}\n\nQuestion: `) },
+        { label: 'Explain', icon: HelpCircle, onSelect: () => withSelection('Explain the selected text in clear, simple terms.') },
+        { label: 'Summarize', icon: TextSearch, onSelect: () => withSelection('Summarize the selected text.') },
+        { label: 'Rewrite', icon: WandSparkles, onSelect: () => withSelection('Rewrite the selected text for clarity and flow while preserving its meaning.') },
+        { label: 'Translate to English', icon: Languages, onSelect: () => withSelection('Translate the selected text into English.') },
+        { label: 'Copy', icon: ClipboardCopy, separatorBefore: true, onSelect: () => copyToClipboard(selectedText) },
+      ])
+      return
+    }
+
+    const messageTarget = target.closest<HTMLElement>('[data-context-message]')
+    if (messageTarget?.dataset.messageRole === 'assistant') {
+      const message = messages.find(item => item.id === messageTarget.dataset.messageId)
+      if (!message || typeof message.content !== 'string') return
+      const plainText = messageTarget.querySelector('.prose')?.textContent?.trim() || message.content
+      const messageIndex = messages.findIndex(item => item.id === message.id)
+      const promptWithResponse = (instruction: string) => sendMessage(undefined, `${instruction}\n\nAssistant response:\n${message.content}`)
+      openFrowContextMenu(event, 'Assistant response actions', [
+        { label: 'Copy response', icon: Copy, onSelect: () => copyToClipboard(plainText) },
+        { label: 'Copy as Markdown', icon: ClipboardCopy, onSelect: () => copyToClipboard(message.content) },
+        { label: 'Explain further', icon: HelpCircle, separatorBefore: true, onSelect: () => promptWithResponse('Explain this response in more detail.') },
+        { label: 'Summarize response', icon: TextSearch, onSelect: () => promptWithResponse('Summarize this response.') },
+        { label: 'Regenerate response', icon: RefreshCw, separatorBefore: true, onSelect: () => sendMessage(undefined, messages[messageIndex - 1]?.content || 'Regenerate the response.') },
+        { label: 'Continue from here', icon: ArrowRight, onSelect: () => promptWithResponse('Continue from where this response leaves off.') },
+        { label: 'Save response', icon: Bookmark, separatorBefore: true, onSelect: () => { toggleBookmark(message.id); toast('Response saved', 'success') } },
+        { label: 'Give feedback', icon: Bug, onSelect: () => feedbackWidgetRef.current?.open('Feedback about an assistant response: ') },
+      ])
+    }
+  }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -1545,8 +1717,8 @@ export default function ChatPage() {
     }
   }, [currentChatId, isDemo])
 
-  const toggleBookmark = (msgId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const toggleBookmark = (msgId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation()
     setBookmarkedMessages(prev => {
       const next = new Set(prev)
       if (next.has(msgId)) next.delete(msgId)
@@ -2278,7 +2450,7 @@ export default function ChatPage() {
       }
       if (match?.[1] === 'python' || match?.[1] === 'py') {
         return (
-          <div className="space-y-4">
+          <div data-context-code="true" data-code-language={match[1]} className="space-y-4">
             <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
               <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Python Source</span>
@@ -2299,7 +2471,7 @@ export default function ChatPage() {
         return <code className="bg-white/10 px-1.5 py-0.5 rounded-md text-[13px]" {...props}>{children}</code>
       }
       return (
-        <div className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
+        <div data-context-code="true" data-code-language={match?.[1] || 'text'} className="relative group my-4 rounded-xl overflow-hidden border border-white/10 bg-[#09090b]">
           <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{match?.[1] || 'Code'}</span>
             <button onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))} className="text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
@@ -2315,12 +2487,78 @@ export default function ChatPage() {
     }
   }), [copyToClipboard])
 
+  const matchingChats = chats.filter(chat =>
+    chatSearch.trim() === '' ||
+    (typeof chat.title === 'string' && chat.title.toLowerCase().includes(chatSearch.toLowerCase()))
+  )
+  const activeSidebarChats = matchingChats
+    .filter(chat => !archivedChatIds.has(chat.id))
+    .sort((a, b) => Number(pinnedChatIds.has(b.id)) - Number(pinnedChatIds.has(a.id)))
+  const archivedSidebarChats = matchingChats.filter(chat => archivedChatIds.has(chat.id))
+
+  const renderChatListItem = (chat: Chat) => (
+    <div key={chat.id} className="group relative">
+      {editingChatId === chat.id ? (
+        <div className="flex items-center gap-2 p-2 bg-white/5 rounded-xl border border-blue-500/50">
+          <input
+            value={editingTitle}
+            onChange={e => setEditingTitle(e.target.value)}
+            className="bg-transparent border-none outline-none text-xs w-full font-medium"
+            autoFocus
+            aria-label="Rename chat"
+            onKeyDown={e => e.key === 'Enter' && updateChatTitle(chat.id)}
+          />
+        </div>
+      ) : (
+        <motion.button
+          data-context-chat-id={chat.id}
+          whileHover={{ x: 4 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            setCurrentChatId(chat.id)
+            if (isMobile) setIsNavOpen(false)
+            trackEvent('sidebar_click', { action: 'select_chat', chat_id: chat.id })
+          }}
+          className={`w-full text-left p-4 rounded-2xl text-[13px] font-bold tracking-tight transition-all flex items-center gap-3 group relative overflow-hidden ${
+            currentChatId === chat.id ? 'bg-(--apple-blue)/10 text-(--apple-blue)' : 'text-(--apple-gray) hover:bg-(--surface-tertiary) hover:text-(--foreground)'
+          }`}
+        >
+          {pinnedChatIds.has(chat.id)
+            ? <Pin className="w-4 h-4 shrink-0 text-(--apple-blue)" aria-label="Pinned" />
+            : <MessageSquare className={`w-4 h-4 shrink-0 transition-all ${currentChatId === chat.id ? 'text-(--apple-blue) scale-110' : 'text-(--apple-gray) group-hover:text-gray-300'}`} />}
+          <span className="truncate">{typeof chat.title === 'string' ? chat.title : JSON.stringify(chat.title)}</span>
+          {currentChatId === chat.id && (
+            <motion.div layoutId="active-chat-indicator" className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-(--apple-blue) rounded-r-full" />
+          )}
+        </motion.button>
+      )}
+
+      {editingChatId !== chat.id && (
+        <div className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+          <AppleTooltip text="Edit Title">
+            <Button aria-label={`Rename ${chat.title}`} variant="ghost" size="icon" className="w-7 h-7" onClick={(e) => { e.stopPropagation(); setEditingChatId(chat.id); setEditingTitle(chat.title); }}>
+              <Edit2 className="w-3 h-3" />
+            </Button>
+          </AppleTooltip>
+          <AppleTooltip text="Delete Thread">
+            <Button aria-label={`Delete ${chat.title}`} variant="destructive" size="icon" className="w-7 h-7" onClick={(e) => {
+              e.stopPropagation()
+              if (window.confirm(`Delete “${chat.title}” and its messages? This cannot be undone.`)) void deleteChat(chat.id)
+            }}>
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          </AppleTooltip>
+        </div>
+      )}
+    </div>
+  )
+
   if (showLanding) {
     return <LandingPage onEnter={() => { setShowLanding(false); trackEvent('chat_started'); }} onTryDemo={enterDemo} mouseX={mouseX} mouseY={mouseY} />
   }
 
   return (
-    <div className="flex h-dvh w-screen max-w-[100vw] text-(--foreground) overflow-hidden relative font-sans selection:bg-blue-500/30">
+    <div onContextMenu={handleFrowContextMenu} className="flex h-dvh w-screen max-w-[100vw] text-(--foreground) overflow-hidden relative font-sans selection:bg-blue-500/30">
 
       <AnimatePresence>
         {isNavOpen && (
@@ -2373,58 +2611,25 @@ export default function ChatPage() {
                   <p className="text-[10px] text-(--apple-gray)/60">Kick off a new intelligent session.</p>
                 </div>
               ) : (
-                chats.filter(c => chatSearch.trim() === '' || (typeof c.title === 'string' && c.title.toLowerCase().includes(chatSearch.toLowerCase()))).map(chat => (
-                  <div key={chat.id} className="group relative">
-                    {editingChatId === chat.id ? (
-                      <div className="flex items-center gap-2 p-2 bg-white/5 rounded-xl border border-blue-500/50">
-                        <input 
-                          value={editingTitle}
-                          onChange={e => setEditingTitle(e.target.value)}
-                          className="bg-transparent border-none outline-none text-xs w-full font-medium"
-                          autoFocus
-                          onKeyDown={e => e.key === 'Enter' && updateChatTitle(chat.id)}
-                        />
-                      </div>
-                    ) : (
-                      <motion.button
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => { 
-                          setCurrentChatId(chat.id); 
-                          if (isMobile) setIsNavOpen(false); 
-                          trackEvent('sidebar_click', { action: 'select_chat', chat_id: chat.id });
-                        }}
-                        className={`w-full text-left p-4 rounded-2xl text-[13px] font-bold tracking-tight transition-all flex items-center gap-3 group relative overflow-hidden ${
-                          currentChatId === chat.id ? 'bg-(--apple-blue)/10 text-(--apple-blue)' : 'text-(--apple-gray) hover:bg-(--surface-tertiary) hover:text-(--foreground)'
-                        }`}
+                <>
+                  {activeSidebarChats.length > 0
+                    ? activeSidebarChats.map(renderChatListItem)
+                    : <p className="px-3 py-4 text-xs text-(--apple-gray)">{archivedSidebarChats.length ? 'No active chats match.' : 'No matching chats.'}</p>}
+                  {archivedSidebarChats.length > 0 && (
+                    <section className="pt-3 mt-2 border-t border-(--border-color)">
+                      <button
+                        type="button"
+                        aria-expanded={showArchivedChats}
+                        onClick={() => setShowArchivedChats(value => !value)}
+                        className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-(--apple-gray) hover:text-(--foreground)"
                       >
-                        <MessageSquare className={`w-4 h-4 shrink-0 transition-all ${currentChatId === chat.id ? 'text-(--apple-blue) scale-110' : 'text-(--apple-gray) group-hover:text-gray-300'}`} />
-                        <span className="truncate">{typeof chat.title === 'string' ? chat.title : JSON.stringify(chat.title)}</span>
-                        {currentChatId === chat.id && (
-                          <motion.div 
-                            layoutId="active-chat-indicator"
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-(--apple-blue) rounded-r-full" 
-                          />
-                        )}
-                      </motion.button>
-                    )}
-                    
-                    {editingChatId !== chat.id && (
-                      <div className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                        <AppleTooltip text="Edit Title">
-                          <Button variant="ghost" size="icon" className="w-7 h-7" onClick={(e) => { e.stopPropagation(); setEditingChatId(chat.id); setEditingTitle(chat.title); }}>
-                            <Edit2 className="w-3 h-3" />
-                          </Button>
-                        </AppleTooltip>
-                        <AppleTooltip text="Delete Thread">
-                          <Button variant="destructive" size="icon" className="w-7 h-7" onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}>
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </AppleTooltip>
-                      </div>
-                    )}
-                  </div>
-                ))
+                        <span>Archived ({archivedSidebarChats.length})</span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showArchivedChats ? 'rotate-180' : ''}`} />
+                      </button>
+                      {showArchivedChats && <div className="space-y-1">{archivedSidebarChats.map(renderChatListItem)}</div>}
+                    </section>
+                  )}
+                </>
               )}
             </div>
 
@@ -2539,7 +2744,7 @@ export default function ChatPage() {
         )}
       </AnimatePresence>
 
-      <FeedbackWidget />
+      <FeedbackWidget ref={feedbackWidgetRef} />
 
       <motion.div layout transition={{ type: 'spring', damping: 32, stiffness: 180 }} className={`flex-1 min-w-0 overflow-hidden flex flex-col relative bg-(--background) ${isMobile ? 'pt-14' : ''}`}>
         <AnimatePresence>
@@ -2687,6 +2892,7 @@ export default function ChatPage() {
                       isMobile={isMobile}
                       highlightedAnchor={highlightedAnchor}
                       savedMemoryMsgId={savedMemoryMsgId}
+                      bookmarkedMessages={bookmarkedMessages}
                       markdownComponents={memoizedMarkdownComponents}
                       cleanContent={cleanDisplayContent(msg.content)}
                     />
@@ -2756,7 +2962,7 @@ export default function ChatPage() {
               {/* Attached file chip */}
               {attachedFile && (
                 <div className="flex items-center gap-2 mt-3 px-1">
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-(--surface-tertiary) border border-(--border-color) text-sm text-(--foreground) font-medium max-w-xs truncate">
+                  <div data-context-file="true" className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-(--surface-tertiary) border border-(--border-color) text-sm text-(--foreground) font-medium max-w-xs truncate">
                     {attachedFile.type === 'image' ? (
                       <img src={attachedFile.content} alt={attachedFile.name} className="w-5 h-5 object-cover rounded-md shrink-0" />
                     ) : (
@@ -2812,6 +3018,7 @@ export default function ChatPage() {
         onAssign={updateShortcut}
         onClose={() => setContextMenu(null)}
       />
+      <FrowContextMenu state={frowContextMenu} onClose={() => setFrowContextMenu(null)} />
 
       <AnimatePresence>
         {isSidebarOpen && (

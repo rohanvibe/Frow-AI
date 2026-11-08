@@ -341,7 +341,19 @@ const {
   checkCopyrightStream,
   COPYRIGHT_REFUSAL,
   getResponseAnchorId,
+  clampContextMenuPoint,
 } = require(path.join(__dirname, '../src/lib/chat/index.ts'));
+
+test('ContextMenu: clamps its position to each viewport edge', () => {
+  assert.deepStrictEqual(
+    clampContextMenuPoint({ x: 490, y: 790 }, 250, 300, 500, 800),
+    { x: 242, y: 492 }
+  );
+  assert.deepStrictEqual(
+    clampContextMenuPoint({ x: 2, y: 4 }, 250, 300, 500, 800),
+    { x: 8, y: 8 }
+  );
+});
 
 test('ChatNavigation: sidebar prompt anchors resolve to their assistant replies', () => {
   const messages = [
