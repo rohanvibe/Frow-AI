@@ -1,13 +1,20 @@
 // Main AI Service - Routing, Fallbacks, and Provider Management
 import { GroqProvider } from './providers/groq';
 import { GeminiProvider } from './providers/gemini';
-import { AIRouter } from './router';
+import { OpenAIProvider } from './providers/openai';
+import { AIRouter, MODEL_PROVIDERS } from './router';
 import { FALLBACK_CHAIN, VISION_MODELS } from '@/config/models';
 import {
   ChatCompletionRequest,
   ChatCompletionResponse,
   RoutingDecision,
 } from './types';
+
+export interface BYOKKeys {
+  groq?: string;
+  gemini?: string;
+  openai?: string;
+}
 
 export class AIService {
   private providers: Map<string, any> = new Map();
@@ -51,6 +58,48 @@ export class AIService {
   }
 
   /**
+   * Resolve an AI provider for a specific model, giving precedence to custom BYOK keys if provided.
+   */
+  public getProvider(
+    model: string,
+    byokKeys?: BYOKKeys
+  ) {
+    if (byokKeys) {
+      const groqKey = byokKeys.groq || (byokKeys.openai?.startsWith('gsk_') ? byokKeys.openai : undefined);
+      const geminiKey = byokKeys.gemini || (byokKeys.openai?.startsWith('AIza') ? byokKeys.openai : undefined);
+      const openaiKey = byokKeys.openai?.startsWith('sk-') ? byokKeys.openai : undefined;
+
+      const providerType = MODEL_PROVIDERS[model] || (model.includes('gemini') ? 'gemini' : (model.startsWith('gpt-') ? 'openai' : 'groq'));
+
+      if (providerType === 'groq' && groqKey && !groqKey.startsWith('your_')) {
+        return new GroqProvider(groqKey, model);
+      }
+
+      if (providerType === 'gemini' && geminiKey && !geminiKey.startsWith('your_')) {
+        return new GeminiProvider(geminiKey, model);
+      }
+
+      if (providerType === 'openai' && openaiKey && !openaiKey.startsWith('your_')) {
+        return new OpenAIProvider(openaiKey, model);
+      }
+
+      if (groqKey && !groqKey.startsWith('your_') && (model === 'openai/gpt-oss-120b' || model.includes('llama') || model.includes('mixtral') || model.includes('groq'))) {
+        return new GroqProvider(groqKey, model);
+      }
+
+      if (geminiKey && !geminiKey.startsWith('your_') && model.includes('gemini')) {
+        return new GeminiProvider(geminiKey, model);
+      }
+
+      if (openaiKey && !openaiKey.startsWith('your_')) {
+        return new OpenAIProvider(openaiKey, model.startsWith('gpt-') ? model : 'gpt-4o-mini');
+      }
+    }
+
+    return this.providers.get(model);
+  }
+
+  /**
    * Check if any message in the request contains an image
    */
   private hasImages(messages: any[]): boolean {
@@ -71,6 +120,7 @@ export class AIService {
       forceModel?: string;
       forceProvider?: string;
       routingDecision?: RoutingDecision;
+      byokKeys?: BYOKKeys;
     } = {}
   ): Promise<ChatCompletionResponse> {
     const {
@@ -82,6 +132,7 @@ export class AIService {
       forceModel,
       forceProvider,
       routingDecision: customRoutingDecision,
+      byokKeys,
     } = options;
 
     // Get routing decision
@@ -111,7 +162,9 @@ export class AIService {
         temperature,
         max_tokens,
       },
-      routingDecision
+      routingDecision,
+      [],
+      byokKeys
     );
   }
 
@@ -129,6 +182,7 @@ export class AIService {
       forceModel?: string;
       forceProvider?: string;
       routingDecision?: RoutingDecision;
+      byokKeys?: BYOKKeys;
     } = {}
   ): Promise<ReadableStream> {
     const {
@@ -140,6 +194,7 @@ export class AIService {
       forceModel,
       forceProvider,
       routingDecision: customRoutingDecision,
+      byokKeys,
     } = options;
 
     // Get routing decision
@@ -169,7 +224,9 @@ export class AIService {
         temperature,
         max_tokens,
       },
-      routingDecision
+      routingDecision,
+      [],
+      byokKeys
     );
   }
 
@@ -192,10 +249,11 @@ export class AIService {
     model: string,
     request: ChatCompletionRequest,
     routingDecision: RoutingDecision,
-    attemptedModels: string[] = []
+    attemptedModels: string[] = [],
+    byokKeys?: BYOKKeys
   ): Promise<ChatCompletionResponse> {
     const currentAttempted = [...attemptedModels, model];
-    const provider = this.providers.get(model);
+    const provider = this.getProvider(model, byokKeys);
 
     if (!provider) {
       console.error(`[AIService] Provider not found for model: ${model}`);
@@ -209,7 +267,7 @@ export class AIService {
       const nextModel = chain.find(m => !currentAttempted.includes(m));
       if (nextModel) {
         console.log(`[AIService] Falling back to: ${nextModel}`);
-        return this.executeWithFallback(nextModel, request, routingDecision, currentAttempted);
+        return this.executeWithFallback(nextModel, request, routingDecision, currentAttempted, byokKeys);
       }
       throw new Error(`No available providers for model: ${model}`);
     }
@@ -232,7 +290,7 @@ export class AIService {
       const nextModel = chain.find(m => !currentAttempted.includes(m));
       if (nextModel) {
         console.log(`[AIService] Falling back to: ${nextModel}`);
-        return this.executeWithFallback(nextModel, request, routingDecision, currentAttempted);
+        return this.executeWithFallback(nextModel, request, routingDecision, currentAttempted, byokKeys);
       }
 
       // No more fallbacks, throw error
@@ -247,10 +305,11 @@ export class AIService {
     model: string,
     request: ChatCompletionRequest,
     routingDecision: RoutingDecision,
-    attemptedModels: string[] = []
+    attemptedModels: string[] = [],
+    byokKeys?: BYOKKeys
   ): Promise<ReadableStream> {
     const currentAttempted = [...attemptedModels, model];
-    const provider = this.providers.get(model);
+    const provider = this.getProvider(model, byokKeys);
 
     if (!provider) {
       console.error(`[AIService] Provider not found for model: ${model}`);
@@ -264,7 +323,7 @@ export class AIService {
       const nextModel = chain.find(m => !currentAttempted.includes(m));
       if (nextModel) {
         console.log(`[AIService] Falling back to: ${nextModel}`);
-        return this.executeStreamWithFallback(nextModel, request, routingDecision, currentAttempted);
+        return this.executeStreamWithFallback(nextModel, request, routingDecision, currentAttempted, byokKeys);
       }
       throw new Error(`No available providers for model: ${model}`);
     }
@@ -287,7 +346,7 @@ export class AIService {
       const nextModel = chain.find(m => !currentAttempted.includes(m));
       if (nextModel) {
         console.log(`[AIService] Falling back to: ${nextModel}`);
-        return this.executeStreamWithFallback(nextModel, request, routingDecision, currentAttempted);
+        return this.executeStreamWithFallback(nextModel, request, routingDecision, currentAttempted, byokKeys);
       }
 
       // No more fallbacks, throw error
@@ -298,8 +357,8 @@ export class AIService {
   /**
    * Check if a provider is available
    */
-  public isProviderAvailable(model: string): boolean {
-    return this.providers.has(model);
+  public isProviderAvailable(model: string, byokKeys?: BYOKKeys): boolean {
+    return Boolean(this.getProvider(model, byokKeys));
   }
 
   /**

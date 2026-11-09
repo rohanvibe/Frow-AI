@@ -1,6 +1,6 @@
 // Chat completion execution and error recovery orchestration
 import { NextResponse } from 'next/server'
-import { aiService } from '@/lib/ai'
+import { aiService, BYOKKeys } from '@/lib/ai'
 import { AIRouter } from '@/lib/ai/router'
 import { RoutingDecision } from '@/lib/ai/types'
 
@@ -20,6 +20,7 @@ export interface ExecuteChatCompletionParams {
   tools: any[]
   routingDecision: RoutingDecision
   detectedImages: any[]
+  byokKeys?: BYOKKeys
 }
 
 /**
@@ -39,6 +40,7 @@ export async function executeChatCompletion(
     tools,
     routingDecision,
     detectedImages,
+    byokKeys,
   } = params
 
   const forcedModel = routingDecision.selectedModel
@@ -55,6 +57,7 @@ export async function executeChatCompletion(
       forceModel: forcedModel,
       forceProvider: forcedProvider,
       routingDecision,
+      byokKeys,
     })
   } catch (error: any) {
     console.error('[Chat API] AI Service Error:', error.message)
@@ -90,6 +93,7 @@ export async function executeChatCompletion(
         forceModel: retryModel,
         forceProvider: retryProvider,
         routingDecision: retryDecision,
+        byokKeys,
       })
     } catch (retryError: any) {
       console.error('[Chat API] Retry failed:', retryError)

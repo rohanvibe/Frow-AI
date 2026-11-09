@@ -1208,5 +1208,37 @@ test('ChatTitle: isDefaultChatTitle accurately detects placeholder vs custom tit
   assert.strictEqual(isDefaultChatTitle('Docker Setup Help'), false);
 });
 
+test('BYOK: isProviderAvailable checks custom keys when provided', () => {
+  const service = new AIService();
+  
+  // Custom Groq key
+  assert.strictEqual(service.isProviderAvailable('llama-3.3-70b-versatile', { groq: 'gsk_test123' }), true);
+  
+  // Custom Gemini key
+  assert.strictEqual(service.isProviderAvailable('gemini-2.5-flash', { gemini: 'AIzaSyTest123' }), true);
+
+  // Custom OpenAI key
+  assert.strictEqual(service.isProviderAvailable('gpt-4o', { openai: 'sk-proj-test123' }), true);
+  assert.strictEqual(service.isProviderAvailable('gpt-4o-mini', { openai: 'sk-proj-test123' }), true);
+
+  // Without custom key, fallback to env availability check
+  const hasEnvGroq = !!process.env.GROQ_API_KEY;
+  assert.strictEqual(service.isProviderAvailable('llama-3.3-70b-versatile', {}), hasEnvGroq);
+});
+
+test('BYOK: getProvider instantiates appropriate provider with custom key', () => {
+  const service = new AIService();
+  
+  const groqProv = service.getProvider('llama-3.3-70b-versatile', { groq: 'gsk_custom_groq' });
+  assert.strictEqual(groqProv.name, 'Groq');
+
+  const geminiProv = service.getProvider('gemini-2.5-flash', { gemini: 'AIzaCustomGemini' });
+  assert.strictEqual(geminiProv.name, 'Gemini');
+
+  const openaiProv = service.getProvider('gpt-4o', { openai: 'sk-custom-openai' });
+  assert.strictEqual(openaiProv.name, 'OpenAI');
+});
+
+
 
 

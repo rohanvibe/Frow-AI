@@ -94,7 +94,16 @@ export async function POST(req: Request) {
       skipSave,
       stream: requestedStream = true,
       selectedModel,
+      byokKeys: rawByokKeys,
     } = payload
+
+    const byokKeys = (rawByokKeys && typeof rawByokKeys === 'object' && !Array.isArray(rawByokKeys))
+      ? {
+          groq: typeof rawByokKeys.groq === 'string' && rawByokKeys.groq.trim() ? rawByokKeys.groq.trim() : undefined,
+          gemini: typeof rawByokKeys.gemini === 'string' && rawByokKeys.gemini.trim() ? rawByokKeys.gemini.trim() : undefined,
+          openai: typeof rawByokKeys.openai === 'string' && rawByokKeys.openai.trim() ? rawByokKeys.openai.trim() : undefined,
+        }
+      : undefined
 
     if (rawHistory !== undefined && !Array.isArray(rawHistory)) {
       return NextResponse.json({ error: 'Messages must be an array' }, { status: 400 })
@@ -177,6 +186,7 @@ export async function POST(req: Request) {
       tools: CHAT_TOOLS,
       routingDecision,
       detectedImages,
+      byokKeys,
     })
 
     if (executionResult.earlyResponse) {
@@ -194,6 +204,7 @@ export async function POST(req: Request) {
         forceModel: routingDecision.selectedModel,
         forceProvider: routingDecision.provider,
         routingDecision,
+        byokKeys,
       })
       const safeContent = await checkCopyrightStream(finalStream, copyrightPrompt)
       return createDirectStreamResponse(safeContent, detectedImages)

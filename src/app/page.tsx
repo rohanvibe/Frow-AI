@@ -1177,7 +1177,6 @@ export default function ChatPage() {
   const [showSettings, setShowSettings] = useState(false)
   const [showPrompts, setShowPrompts] = useState(false)
   const [prompts, setPrompts] = useState<Prompt[]>([])
-  const [modelType, setModelType] = useState<'default' | 'byok'>('default')
   const [selectedModel, setSelectedModel] = useState<ModelId>('auto')
 
   // Load user's model preference from profile
@@ -2302,19 +2301,43 @@ export default function ChatPage() {
 
     let finalContent = ''
     try {
-      if (modelType === 'default') {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            message: finalPrompt, 
-            image: imageAttachment,
-            messages: messages.slice(-20), // Send last 20 messages for context
-            chatId,
-            selectedModel: selectedModel !== 'auto' ? selectedModel : undefined
-          }),
-          signal: abortControllerRef.current.signal
-        })
+      let byokKeys: { groq?: string; gemini?: string; openai?: string } | undefined
+      try {
+        const savedKeys = localStorage.getItem('Frow_keys')
+        if (savedKeys) {
+          const parsed = JSON.parse(savedKeys)
+          if (parsed && typeof parsed === 'object') {
+            const clean: Record<string, string> = {}
+            if (typeof parsed.groq === 'string' && parsed.groq.trim()) clean.groq = parsed.groq.trim()
+            if (typeof parsed.gemini === 'string' && parsed.gemini.trim()) clean.gemini = parsed.gemini.trim()
+            if (typeof parsed.openai === 'string' && parsed.openai.trim()) {
+              const val = parsed.openai.trim()
+              if (!clean.groq && val.startsWith('gsk_')) {
+                clean.groq = val
+              } else if (!clean.gemini && val.startsWith('AIza')) {
+                clean.gemini = val
+              } else {
+                clean.openai = val
+              }
+            }
+            if (Object.keys(clean).length > 0) byokKeys = clean
+          }
+        }
+      } catch {}
+
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: finalPrompt, 
+          image: imageAttachment,
+          messages: messages.slice(-20), // Send last 20 messages for context
+          chatId,
+          selectedModel: selectedModel !== 'auto' ? selectedModel : undefined,
+          byokKeys,
+        }),
+        signal: abortControllerRef.current.signal
+      })
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
@@ -2464,10 +2487,6 @@ export default function ChatPage() {
              toast("Storage sync failed. History may be incomplete.", "warning")
           }
         }
-
-      } else {
-        // BYOK logic... (same as before but with abort signal support)
-      }
 
       // Generate one title after the first answer, when the conversation has enough context.
       // The endpoint owns persistence; this client only updates the sidebar optimistically.
@@ -3523,7 +3542,7 @@ export default function ChatPage() {
 
 function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: { onClose: () => void, shortcuts: any, updateShortcut: (id: ShortcutId, key: string) => void, resetShortcuts: () => void }) {
   const [activeTab, setActiveTab] = useState<'general' | 'personalization' | 'shortcuts'>('general')
-  const [keys, setKeys] = useState({ openai: '' })
+  const [keys, setKeys] = useState({ groq: '', gemini: '', openai: '' })
   const [profile, setProfile] = useState({ custom_instructions: '', ai_memory: [] as string[] })
   const [newMemory, setNewMemory] = useState('')
   const [saving, setSaving] = useState(false)
@@ -3533,7 +3552,24 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
   useEffect(() => {
     // Load local keys
     const saved = localStorage.getItem('Frow_keys')
-    if (saved) setKeys(JSON.parse(saved))
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (parsed && typeof parsed === 'object') {
+          let groq = typeof parsed.groq === 'string' ? parsed.groq : ''
+          let gemini = typeof parsed.gemini === 'string' ? parsed.gemini : ''
+          let openai = typeof parsed.openai === 'string' ? parsed.openai : ''
+          if (!groq && openai.startsWith('gsk_')) {
+            groq = openai
+            openai = ''
+          } else if (!gemini && openai.startsWith('AIza')) {
+            gemini = openai
+            openai = ''
+          }
+          setKeys({ groq, gemini, openai })
+        }
+      } catch (e) {}
+    }
 
     // Load server profile
     const loadProfile = async () => {
@@ -3642,9 +3678,47 @@ function SettingsModal({ onClose, shortcuts, updateShortcut, resetShortcuts }: {
                 transition={{ type: 'spring', damping: 30, stiffness: 250 }}
                 className="space-y-6"
               >
-                <div className="space-y-3">
-                  <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 ml-2">AI API Key</label>
-                  <Input type="password" value={keys.openai} onChange={(e) => setKeys({...keys, openai: e.target.value})} placeholder="sk-â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="bg-white/5 py-8 rounded-2xl border-white/5 focus:ring-1 focus:ring-purple-500/30" />
+                <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-300">
+                  <p className="font-semibold mb-1">Bring Your Own Key (BYOK)</p>
+                  <p className="text-[11px] text-gray-300">
+                    Add your personal API keys to bypass rate limits and server quotas. Keys are stored locally in your browser and sent directly with your chat requests.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-400 ml-2">Groq API Key (Speed &amp; Coding)</label>
+                  <Input 
+                    type="password" 
+                    value={keys.groq} 
+                    onChange={(e) => setKeys({...keys, groq: e.target.value})} 
+                    placeholder="gsk_••••••••••••••••••••••••••••••••••••" 
+                    className="bg-white/5 py-6 rounded-2xl border-white/5 focus:ring-1 focus:ring-purple-500/30 font-mono text-xs" 
+                  />
+                  <p className="text-[10px] text-gray-500 ml-2">Powers Llama 3.3, 3.1, and ultra-fast generation.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-400 ml-2">Google Gemini API Key (Vision &amp; Multimodal)</label>
+                  <Input 
+                    type="password" 
+                    value={keys.gemini} 
+                    onChange={(e) => setKeys({...keys, gemini: e.target.value})} 
+                    placeholder="AIzaSy••••••••••••••••••••••••••••••••" 
+                    className="bg-white/5 py-6 rounded-2xl border-white/5 focus:ring-1 focus:ring-purple-500/30 font-mono text-xs" 
+                  />
+                  <p className="text-[10px] text-gray-500 ml-2">Powers Gemini 2.5 Flash and multimodal/image queries.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-400 ml-2">OpenAI API Key (Fallback)</label>
+                  <Input 
+                    type="password" 
+                    value={keys.openai} 
+                    onChange={(e) => setKeys({...keys, openai: e.target.value})} 
+                    placeholder="sk-••••••••••••••••••••••••••••••••••••" 
+                    className="bg-white/5 py-6 rounded-2xl border-white/5 focus:ring-1 focus:ring-purple-500/30 font-mono text-xs" 
+                  />
+                  <p className="text-[10px] text-gray-500 ml-2">Powers OpenAI fallback models.</p>
                 </div>
               </motion.div>
             )}
