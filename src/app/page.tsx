@@ -56,7 +56,7 @@ import {
   CheckCircle2,
   Search,
   Star,
-  Map,
+  Map as MapIcon,
   List,
   Sparkles,
   Sun,
@@ -84,7 +84,7 @@ import { DEMO_CONVERSATION, DEMO_SIDEBAR_ITEMS } from '@/utils/demo-data'
 import { FrowContextMenu } from '@/components/FrowContextMenu'
 import type { FrowContextMenuItem, FrowContextMenuState } from '@/components/FrowContextMenu'
 import {
-  Archive, Bookmark, ClipboardCopy, Code2, FileSearch, Languages,
+  Archive, Bookmark, Bug, ClipboardCopy, Code2, FileSearch, Languages,
   MessageSquarePlus, Pin, PinOff, Play, TextSearch, WandSparkles,
 } from 'lucide-react'
 
@@ -592,7 +592,7 @@ function LandingPage({ onEnter, onTryDemo, mouseX, mouseY }: { onEnter: () => vo
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full py-40 relative z-10">
         {/* Feature Cards with Scroll Animations */}
         {[
-          { icon: Map, title: "Never Lose Your Context", desc: "Instantly jump between ideas without losing track. Your thoughts stay perfectly organized.", color: "text-purple-400" },
+          { icon: MapIcon, title: "Never Lose Your Context", desc: "Instantly jump between ideas without losing track. Your thoughts stay perfectly organized.", color: "text-purple-400" },
           { icon: Activity, title: "Solve Problems Instantly", desc: "Built-in interactive tools and execution help you compute answers immediately.", color: "text-magenta-400" },
           { icon: ShieldCheck, title: "Your Data Is Truly Yours", desc: "Everything runs securely. Focus on your work without worrying about privacy.", color: "text-pink-400" }
         ].map((f, i) => (
@@ -3343,7 +3343,7 @@ export default function ChatPage() {
                   </h2>
                   <div className="flex bg-(--surface-tertiary) p-1 rounded-lg">
                     <button onClick={() => setSidebarMode('flow')} className={`p-1 rounded-md transition-colors ${sidebarMode === 'flow' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}><List className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => setSidebarMode('map')} className={`p-1 rounded-md transition-colors ${sidebarMode === 'map' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}><Map className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => setSidebarMode('map')} className={`p-1 rounded-md transition-colors ${sidebarMode === 'map' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}><MapIcon className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
                 {isDemo && showDemoTooltip && (
