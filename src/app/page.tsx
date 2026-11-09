@@ -1304,6 +1304,8 @@ export default function ChatPage() {
   const [sidebarMode, setSidebarMode] = useState<'flow' | 'map' | 'saved'>('flow')
   const [savedResponses, setSavedResponses] = useState<Array<Message & { chatTitle: string }>>([])
   const [savedResponsesLoading, setSavedResponsesLoading] = useState(false)
+  const [savedResponsesError, setSavedResponsesError] = useState<string | null>(null)
+  const [savedRefreshToken, setSavedRefreshToken] = useState(0)
   const [pendingSavedMessageId, setPendingSavedMessageId] = useState<string | null>(null)
 
   const [savedMemoryMsgId, setSavedMemoryMsgId] = useState<string | null>(null)
@@ -1511,7 +1513,7 @@ export default function ChatPage() {
         { label: 'Summarize response', icon: TextSearch, onSelect: () => promptWithResponse('Summarize this response.') },
         { label: 'Regenerate response', icon: RefreshCw, separatorBefore: true, onSelect: () => sendMessage(undefined, messages[messageIndex - 1]?.content || 'Regenerate the response.') },
         { label: 'Continue from here', icon: ArrowRight, onSelect: () => promptWithResponse('Continue from where this response leaves off.') },
-        { label: 'Save response', icon: Bookmark, separatorBefore: true, onSelect: () => { toggleBookmark(message.id); toast('Response saved', 'success') } },
+        { label: bookmarkedMessages.has(message.id) ? 'Remove saved response' : 'Save response', icon: Bookmark, separatorBefore: true, onSelect: () => { void toggleBookmark(message.id) } },
       ])
     }
   }
@@ -1693,54 +1695,140 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => {
-    if (currentChatId && user) {
+    if (currentChatId && user && !isDemo) {
       localStorage.setItem(`Frow_last_chat_${user.id}`, currentChatId)
       if (!skipFetchRef.current) {
         fetchMessages(currentChatId)
       }
       skipFetchRef.current = false // Reset for next selection
-      
-      // Load bookmarks
-      const savedBookmarks = localStorage.getItem(`Frow_bookmarks_${currentChatId}`)
-      if (savedBookmarks) {
-         try {
-           setBookmarkedMessages(new Set(JSON.parse(savedBookmarks)))
-         } catch { setBookmarkedMessages(new Set()) }
-      } else {
-         setBookmarkedMessages(new Set())
-      }
+
+      let cancelled = false
+      void supabase
+        .from('saved_responses')
+        .select('message_id')
+        .eq('user_id', user.id)
+        .eq('chat_id', currentChatId)
+        .then(({ data, error }) => {
+          if (cancelled) return
+          if (error) {
+            console.error('Could not load saved responses for chat:', error)
+            setBookmarkedMessages(new Set())
+            return
+          }
+          setBookmarkedMessages(new Set((data || []).map(row => row.message_id)))
+        })
+      return () => { cancelled = true }
+    } else if (isDemo) {
+      setBookmarkedMessages(new Set())
     } else if (!isDemo) {
       setMessages([])
       setBookmarkedMessages(new Set())
     }
-  }, [currentChatId, isDemo])
+  }, [currentChatId, isDemo, user?.id, supabase])
+
+  useEffect(() => {
+    if (!user?.id) return
+    const migrationMarker = `Frow_bookmarks_migrated_${user.id}`
+    if (localStorage.getItem(migrationMarker)) return
+
+    let cancelled = false
+    const migrateLegacyBookmarks = async () => {
+      const prefix = 'Frow_bookmarks_'
+      const legacyKeys = Object.keys(localStorage).filter(key => key.startsWith(prefix))
+      if (legacyKeys.length === 0) {
+        localStorage.setItem(migrationMarker, 'true')
+        return
+      }
+
+      const refs = legacyKeys.flatMap(key => {
+        try {
+          const ids: unknown = JSON.parse(localStorage.getItem(key) || '[]')
+          const chatId = key.slice(prefix.length)
+          return Array.isArray(ids)
+            ? ids.filter((id): id is string => typeof id === 'string').map(id => ({ id, chatId }))
+            : []
+        } catch {
+          return []
+        }
+      })
+      const messageIds = [...new Set(refs.map(item => item.id))]
+      if (messageIds.length === 0) {
+        localStorage.setItem(migrationMarker, 'true')
+        return
+      }
+
+      const { data: messagesToMigrate, error: messagesError } = await supabase
+        .from('messages')
+        .select('id, chat_id, role')
+        .in('id', messageIds)
+      if (messagesError) {
+        console.error('Could not read legacy saved responses:', messagesError)
+        return
+      }
+
+      const refsByKey = new Set(refs.map(item => `${item.chatId}:${item.id}`))
+      const rows = (messagesToMigrate || [])
+        .filter(message => refsByKey.has(`${message.chat_id}:${message.id}`))
+        .map(message => ({ user_id: user.id, chat_id: message.chat_id, message_id: message.id }))
+      if (rows.length === 0) return
+
+      const { error: saveError } = await supabase
+        .from('saved_responses')
+        .upsert(rows, { onConflict: 'user_id,message_id', ignoreDuplicates: true })
+      if (saveError) {
+        console.error('Could not migrate legacy saved responses:', saveError)
+        return
+      }
+      if (cancelled) return
+
+      const migratedChats = new Set(rows.map(row => row.chat_id))
+      legacyKeys.forEach(key => {
+        if (migratedChats.has(key.slice(prefix.length))) localStorage.removeItem(key)
+      })
+      localStorage.setItem(migrationMarker, 'true')
+      if (currentChatId) {
+        const currentChatBookmarks = rows
+          .filter(row => row.chat_id === currentChatId)
+          .map(row => row.message_id)
+        if (currentChatBookmarks.length > 0) {
+          setBookmarkedMessages(previous => new Set([...previous, ...currentChatBookmarks]))
+        }
+      }
+      setSavedRefreshToken(value => value + 1)
+    }
+
+    void migrateLegacyBookmarks()
+    return () => { cancelled = true }
+  }, [user?.id, currentChatId, supabase])
 
   useEffect(() => {
     if (sidebarMode !== 'saved') return
     if (!user?.id) {
       setSavedResponses([])
+      setSavedResponsesLoading(false)
+      setSavedResponsesError(null)
       return
     }
 
     let cancelled = false
     const loadSavedResponses = async () => {
       setSavedResponsesLoading(true)
-      const prefix = 'Frow_bookmarks_'
-      const savedRefs = Object.keys(localStorage)
-        .filter(key => key.startsWith(prefix))
-        .flatMap(key => {
-          try {
-            const ids: unknown = JSON.parse(localStorage.getItem(key) || '[]')
-            const chatId = key.slice(prefix.length)
-            return Array.isArray(ids)
-              ? ids.filter((id): id is string => typeof id === 'string').map(id => ({ id, chatId }))
-              : []
-          } catch {
-            return []
-          }
-        })
-      const messageIds = [...new Set(savedRefs.map(item => item.id))]
-
+      setSavedResponsesError(null)
+      const { data: bookmarks, error: bookmarksError } = await supabase
+        .from('saved_responses')
+        .select('message_id, chat_id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      if (bookmarksError) {
+        console.error('Could not load saved responses:', bookmarksError)
+        if (!cancelled) {
+          setSavedResponses([])
+          setSavedResponsesLoading(false)
+          setSavedResponsesError('Saved items are unavailable. Make sure the Supabase migration has been applied.')
+        }
+        return
+      }
+      const messageIds = [...new Set((bookmarks || []).map(row => row.message_id))]
       if (messageIds.length === 0) {
         if (!cancelled) {
           setSavedResponses([])
@@ -1749,52 +1837,102 @@ export default function ChatPage() {
         return
       }
 
-      const { data } = await supabase
+      const { data, error: messagesError } = await supabase
         .from('messages')
         .select('id, chat_id, role, content, created_at')
         .in('id', messageIds)
-        .eq('role', 'assistant')
 
       if (!cancelled) {
-        setSavedResponses((data || []).map(message => ({
-          ...message,
-          chatTitle: chats.find(chat => chat.id === message.chat_id)?.title || 'Conversation',
-        })))
+        if (messagesError) {
+          console.error('Could not load saved message contents:', messagesError)
+          setSavedResponses([])
+          setSavedResponsesLoading(false)
+          setSavedResponsesError('Saved items could not be loaded. Please try again.')
+          return
+        }
+        const messagesById = new Map((data || []).map(message => [message.id, message]))
+        setSavedResponses((bookmarks || []).flatMap(bookmark => {
+          const message = messagesById.get(bookmark.message_id)
+          return message ? [{
+            ...message,
+            chatTitle: chats.find(chat => chat.id === message.chat_id)?.title || 'Conversation',
+          }] : []
+        }))
         setSavedResponsesLoading(false)
       }
     }
 
     void loadSavedResponses()
     return () => { cancelled = true }
-  }, [sidebarMode, user?.id, chats, bookmarkedMessages, supabase])
+  }, [sidebarMode, user?.id, chats, savedRefreshToken, supabase])
 
-  const toggleBookmark = (msgId: string, e?: React.MouseEvent) => {
+  const toggleBookmark = async (msgId: string, e?: React.MouseEvent) => {
     e?.stopPropagation()
-    setBookmarkedMessages(prev => {
-      const next = new Set(prev)
-      if (next.has(msgId)) next.delete(msgId)
+    if (isDemo) {
+      toast('Save items from a signed-in chat to sync them to your account.', 'error')
+      return
+    }
+    if (!user?.id || !currentChatId) {
+      toast('Sign in to sync saved responses to your account.', 'error')
+      return
+    }
+
+    const wasSaved = bookmarkedMessages.has(msgId)
+    const request = wasSaved
+      ? supabase.from('saved_responses').delete().eq('user_id', user.id).eq('chat_id', currentChatId).eq('message_id', msgId)
+      : supabase.from('saved_responses').insert({ user_id: user.id, chat_id: currentChatId, message_id: msgId })
+    const { error } = await request
+    if (error) {
+      console.error('Could not update saved response:', error)
+      toast('Could not update saved responses. Please try again.', 'error')
+      return
+    }
+
+    setBookmarkedMessages(previous => {
+      const next = new Set(previous)
+      if (wasSaved) next.delete(msgId)
       else next.add(msgId)
-      if (currentChatId) {
-        localStorage.setItem(`Frow_bookmarks_${currentChatId}`, JSON.stringify(Array.from(next)))
-      }
       return next
     })
+    if (wasSaved) {
+      setSavedResponses(previous => previous.filter(message => message.id !== msgId))
+      toast('Response removed from Saved', 'success')
+    } else {
+      const message = messages.find(item => item.id === msgId)
+      if (message) {
+        setSavedResponses(previous => [{
+          ...message,
+          chatTitle: chats.find(chat => chat.id === currentChatId)?.title || 'Conversation',
+        }, ...previous.filter(item => item.id !== msgId)])
+      }
+      toast('Response saved to your account', 'success')
+    }
+    setSavedRefreshToken(value => value + 1)
   }
 
-  const removeSavedBookmark = (chatId: string, msgId: string, e: React.MouseEvent) => {
+  const removeSavedBookmark = async (chatId: string, msgId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    const storageKey = `Frow_bookmarks_${chatId}`
-    let ids: string[] = []
-    try {
-      const stored: unknown = JSON.parse(localStorage.getItem(storageKey) || '[]')
-      if (Array.isArray(stored)) ids = stored.filter((id): id is string => typeof id === 'string')
-    } catch {
-      ids = []
+    if (!user?.id) return
+    const { error } = await supabase
+      .from('saved_responses')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('chat_id', chatId)
+      .eq('message_id', msgId)
+    if (error) {
+      console.error('Could not remove saved response:', error)
+      toast('Could not remove saved response. Please try again.', 'error')
+      return
     }
-    const next = ids.filter(id => id !== msgId)
-    localStorage.setItem(storageKey, JSON.stringify(next))
-    if (chatId === currentChatId) setBookmarkedMessages(new Set(next))
+    if (chatId === currentChatId) {
+      setBookmarkedMessages(previous => {
+        const next = new Set(previous)
+        next.delete(msgId)
+        return next
+      })
+    }
     setSavedResponses(previous => previous.filter(message => message.id !== msgId))
+    setSavedRefreshToken(value => value + 1)
   }
 
   useEffect(() => {
@@ -3201,7 +3339,7 @@ export default function ChatPage() {
                 <div className="flex items-center justify-between">
                   <h2 className="font-black text-[9px] uppercase tracking-[0.4em] text-gray-600 pt-1 flex items-center gap-2">
                      {sidebarMode === 'saved' ? <Bookmark className="w-3 h-3" /> : <Activity className="w-3 h-3" />}
-                     {sidebarMode === 'saved' ? 'Saved Responses' : `Session ${sidebarMode === 'map' ? 'Map' : 'Flow'}`}
+                     {sidebarMode === 'saved' ? 'Saved' : `Session ${sidebarMode === 'map' ? 'Map' : 'Flow'}`}
                   </h2>
                   <div className="flex bg-(--surface-tertiary) p-1 rounded-lg">
                     <button onClick={() => setSidebarMode('flow')} className={`p-1 rounded-md transition-colors ${sidebarMode === 'flow' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}><List className="w-3.5 h-3.5" /></button>
@@ -3252,13 +3390,15 @@ export default function ChatPage() {
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 {sidebarMode === 'saved' ? (
-                  savedResponsesLoading ? (
+                  savedResponsesError ? (
+                    <p role="alert" className="px-3 py-6 text-center text-xs text-red-400">{savedResponsesError}</p>
+                  ) : savedResponsesLoading ? (
                     <p className="px-3 py-6 text-center text-xs text-(--apple-gray)">Loading saved responses…</p>
                   ) : savedResponses.length === 0 ? (
                     <div className="flex flex-col items-center justify-center text-center p-6 mt-10 space-y-3 text-(--apple-gray)">
                       <Bookmark className="w-7 h-7 opacity-50" />
-                      <p className="text-xs font-semibold">No saved responses yet.</p>
-                      <p className="text-[10px] opacity-70">Use “Save response” from an assistant message’s right-click menu.</p>
+                      <p className="text-xs font-semibold">No saved items yet.</p>
+                      <p className="text-[10px] opacity-70">Save an assistant response from its right-click menu, or star a message in Flow.</p>
                     </div>
                   ) : (
                     savedResponses.map(message => (
@@ -3283,7 +3423,7 @@ export default function ChatPage() {
                         </button>
                         <button
                           type="button"
-                          aria-label="Remove saved response"
+                          aria-label="Remove saved item"
                           title="Remove from saved"
                           onClick={event => removeSavedBookmark(message.chat_id, message.id, event)}
                           className="p-2 mt-1 mr-1 text-yellow-500 hover:text-(--foreground) rounded-lg"

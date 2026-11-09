@@ -7,7 +7,8 @@ This directory contains version-controlled database migrations for the Frow AI p
 ```
 supabase/
 ├── migrations/
-│   └── 20260101000000_initial_schema.sql  # Baseline schema and safe, repeatable RLS policies
+│   ├── 20260101000000_initial_schema.sql  # Baseline schema and safe, repeatable RLS policies
+│   └── 20261109090000_saved_responses.sql # Account-synced response bookmarks
 └── README.md
 ```
 
