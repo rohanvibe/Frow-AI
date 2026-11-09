@@ -20,7 +20,6 @@ type AnalyticsEvent =
   | 'snapshot_exported'
   | 'tutorial_started'
   | 'tutorial_completed'
-  | 'feedback_submitted'
   | 'byok_opened'
   | 'return_visit'
   | 'return_user'

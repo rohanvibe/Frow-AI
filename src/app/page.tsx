@@ -81,13 +81,10 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { trackEvent } from '@/utils/analytics'
 import { DEMO_CONVERSATION, DEMO_SIDEBAR_ITEMS } from '@/utils/demo-data'
-// Feature test
-import { FeedbackWidget } from '@/components/FeedbackWidget'
-import type { FeedbackWidgetHandle } from '@/components/FeedbackWidget'
 import { FrowContextMenu } from '@/components/FrowContextMenu'
 import type { FrowContextMenuItem, FrowContextMenuState } from '@/components/FrowContextMenu'
 import {
-  Archive, Bookmark, Bug, ClipboardCopy, Code2, FileSearch, Languages,
+  Archive, Bookmark, ClipboardCopy, Code2, FileSearch, Languages,
   MessageSquarePlus, Pin, PinOff, Play, TextSearch, WandSparkles,
 } from 'lucide-react'
 
@@ -1304,7 +1301,10 @@ export default function ChatPage() {
   const [chatSearch, setChatSearch] = useState('')
 
   // Phase 6 Chat Map
-  const [sidebarMode, setSidebarMode] = useState<'flow' | 'map'>('flow')
+  const [sidebarMode, setSidebarMode] = useState<'flow' | 'map' | 'saved'>('flow')
+  const [savedResponses, setSavedResponses] = useState<Array<Message & { chatTitle: string }>>([])
+  const [savedResponsesLoading, setSavedResponsesLoading] = useState(false)
+  const [pendingSavedMessageId, setPendingSavedMessageId] = useState<string | null>(null)
 
   const [savedMemoryMsgId, setSavedMemoryMsgId] = useState<string | null>(null)
 
@@ -1314,7 +1314,6 @@ export default function ChatPage() {
   const [pinnedChatIds, setPinnedChatIds] = useState<Set<string>>(new Set())
   const [archivedChatIds, setArchivedChatIds] = useState<Set<string>>(new Set())
   const [showArchivedChats, setShowArchivedChats] = useState(false)
-  const feedbackWidgetRef = useRef<FeedbackWidgetHandle | null>(null)
   const [chatDrafts, setChatDrafts] = useState<Record<string, string>>({})
   const [chatScrolls, setChatScrolls] = useState<Record<string, number>>({})
   const [showJumpToBottom, setShowJumpToBottom] = useState(false)
@@ -1346,7 +1345,7 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const skipFetchRef = useRef(false)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
   const { toast } = useToast()
 
@@ -1513,7 +1512,6 @@ export default function ChatPage() {
         { label: 'Regenerate response', icon: RefreshCw, separatorBefore: true, onSelect: () => sendMessage(undefined, messages[messageIndex - 1]?.content || 'Regenerate the response.') },
         { label: 'Continue from here', icon: ArrowRight, onSelect: () => promptWithResponse('Continue from where this response leaves off.') },
         { label: 'Save response', icon: Bookmark, separatorBefore: true, onSelect: () => { toggleBookmark(message.id); toast('Response saved', 'success') } },
-        { label: 'Give feedback', icon: Bug, onSelect: () => feedbackWidgetRef.current?.open('Feedback about an assistant response: ') },
       ])
     }
   }
@@ -1717,6 +1715,59 @@ export default function ChatPage() {
     }
   }, [currentChatId, isDemo])
 
+  useEffect(() => {
+    if (sidebarMode !== 'saved') return
+    if (!user?.id) {
+      setSavedResponses([])
+      return
+    }
+
+    let cancelled = false
+    const loadSavedResponses = async () => {
+      setSavedResponsesLoading(true)
+      const prefix = 'Frow_bookmarks_'
+      const savedRefs = Object.keys(localStorage)
+        .filter(key => key.startsWith(prefix))
+        .flatMap(key => {
+          try {
+            const ids: unknown = JSON.parse(localStorage.getItem(key) || '[]')
+            const chatId = key.slice(prefix.length)
+            return Array.isArray(ids)
+              ? ids.filter((id): id is string => typeof id === 'string').map(id => ({ id, chatId }))
+              : []
+          } catch {
+            return []
+          }
+        })
+      const messageIds = [...new Set(savedRefs.map(item => item.id))]
+
+      if (messageIds.length === 0) {
+        if (!cancelled) {
+          setSavedResponses([])
+          setSavedResponsesLoading(false)
+        }
+        return
+      }
+
+      const { data } = await supabase
+        .from('messages')
+        .select('id, chat_id, role, content, created_at')
+        .in('id', messageIds)
+        .eq('role', 'assistant')
+
+      if (!cancelled) {
+        setSavedResponses((data || []).map(message => ({
+          ...message,
+          chatTitle: chats.find(chat => chat.id === message.chat_id)?.title || 'Conversation',
+        })))
+        setSavedResponsesLoading(false)
+      }
+    }
+
+    void loadSavedResponses()
+    return () => { cancelled = true }
+  }, [sidebarMode, user?.id, chats, bookmarkedMessages, supabase])
+
   const toggleBookmark = (msgId: string, e?: React.MouseEvent) => {
     e?.stopPropagation()
     setBookmarkedMessages(prev => {
@@ -1728,6 +1779,22 @@ export default function ChatPage() {
       }
       return next
     })
+  }
+
+  const removeSavedBookmark = (chatId: string, msgId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const storageKey = `Frow_bookmarks_${chatId}`
+    let ids: string[] = []
+    try {
+      const stored: unknown = JSON.parse(localStorage.getItem(storageKey) || '[]')
+      if (Array.isArray(stored)) ids = stored.filter((id): id is string => typeof id === 'string')
+    } catch {
+      ids = []
+    }
+    const next = ids.filter(id => id !== msgId)
+    localStorage.setItem(storageKey, JSON.stringify(next))
+    if (chatId === currentChatId) setBookmarkedMessages(new Set(next))
+    setSavedResponses(previous => previous.filter(message => message.id !== msgId))
   }
 
   useEffect(() => {
@@ -2396,6 +2463,13 @@ export default function ChatPage() {
     }
   }
 
+  useEffect(() => {
+    if (!pendingSavedMessageId || fetchingMessages) return
+    if (!messages.some(message => message.id === pendingSavedMessageId)) return
+    window.requestAnimationFrame(() => scrollToMessage(pendingSavedMessageId))
+    setPendingSavedMessageId(null)
+  }, [pendingSavedMessageId, fetchingMessages, messages, scrollToMessage])
+
   const enterDemo = () => {
     // Force set everything at once to avoid race conditions
     const demoId = 'demo-chat'
@@ -2668,6 +2742,16 @@ export default function ChatPage() {
                       <Command className="w-5 h-5 text-(--apple-blue)" />
                     </button>
                   </AppleTooltip>
+                  <AppleTooltip text="Saved Responses">
+                    <button
+                      aria-label="Saved Responses"
+                      aria-pressed={sidebarMode === 'saved'}
+                      onClick={() => setSidebarMode('saved')}
+                      className={`flex-1 flex items-center justify-center p-3 rounded-xl transition-all border border-(--border-color) ${sidebarMode === 'saved' ? 'bg-(--surface-tertiary)' : 'hover:bg-(--surface-tertiary)'}`}
+                    >
+                      <Bookmark className="w-5 h-5 text-(--apple-blue)" />
+                    </button>
+                  </AppleTooltip>
                   <AppleTooltip text="Settings">
                     <button
                       id="tutorial-settings"
@@ -2694,11 +2778,21 @@ export default function ChatPage() {
                     <span className="text-[13px] font-semibold tracking-tight">Saved Prompts</span>
                     <span className="ml-auto text-[8px] font-mono text-(--apple-gray)">{getShortcutLabel('openPrompts')}</span>
                   </Button>
-                  <Button id="tutorial-settings" variant="ghost" className="w-full justify-start gap-4 rounded-xl py-6 hover:bg-(--surface-tertiary) text-(--foreground)" onClick={() => { trackEvent('byok_opened'); setShowSettings(true); }} onContextMenu={e => openContextMenu(e, 'openSettings')}>
-                    <Settings className="w-4 h-4 text-(--apple-blue)" />
-                    <span className="text-[13px] font-semibold tracking-tight">Settings</span>
-                    <span className="ml-auto text-[8px] font-mono text-(--apple-gray)">{getShortcutLabel('openSettings')}</span>
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      aria-pressed={sidebarMode === 'saved'}
+                      className={`flex-1 justify-start gap-3 rounded-xl py-5 hover:bg-(--surface-tertiary) text-(--foreground) ${sidebarMode === 'saved' ? 'bg-(--surface-tertiary)' : ''}`}
+                      onClick={() => setSidebarMode('saved')}
+                    >
+                      <Bookmark className="w-4 h-4 text-(--apple-blue)" />
+                      <span className="text-[13px] font-semibold tracking-tight">Saved</span>
+                    </Button>
+                    <Button id="tutorial-settings" variant="ghost" className="flex-1 justify-start gap-3 rounded-xl py-5 hover:bg-(--surface-tertiary) text-(--foreground)" onClick={() => { trackEvent('byok_opened'); setShowSettings(true); }} onContextMenu={e => openContextMenu(e, 'openSettings')}>
+                      <Settings className="w-4 h-4 text-(--apple-blue)" />
+                      <span className="text-[13px] font-semibold tracking-tight">Settings</span>
+                    </Button>
+                  </div>
                   <div className="pt-4 mt-2 border-t border-white/5">
                     <div className="flex bg-(--surface-tertiary) p-1 rounded-xl items-center border border-white/5">
                       <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${theme === 'light' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}>
@@ -2743,8 +2837,6 @@ export default function ChatPage() {
           }} />
         )}
       </AnimatePresence>
-
-      <FeedbackWidget ref={feedbackWidgetRef} />
 
       <motion.div layout transition={{ type: 'spring', damping: 32, stiffness: 180 }} className={`flex-1 min-w-0 overflow-hidden flex flex-col relative bg-(--background) ${isMobile ? 'pt-14' : ''}`}>
         <AnimatePresence>
@@ -3108,8 +3200,8 @@ export default function ChatPage() {
               <div id="tutorial-history" className="p-5 border-b border-white/5 flex flex-col shrink-0 gap-3">
                 <div className="flex items-center justify-between">
                   <h2 className="font-black text-[9px] uppercase tracking-[0.4em] text-gray-600 pt-1 flex items-center gap-2">
-                     <Activity className="w-3 h-3" />
-                     Session {sidebarMode === 'map' ? 'Map' : 'Flow'}
+                     {sidebarMode === 'saved' ? <Bookmark className="w-3 h-3" /> : <Activity className="w-3 h-3" />}
+                     {sidebarMode === 'saved' ? 'Saved Responses' : `Session ${sidebarMode === 'map' ? 'Map' : 'Flow'}`}
                   </h2>
                   <div className="flex bg-(--surface-tertiary) p-1 rounded-lg">
                     <button onClick={() => setSidebarMode('flow')} className={`p-1 rounded-md transition-colors ${sidebarMode === 'flow' ? 'bg-(--foreground) text-(--background) shadow-sm' : 'text-(--apple-gray) hover:text-(--foreground)'}`}><List className="w-3.5 h-3.5" /></button>
@@ -3159,7 +3251,49 @@ export default function ChatPage() {
                 )}
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                {sidebarMode === 'map' ? (
+                {sidebarMode === 'saved' ? (
+                  savedResponsesLoading ? (
+                    <p className="px-3 py-6 text-center text-xs text-(--apple-gray)">Loading saved responses…</p>
+                  ) : savedResponses.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center p-6 mt-10 space-y-3 text-(--apple-gray)">
+                      <Bookmark className="w-7 h-7 opacity-50" />
+                      <p className="text-xs font-semibold">No saved responses yet.</p>
+                      <p className="text-[10px] opacity-70">Use “Save response” from an assistant message’s right-click menu.</p>
+                    </div>
+                  ) : (
+                    savedResponses.map(message => (
+                      <div key={message.id} className="flex items-start gap-1 rounded-xl border border-(--border-color) bg-(--surface) hover:bg-(--surface-tertiary) transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            trackEvent('sidebar_click', { type: 'saved_response', messageId: message.id })
+                            if (message.chat_id === currentChatId && !fetchingMessages && messages.some(item => item.id === message.id)) {
+                              scrollToMessage(message.id)
+                            } else {
+                              setPendingSavedMessageId(message.id)
+                              if (message.chat_id !== currentChatId) setCurrentChatId(message.chat_id)
+                            }
+                            if (isMobile) setIsSidebarOpen(false)
+                          }}
+                          title={message.content}
+                          className="min-w-0 flex-1 p-3 text-left"
+                        >
+                          <span className="block text-[9px] font-bold uppercase tracking-wider text-(--apple-blue) truncate">{message.chatTitle}</span>
+                          <span className="mt-1 block text-[11px] leading-relaxed text-(--foreground) line-clamp-3">{message.content}</span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Remove saved response"
+                          title="Remove from saved"
+                          onClick={event => removeSavedBookmark(message.chat_id, message.id, event)}
+                          className="p-2 mt-1 mr-1 text-yellow-500 hover:text-(--foreground) rounded-lg"
+                        >
+                          <Star className="w-3.5 h-3.5" fill="currentColor" />
+                        </button>
+                      </div>
+                    ))
+                  )
+                ) : sidebarMode === 'map' ? (
                    chatMap.map((section, sidx) => (
                       <div key={sidx} className="space-y-3 mb-6">
                          <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-2">
